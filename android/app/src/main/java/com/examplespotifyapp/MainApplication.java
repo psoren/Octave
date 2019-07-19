@@ -3,6 +3,7 @@ package com.examplespotifyapp;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.reactnativecommunity.geolocation.GeolocationPackage;
 import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
 import com.oblador.vectoricons.VectorIconsPackage;
 import com.lufinkey.react.spotify.RNSpotifyPackage;
@@ -28,6 +29,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new GeolocationPackage(),
             new AsyncStoragePackage(),
             new VectorIconsPackage(),
             new RNSpotifyPackage(),
