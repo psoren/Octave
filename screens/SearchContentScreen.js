@@ -33,10 +33,7 @@ class SearchContentScreen extends Component {
         }));
         this.setState({ uris });
 
-
         // Perform Artist Search
-
-
         // Perform Playlist Search
       });
     }

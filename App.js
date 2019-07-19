@@ -18,9 +18,9 @@ const Navigator = createBottomTabNavigator({
   SearchContent: SearchContentScreen,
   Main: createBottomTabNavigator({
     Home: HomeScreen,
+    RoomSearch: RoomSearchScreen,
     CreateRoom: CreateRoomScreen,
     Settings: SettingsScreen,
-    RoomSearch: RoomSearchScreen,
   }),
 },
 { defaultNavigationOptions: { tabBarVisible: false } });

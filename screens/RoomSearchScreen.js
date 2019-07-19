@@ -4,11 +4,11 @@ import { Icon } from 'react-native-elements';
 
 class RoomSearchScreen extends Component {
     static navigationOptions = () => ({
-      title: 'Search',
+      title: 'Discover',
       tabBarIcon: ({ tintColor }) => (
         <Icon
-          type="search"
-          name="home"
+          type="material"
+          name="search"
           size={30}
           color={tintColor}
         />
