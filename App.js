@@ -13,6 +13,9 @@ import RoomSearchScreen from './screens/RoomSearchScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import SearchContentScreen from './screens/SearchContentScreen';
 
+// Testing
+import TestingScreen from './screens/TestingScreen';
+
 
 const Navigator = createBottomTabNavigator({
   Login: LoginScreen,
@@ -22,7 +25,7 @@ const Navigator = createBottomTabNavigator({
     RoomSearch: RoomSearchScreen,
     CreateRoom: CreateRoomScreen,
     Settings: SettingsScreen,
-    Test: RoomSearchScreen
+    Testing: TestingScreen
   }),
 },
 { defaultNavigationOptions: { tabBarVisible: false } });
