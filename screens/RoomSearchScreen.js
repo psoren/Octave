@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { Text, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 
+// Testing
+import Artist from '../components/Artist';
+
 class RoomSearchScreen extends Component {
     static navigationOptions = () => ({
       title: 'Discover',
@@ -17,13 +20,7 @@ class RoomSearchScreen extends Component {
 
     render() {
       return (
-        <View style={styles.container}>
-          <Text>RoomSearchScreen</Text>
-          <Text>RoomSearchScreen</Text>
-          <Text>RoomSearchScreen</Text>
-          <Text>RoomSearchScreen</Text>
-          <Text>RoomSearchScreen</Text>
-        </View>
+        <Artist uri="spotify:artist:246dkjvS1zLTtiykXe5h60" />
       );
     }
 }
