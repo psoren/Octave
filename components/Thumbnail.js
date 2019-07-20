@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-community/async-storage';
 
 const { width: imageSize } = Dimensions.get('window');
 
-class AlbumThumbnail extends Component {
+class Thumbnail extends Component {
   state = {
     name: '',
     loading: true,
@@ -16,11 +16,12 @@ class AlbumThumbnail extends Component {
 
   componentDidMount = async () => {
     const infoArr = this.props.uri.split(':');
+    const type = `${infoArr[1]}s`;
     const id = infoArr[2];
     const accessToken = await AsyncStorage.getItem('accessToken');
 
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-    const { data } = await axios.get(`https://api.spotify.com/v1/albums/${id}`, config);
+    const { data } = await axios.get(`https://api.spotify.com/v1/${type}/${id}`, config);
 
     let { name } = data;
     name = name.length > 20 ? `${name.slice(0, 20)}...` : name;
@@ -71,4 +72,4 @@ const styles = {
   }
 };
 
-export default AlbumThumbnail;
+export default Thumbnail;

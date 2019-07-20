@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { View } from 'react-native';
 import { Icon } from 'react-native-elements';
 
-import SearchResult from '../components/SearchResult';
+import Thumbnail from '../components/Thumbnail';
 
 class RoomSearchScreen extends Component {
     static navigationOptions = () => ({
@@ -10,7 +10,7 @@ class RoomSearchScreen extends Component {
       tabBarIcon: ({ tintColor }) => (
         <Icon
           type="material"
-          name="search"
+          name="important-devices"
           size={30}
           color={tintColor}
         />
@@ -20,7 +20,10 @@ class RoomSearchScreen extends Component {
     render() {
       return (
         <View style={styles.container}>
-          <SearchResult uri="spotify:playlist:37i9dQZEVXcSK2M4TVQOSL" />
+          <Thumbnail uri="spotify:album:2FNk380jCQyICbwtkOdEHE" />
+          <Thumbnail uri="spotify:artist:4YLQaW1UU3mrVetC8gNkg5" />
+          <Thumbnail uri="spotify:playlist:37i9dQZF1DX8Uebhn9wzrS" />
+
         </View>
       );
     }
