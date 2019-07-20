@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { Icon } from 'react-native-elements';
 
-// Testing
-import Artist from '../components/Artist';
+import SearchResult from '../components/SearchResult';
 
 class RoomSearchScreen extends Component {
     static navigationOptions = () => ({
@@ -20,7 +19,9 @@ class RoomSearchScreen extends Component {
 
     render() {
       return (
-        <Artist uri="spotify:artist:246dkjvS1zLTtiykXe5h60" />
+        <View style={styles.container}>
+          <SearchResult uri="spotify:playlist:37i9dQZEVXcSK2M4TVQOSL" />
+        </View>
       );
     }
 }
@@ -29,6 +30,7 @@ const styles = {
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    marginTop: 50
   },
 };
 

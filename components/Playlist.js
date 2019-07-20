@@ -8,62 +8,64 @@ import AsyncStorage from '@react-native-community/async-storage';
 import Song from './Song';
 
 class Playlist extends Component {
-    state = {
-      albumArtExists: false,
-      uris: []
-    };
+  state = {
+    albumArtExists: false,
+    uris: []
+  };
 
-    componentDidMount = async () => {
-      const infoArr = this.props.uri.split(':');
-      const id = infoArr[2];
-      const accessToken = await AsyncStorage.getItem('accessToken');
+  componentDidMount = async () => {
+    const infoArr = this.props.uri.split(':');
+    const id = infoArr[2];
+    const accessToken = await AsyncStorage.getItem('accessToken');
 
-      // Get playlist
-      const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-      const { data } = await axios.get(`https://api.spotify.com/v1/playlists/${id}`, config);
+    // Get playlist
+    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
+    const { data } = await axios.get(`https://api.spotify.com/v1/playlists/${id}`, config);
 
-      if (data.images[0].url) {
-        this.setState({
-          albumArtExists: true,
-          albumArt: data.images[0].url
-        });
-      }
-      this.setState({ name: data.name });
-
-      // //Get playlist songs
-      const result = await axios.get(`https://api.spotify.com/v1/playlists/${id}/tracks`, config);
-      const uris = result.data.items.map(songObj => songObj.track.uri);
-      this.setState({ uris });
+    if (data.images
+      && data.images[0]
+      && data.images[0].url) {
+      this.setState({
+        albumArtExists: true,
+        albumArt: data.images[0].url
+      });
     }
+    this.setState({ name: data.name });
 
-    keyExtractor = item => item;
+    // //Get playlist songs
+    const result = await axios.get(`https://api.spotify.com/v1/playlists/${id}/tracks`, config);
+    const uris = result.data.items.map(songObj => songObj.track.uri);
+    this.setState({ uris });
+  }
 
-    render() {
-      return (
-        <View style={styles.container}>
-          <Text style={styles.title}>{this.state.name}</Text>
-          {this.state.albumArtExists
-            ? (
-              <Image
-                source={{ uri: this.state.albumArt }}
-                style={styles.albumArt}
-              />
-            )
-            : (
-              <Image
-                source={require('../assets/default_album.png')}
-                style={styles.albumArt}
-              />
-            )
-                }
-          <FlatList
-            data={this.state.uris}
-            renderItem={({ item }) => <Song uri={item} />}
-            keyExtractor={this.keyExtractor}
-          />
-        </View>
-      );
-    }
+  keyExtractor = item => item;
+
+  render() {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{this.state.name}</Text>
+        {this.state.albumArtExists
+          ? (
+            <Image
+              source={{ uri: this.state.albumArt }}
+              style={styles.albumArt}
+            />
+          )
+          : (
+            <Image
+              source={require('../assets/default_album.png')}
+              style={styles.albumArt}
+            />
+          )
+        }
+        <FlatList
+          data={this.state.uris}
+          renderItem={({ item }) => <Song uri={item} />}
+          keyExtractor={this.keyExtractor}
+        />
+      </View>
+    );
+  }
 }
 
 const styles = {

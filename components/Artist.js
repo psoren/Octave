@@ -20,6 +20,8 @@ class Artist extends Component {
       // Get artist info
       const config = { headers: { Authorization: `Bearer ${accessToken}` } };
       const { data: artistData } = await axios.get(`https://api.spotify.com/v1/artists/${id}`, config);
+
+
       this.setState({ name: artistData.name, artistImage: artistData.images[1].url });
 
       // Get top tracks

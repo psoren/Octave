@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { View, TextInput, SectionList } from 'react-native';
+import {
+  Text, View, TextInput, SectionList
+} from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-community/async-storage';
 import axios from 'axios';
@@ -8,9 +10,15 @@ import { connect } from 'react-redux';
 import * as actions from '../actions';
 
 import Song from '../components/Song';
+import SearchResult from '../components/SearchResult';
 
 class SearchContentScreen extends Component {
-  state = { search: '', uris: [] };
+  state = {
+    search: '',
+    songs: [],
+    artists: [],
+    playlists: []
+  };
 
   componentDidMount = async () => {
     const accessToken = await AsyncStorage.getItem('accessToken');
@@ -19,23 +27,32 @@ class SearchContentScreen extends Component {
 
   performSearch = async (search) => {
     this.setState({ search }, async () => {
-      // Perform Song Search
-      const query = qs.stringify({
+      // Search songs
+      const query = {
         q: this.state.search,
         type: 'track',
-        limit: 10
-      });
+        limit: 3
+      };
       const config = { headers: { Authorization: `Bearer ${this.state.accessToken}` } };
-      const { data } = await axios.get(`https://api.spotify.com/v1/search?${query}`, config);
-      const uris = data.tracks.items.map(item => item.uri);
-      this.setState({ uris });
+      const { data: songData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({ ...query })}`, config);
+      const songs = songData.tracks.items.map(item => item.uri);
+      this.setState({ songs });
 
+      // Search Artists
+      const { data: artistData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({
+        ...query, type: 'artist'
+      })}`, config);
+      const artists = artistData.artists.items.map(item => item.uri);
+      this.setState({ artists });
 
-      // Perform Artist Search
-      // Perform Playlist Search
+      // Search Playlists
+      const { data: playlistData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({
+        ...query, type: 'playlist'
+      })}`, config);
+      const playlists = playlistData.playlists.items.map(item => item.uri);
+      this.setState({ playlists });
     });
   }
-
 
   render() {
     return (
@@ -56,21 +73,19 @@ class SearchContentScreen extends Component {
           <Button
             type="clear"
             onPress={() => this.props.navigation.navigate('CreateRoom')}
-            icon={(
-              <Icon
-                type="material"
-                name="close"
-              />
-            )}
+            icon={(<Icon type="material" name="close" />)}
           />
         </View>
         <View style={styles.list}>
           <SectionList
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={styles.sectionHeader}>{title}</Text>
+            )}
             sections={[
               {
                 id: 0,
                 title: 'Songs',
-                data: this.state.uris,
+                data: this.state.songs,
                 renderItem: ({ item }) => (
                   <Song
                     uri={item}
@@ -79,9 +94,29 @@ class SearchContentScreen extends Component {
                     playLater={() => this.props.appendSongToQueue(item)}
                   />
                 )
+              }, {
+                id: 1,
+                title: 'Artists',
+                data: this.state.artists,
+                renderItem: ({ item }) => (
+                  <SearchResult
+                    uri={item}
+                    key={item}
+                  />
+                )
+              }, {
+                id: 2,
+                title: 'Playlists',
+                data: this.state.playlists,
+                renderItem: ({ item }) => (
+                  <SearchResult
+                    uri={item}
+                    key={item}
+                  />
+                )
               }
             ]}
-            keyExtractor={item => item.uri}
+            keyExtractor={item => item}
           />
         </View>
       </View>
@@ -110,6 +145,11 @@ const styles = {
   list: {
     flex: 1,
     flexDirection: 'row'
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    backgroundColor: '#555'
   }
 };
 

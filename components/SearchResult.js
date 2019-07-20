@@ -1,44 +1,36 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Image, TouchableOpacity, ActivityIndicator, Dimensions
+  Text, View, Image, TouchableOpacity
 } from 'react-native';
+import { Icon } from 'react-native-elements';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
 
-const { width: imageSize } = Dimensions.get('window');
-
-class AlbumThumbnail extends Component {
+class SearchResult extends Component {
   state = {
-    name: '',
-    loading: true,
+    imageExists: false,
     image: '../assets/default_album.png'
   };
 
   componentDidMount = async () => {
     const infoArr = this.props.uri.split(':');
     const id = infoArr[2];
+    const type = `${infoArr[1]}s`;
     const accessToken = await AsyncStorage.getItem('accessToken');
-
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-    const { data } = await axios.get(`https://api.spotify.com/v1/albums/${id}`, config);
-
-    let { name } = data;
-    name = name.length > 20 ? `${name.slice(0, 20)}...` : name;
+    const { data } = await axios.get(`https://api.spotify.com/v1/${type}/${id}`, config);
+    const contentType = type.charAt(0).toUpperCase()
+      + type.slice(1, type.length - 1);
 
     if (data.images
       && data.images[0]
       && data.images[0].url) {
       this.setState({ imageExists: true, image: data.images[0].url });
     }
-
-    this.setState({ name, loading: false });
+    this.setState({ contentType, name: data.name });
   }
 
   render() {
-    if (this.state.loading) {
-      return (<ActivityIndicator size="large" color="#fff" />);
-    }
-
     return (
       <TouchableOpacity onPress={this.props.onPress}>
         <View style={styles.container}>
@@ -47,7 +39,15 @@ class AlbumThumbnail extends Component {
               ? (<Image source={{ uri: this.state.image }} style={styles.image} />)
               : (<Image source={require('../assets/default_album.png')} style={styles.image} />)
           }
-          <Text style={styles.name}>{this.state.name}</Text>
+          <View style={styles.infoContainer}>
+            <Text style={styles.name}>{this.state.name}</Text>
+            <Text style={styles.type}>{this.state.contentType}</Text>
+          </View>
+          <Icon
+            type="material"
+            name="keyboard-arrow-right"
+            size={30}
+          />
         </View>
       </TouchableOpacity>
     );
@@ -56,19 +56,32 @@ class AlbumThumbnail extends Component {
 
 const styles = {
   container: {
-    flexDirection: 'column',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    margin: 20
-  },
-  name: {
-    fontSize: 12,
-    fontWeight: 'bold'
+    margin: 5
   },
   image: {
-    width: imageSize / 3,
-    height: imageSize / 3
-  }
+    height: 50,
+    width: 50,
+  },
+  infoContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    position: 'absolute',
+    left: 50,
+    marginLeft: 15,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  artists: {
+    fontSize: 14
+  },
+  moreButton: {
+    alignSelf: 'flex-end'
+  },
 };
 
-export default AlbumThumbnail;
+export default SearchResult;
