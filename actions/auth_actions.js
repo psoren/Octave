@@ -13,6 +13,7 @@ export const storeTokens = sessionInfo => async (dispatch) => {
     payload: {
       accessToken,
       refreshToken,
+      expireTime
     },
   });
 };

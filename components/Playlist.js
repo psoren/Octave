@@ -3,7 +3,7 @@ import {
   Text, View, Image, FlatList
 } from 'react-native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-community/async-storage';
+import { connect } from 'react-redux';
 
 import Song from './Song';
 
@@ -16,7 +16,7 @@ class Playlist extends Component {
   componentDidMount = async () => {
     const infoArr = this.props.uri.split(':');
     const id = infoArr[2];
-    const accessToken = await AsyncStorage.getItem('accessToken');
+    const { accessToken } = this.props;
 
     // Get playlist
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
@@ -89,4 +89,6 @@ const styles = {
   }
 };
 
-export default Playlist;
+const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+
+export default connect(mapStateToProps, null)(Playlist);

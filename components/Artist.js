@@ -3,11 +3,11 @@ import {
   Text, View, Image, ScrollView
 } from 'react-native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-community/async-storage';
 import qs from 'qs';
+import { connect } from 'react-redux';
 
 import Song from './Song';
-import AlbumThumbnail from './AlbumThumbnail';
+import Thumbnail from './Thumbnail';
 
 class Artist extends Component {
     state = { songUris: [], albumUris: [] };
@@ -15,13 +15,11 @@ class Artist extends Component {
     componentDidMount = async () => {
       const infoArr = this.props.uri.split(':');
       const id = infoArr[2];
-      const accessToken = await AsyncStorage.getItem('accessToken');
+      const { accessToken } = this.props;
 
       // Get artist info
       const config = { headers: { Authorization: `Bearer ${accessToken}` } };
       const { data: artistData } = await axios.get(`https://api.spotify.com/v1/artists/${id}`, config);
-
-
       this.setState({ name: artistData.name, artistImage: artistData.images[1].url });
 
       // Get top tracks
@@ -67,7 +65,7 @@ class Artist extends Component {
             </View>
             <View style={styles.albumsContainer}>
               {this.state.albumUris.map(uri => (
-                <AlbumThumbnail
+                <Thumbnail
                   uri={uri}
                   key={uri}
                   onPress={() => this.selectAlbum(uri)}
@@ -119,4 +117,6 @@ const styles = {
   }
 };
 
-export default Artist;
+const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+
+export default connect(mapStateToProps, null)(Artist);

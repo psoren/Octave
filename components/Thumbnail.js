@@ -3,7 +3,7 @@ import {
   Text, View, Image, TouchableOpacity, ActivityIndicator, Dimensions
 } from 'react-native';
 import axios from 'axios';
-import AsyncStorage from '@react-native-community/async-storage';
+import { connect } from 'react-redux';
 
 const { width: imageSize } = Dimensions.get('window');
 
@@ -18,7 +18,7 @@ class Thumbnail extends Component {
     const infoArr = this.props.uri.split(':');
     const type = `${infoArr[1]}s`;
     const id = infoArr[2];
-    const accessToken = await AsyncStorage.getItem('accessToken');
+    const { accessToken } = this.props;
 
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
     const { data } = await axios.get(`https://api.spotify.com/v1/${type}/${id}`, config);
@@ -72,4 +72,6 @@ const styles = {
   }
 };
 
-export default Thumbnail;
+const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+
+export default connect(mapStateToProps, null)(Thumbnail);

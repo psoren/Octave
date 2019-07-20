@@ -4,8 +4,8 @@ import {
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import axios from 'axios';
-import AsyncStorage from '@react-native-community/async-storage';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 
 class Song extends Component {
   state = {
@@ -17,7 +17,7 @@ class Song extends Component {
     const infoArr = this.props.uri.split(':');
     const id = infoArr[2];
     this.setState({ id });
-    const accessToken = await AsyncStorage.getItem('accessToken');
+    const { accessToken } = this.props;
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
     const { data } = await axios.get(`https://api.spotify.com/v1/tracks/${id}`, config);
     let albumArt = '../assets/default_album.png';
@@ -179,4 +179,6 @@ const styles = {
   }
 };
 
-export default Song;
+const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+
+export default connect(mapStateToProps, null)(Song);
