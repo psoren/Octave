@@ -45,7 +45,7 @@ class CreateRoomScreen extends Component {
         <View style={styles.songList}>
           <FlatList
             data={this.props.songs}
-            renderItem={({ item }) => <Song uri={item} />}
+            renderItem={({ item }) => <Song uri={item} playNow={() => {}} playLater={() => {}} />}
             keyExtractor={this.keyExtractor}
           />
         </View>
@@ -87,10 +87,10 @@ const styles = {
   }
 };
 
-function mapStateToProps(state) {
+function mapStateToProps({ newRoom }) {
   return {
-    roomName: state.newRoom.roomName,
-    songs: state.newRoom.songs
+    roomName: newRoom.roomName,
+    songs: newRoom.songs
   };
 }
 
