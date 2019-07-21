@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Image, TouchableOpacity, ActivityIndicator, Dimensions
+  Text, View, Image, TouchableOpacity, Dimensions
 } from 'react-native';
 import axios from 'axios';
 import { connect } from 'react-redux';
@@ -8,11 +8,7 @@ import { connect } from 'react-redux';
 const { width: imageSize } = Dimensions.get('window');
 
 class Thumbnail extends Component {
-  state = {
-    name: '',
-    loading: true,
-    image: '../assets/default_album.png'
-  };
+  state = { name: '', loading: true, };
 
   componentDidMount = async () => {
     const infoArr = this.props.uri.split(':');
@@ -31,22 +27,17 @@ class Thumbnail extends Component {
       && data.images[0].url) {
       this.setState({ imageExists: true, image: data.images[0].url });
     }
-
     this.setState({ name, loading: false });
   }
 
   render() {
-    if (this.state.loading) {
-      return (<ActivityIndicator size="large" color="#fff" />);
-    }
-
     return (
       <TouchableOpacity onPress={this.props.onPress}>
         <View style={styles.container}>
           {
-            this.state.imageExists
-              ? (<Image source={{ uri: this.state.image }} style={styles.image} />)
-              : (<Image source={require('../assets/default_album.png')} style={styles.image} />)
+            (!this.state.imageExists || this.state.loading)
+              ? (<Image source={require('../assets/default_album.png')} style={styles.image} />)
+              : (<Image source={{ uri: this.state.image }} style={styles.image} />)
           }
           <Text style={styles.name}>{this.state.name}</Text>
         </View>
