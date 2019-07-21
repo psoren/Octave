@@ -3,53 +3,32 @@ import {
   Text, View, Image, Modal
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
-import axios from 'axios';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
 class Song extends Component {
   state = {
-    albumArtExists: false,
+    imageExists: false,
     modalVisible: false
   };
 
   componentDidMount = async () => {
-    const infoArr = this.props.uri.split(':');
-    const id = infoArr[2];
-    this.setState({ id });
-    const { accessToken } = this.props;
-    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-    const { data } = await axios.get(`https://api.spotify.com/v1/tracks/${id}`, config);
-    let albumArt = '../assets/default_album.png';
-    if (data.album
-      && data.album.images
-      && data.album.images[2]
-      && data.album.images[2].url) {
-      this.setState({ albumArtExists: true });
-      albumArt = data.album.images[2].url;
-    }
-    let artists = '';
-    data.artists.forEach((_, index) => {
-      artists += data.artists[index].name;
-      if (index !== data.artists.length - 1) {
-        artists += ', ';
-      }
+    const {
+      id, name, artists, imageExists, albumArt
+    } = this.props;
+    this.setState({
+      id, name, artists, imageExists, albumArt
     });
-
-    let { name } = data;
-    name = name.length > 20 ? `${name.slice(0, 20)}...` : name;
-    artists = artists.length > 20 ? `${artists.slice(0, 20)}...` : artists;
-    this.setState({ name, albumArt, artists });
   }
 
   handlePlayNow = async () => {
     this.setState({ modalVisible: false });
-    this.props.playNow(this.state.id);
+    console.log(`play ${this.state.id}now...`);
   }
 
   handlePlayLater = async () => {
     this.setState({ modalVisible: false });
-    this.props.playLater(this.state.id);
+    console.log(`play ${this.state.id}later...`);
   }
 
   toggleModal = () => {
@@ -58,15 +37,12 @@ class Song extends Component {
     }
   }
 
-  hideModal = () => {
-    console.log('hide modal');
-    this.setState({ modalVisible: false });
-  }
+  hideModal = () => this.setState({ modalVisible: false });
 
   render() {
     return (
       <View style={styles.container}>
-        {this.state.albumArtExists
+        {this.state.imageExists
           ? (
             <Image
               source={{ uri: this.state.albumArt }}
@@ -131,8 +107,11 @@ class Song extends Component {
 }
 
 Song.propTypes = {
-  playNow: PropTypes.func.isRequired,
-  playLater: PropTypes.func.isRequired
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  artists: PropTypes.string.isRequired,
+  imageExists: PropTypes.bool.isRequired,
+  albumArt: PropTypes.string.isRequired,
 };
 
 const styles = {
