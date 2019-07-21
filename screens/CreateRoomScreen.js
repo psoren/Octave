@@ -23,13 +23,9 @@ class CreateRoomScreen extends Component {
 
   keyExtractor = item => item;
 
-  addSongs = () => {
-    this.props.navigation.navigate('SearchContent');
-  }
+  addSongs = () => this.props.navigation.navigate('AddSongs');
 
-  createRoom = () => {
-    console.log('create room');
-  }
+  createRoom = () => console.log('create room');
 
   render() {
     return (
@@ -45,7 +41,7 @@ class CreateRoomScreen extends Component {
         <View style={styles.songList}>
           <FlatList
             data={this.props.songs}
-            renderItem={({ item }) => <Song uri={item} playNow={() => {}} playLater={() => {}} />}
+            renderItem={({ item }) => <Song uri={item} playNow={() => { }} playLater={() => { }} />}
             keyExtractor={this.keyExtractor}
           />
         </View>

@@ -5,36 +5,45 @@ import {
 import axios from 'axios';
 import { connect } from 'react-redux';
 
-import Song from './Song';
+import Song from '../components/Song';
 
-class Playlist extends Component {
-  state = {
-    albumArtExists: false,
-    uris: []
-  };
+class SongsCollectionScreen extends Component {
+  state = { imageExists: false, uris: [] };
 
   componentDidMount = async () => {
-    const infoArr = this.props.uri.split(':');
+    let infoArr;
+    if (this.props.uri) {
+      infoArr = this.props.uri.split(':');
+    } else {
+      infoArr = this.props.navigation.getParam('uri').split(':');
+    }
+
     const id = infoArr[2];
+    const type = `${infoArr[1]}s`;
     const { accessToken } = this.props;
 
     // Get playlist
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-    const { data } = await axios.get(`https://api.spotify.com/v1/playlists/${id}`, config);
+    const { data: playlistData } = await axios.get(`https://api.spotify.com/v1/${type}/${id}`, config);
 
-    if (data.images
-      && data.images[0]
-      && data.images[0].url) {
+    if (playlistData.images
+      && playlistData.images[0]
+      && playlistData.images[0].url) {
       this.setState({
-        albumArtExists: true,
-        albumArt: data.images[0].url
+        imageExists: true,
+        albumArt: playlistData.images[0].url
       });
     }
-    this.setState({ name: data.name });
+    this.setState({ name: playlistData.name });
 
-    // //Get playlist songs
-    const result = await axios.get(`https://api.spotify.com/v1/playlists/${id}/tracks`, config);
-    const uris = result.data.items.map(songObj => songObj.track.uri);
+    // Get songs
+    const { data: songsData } = await axios.get(`https://api.spotify.com/v1/${type}/${id}/tracks`, config);
+    let uris = [];
+    if (type === 'playlists') {
+      uris = songsData.items.map(songObj => songObj.track.uri);
+    } else {
+      uris = songsData.items.map(songObj => songObj.uri);
+    }
     this.setState({ uris });
   }
 
@@ -44,7 +53,7 @@ class Playlist extends Component {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>{this.state.name}</Text>
-        {this.state.albumArtExists
+        {this.state.imageExists
           ? (
             <Image
               source={{ uri: this.state.albumArt }}
@@ -74,8 +83,7 @@ const styles = {
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'stretch',
-    backgroundColor: '#fff',
-    marginTop: 50
+    backgroundColor: '#fff'
   },
   albumArt: {
     height: 200,
@@ -91,4 +99,4 @@ const styles = {
 
 const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
 
-export default connect(mapStateToProps, null)(Playlist);
+export default connect(mapStateToProps, null)(SongsCollectionScreen);

@@ -6,14 +6,20 @@ import axios from 'axios';
 import qs from 'qs';
 import { connect } from 'react-redux';
 
-import Song from './Song';
-import Thumbnail from './Thumbnail';
+import Song from '../components/Song';
+import Thumbnail from '../components/Thumbnail';
 
-class Artist extends Component {
+class ArtistScreen extends Component {
     state = { songUris: [], albumUris: [] };
 
     componentDidMount = async () => {
-      const infoArr = this.props.uri.split(':');
+      let infoArr;
+      if (this.props.uri) {
+        infoArr = this.props.uri.split(':');
+      } else {
+        infoArr = this.props.navigation.getParam('uri').split(':');
+      }
+
       const id = infoArr[2];
       const { accessToken } = this.props;
 
@@ -119,4 +125,4 @@ const styles = {
 
 const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
 
-export default connect(mapStateToProps, null)(Artist);
+export default connect(mapStateToProps, null)(ArtistScreen);

@@ -2,11 +2,12 @@ import React from 'react';
 import {
   Text, View, Image, TouchableOpacity, Dimensions
 } from 'react-native';
+import { withNavigation } from 'react-navigation';
 
 const { width: imageSize } = Dimensions.get('window');
 
 const LibrarySongsThumbnail = props => (
-  <TouchableOpacity onPress={props.onPress}>
+  <TouchableOpacity onPress={() => props.navigation.navigate('CreateRoomLibrarySongs')}>
     <View style={styles.container}>
       <Image source={require('../assets/spotify_icon.png')} style={styles.image} />
       <Text style={styles.name}>Your Songs</Text>
@@ -31,4 +32,4 @@ const styles = {
   }
 };
 
-export default LibrarySongsThumbnail;
+export default withNavigation(LibrarySongsThumbnail);

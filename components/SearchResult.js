@@ -5,6 +5,7 @@ import {
 import { Icon } from 'react-native-elements';
 import axios from 'axios';
 import AsyncStorage from '@react-native-community/async-storage';
+import { withNavigation } from 'react-navigation';
 
 class SearchResult extends Component {
   state = {
@@ -22,6 +23,8 @@ class SearchResult extends Component {
     const contentType = type.charAt(0).toUpperCase()
       + type.slice(1, type.length - 1);
 
+    console.log(contentType);
+
     if (data.images
       && data.images[0]
       && data.images[0].url) {
@@ -30,9 +33,22 @@ class SearchResult extends Component {
     this.setState({ contentType, name: data.name });
   }
 
+  navigate = () => {
+    switch (this.state.contentType) {
+      case 'Artist':
+        this.props.navigation.navigate('CreateRoomSearchArtist', { uri: this.props.uri });
+        return;
+      case 'Playlist':
+        this.props.navigation.navigate('CreateRoomSearchPlaylist', { uri: this.props.uri });
+        return;
+      default:
+        console.log('bad param');
+    }
+  }
+
   render() {
     return (
-      <TouchableOpacity onPress={this.props.onPress}>
+      <TouchableOpacity onPress={this.navigate}>
         <View style={styles.container}>
           {
             this.state.imageExists
@@ -84,4 +100,4 @@ const styles = {
   },
 };
 
-export default SearchResult;
+export default withNavigation(SearchResult);

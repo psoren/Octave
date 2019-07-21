@@ -3,16 +3,15 @@ import {
   Text, View, TextInput, SectionList
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
-import AsyncStorage from '@react-native-community/async-storage';
 import axios from 'axios';
 import qs from 'qs';
 import { connect } from 'react-redux';
 import * as actions from '../actions';
 
-import Song from '../components/Song';
-import SearchResult from '../components/SearchResult';
+import Song from './Song';
+import SearchResult from './SearchResult';
 
-class SearchContentScreen extends Component {
+class SearchContent extends Component {
   state = {
     search: '',
     songs: [],
@@ -21,7 +20,7 @@ class SearchContentScreen extends Component {
   };
 
   componentDidMount = async () => {
-    const accessToken = await AsyncStorage.getItem('accessToken');
+    const { accessToken } = this.props;
     this.setState({ accessToken });
   }
 
@@ -126,7 +125,6 @@ class SearchContentScreen extends Component {
 
 const styles = {
   container: {
-    marginTop: 50,
     flex: 1,
     backgroundColor: '#fff',
     justifyContent: 'center',
@@ -153,4 +151,6 @@ const styles = {
   }
 };
 
-export default connect(null, actions)(SearchContentScreen);
+const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+
+export default connect(mapStateToProps, actions)(SearchContent);

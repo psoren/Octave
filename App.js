@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import {
   createBottomTabNavigator,
   createAppContainer,
+  createStackNavigator,
 } from 'react-navigation';
 
 import store from './store';
@@ -11,22 +12,28 @@ import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import RoomSearchScreen from './screens/RoomSearchScreen';
 import SettingsScreen from './screens/SettingsScreen';
-import SearchContentScreen from './screens/SearchContentScreen';
+import AddSongsScreen from './screens/AddSongsScreen';
 
-// Testing
-import TestingScreen from './screens/TestingScreen';
-
+import ArtistScreen from './screens/ArtistScreen';
+import LibrarySongsScreen from './screens/LibrarySongsScreen';
+import SongsCollectionScreen from './screens/SongsCollectionScreen';
 
 const Navigator = createBottomTabNavigator({
   Login: LoginScreen,
-  SearchContent: SearchContentScreen,
   Main: createBottomTabNavigator({
     Home: HomeScreen,
     RoomSearch: RoomSearchScreen,
-    CreateRoom: CreateRoomScreen,
-    Settings: SettingsScreen,
-    Testing: TestingScreen
-  }),
+    CreateRoomMain: createStackNavigator({
+      CreateRoom: CreateRoomScreen,
+      AddSongs: AddSongsScreen,
+      CreateRoomSearchArtist: ArtistScreen,
+      CreateRoomSearchAlbum: SongsCollectionScreen,
+      CreateRoomSearchPlaylist: SongsCollectionScreen,
+      CreateRoomLibraryPlaylist: SongsCollectionScreen,
+      CreateRoomLibrarySongs: LibrarySongsScreen
+    }),
+    Settings: SettingsScreen
+  })
 },
 { defaultNavigationOptions: { tabBarVisible: false } });
 

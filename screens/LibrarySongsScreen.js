@@ -58,8 +58,6 @@ class LibrarySongsScreen extends Component {
             />
           )}
         />
-
-
       </View>
     );
   }

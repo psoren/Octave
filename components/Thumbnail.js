@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import { connect } from 'react-redux';
+import { withNavigation } from 'react-navigation';
 
 const { width: imageSize } = Dimensions.get('window');
 
@@ -27,12 +28,26 @@ class Thumbnail extends Component {
       && data.images[0].url) {
       this.setState({ imageExists: true, image: data.images[0].url });
     }
-    this.setState({ name, loading: false });
+    this.setState({ name, loading: false, type });
+  }
+
+  navigate = () => {
+    switch (this.state.type) {
+      case 'albums':
+        this.props.navigation.navigate('CreateRoomSearchAlbum',
+          { uri: this.props.uri });
+        break;
+      case 'playlists':
+        this.props.navigation.navigate('CreateRoomSearchAlbum',
+          { uri: this.props.uri });
+        break;
+      default:
+    }
   }
 
   render() {
     return (
-      <TouchableOpacity onPress={this.props.onPress}>
+      <TouchableOpacity onPress={this.navigate}>
         <View style={styles.container}>
           {
             (!this.state.imageExists || this.state.loading)
@@ -65,4 +80,4 @@ const styles = {
 
 const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
 
-export default connect(mapStateToProps, null)(Thumbnail);
+export default connect(mapStateToProps, null)(withNavigation(Thumbnail));
