@@ -15,9 +15,12 @@ export default (song) => {
   let { artists, name } = track;
   const artistsTitle = artists.reduce((acc, artist) => `${acc}, ${artist.name}`, '').slice(2);
   const { id } = track;
+
+  const key = id + song.added_at;
+
   name = name.length > 20 ? `${name.slice(0, 20)}...` : name;
   artists = artists.length > 20 ? `${artists.slice(0, 20)}...` : artists;
   return {
-    id, name, artists: artistsTitle, imageExists, albumArt
+    id, name, artists: artistsTitle, imageExists, albumArt, key
   };
 };

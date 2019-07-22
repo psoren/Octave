@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { View, FlatList } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { Text, View, FlatList } from 'react-native';
 import axios from 'axios';
 import qs from 'qs';
 import { connect } from 'react-redux';
@@ -23,7 +22,27 @@ class LibrarySongsScreen extends Component {
 
   onEndReached = async () => {
     const { data } = await axios.get(this.state.next, this.state.config);
-    const newSongs = data.items.map(item => getSongData(item));
+    const newSongs = data.items.map(({ track }) => {
+      let imageExists = false;
+      let albumArt = '../assets/default_album.png';
+
+      if (track.album
+          && track.album.images
+          && track.album.images[2]
+          && track.album.images[2].url) {
+        imageExists = true;
+        albumArt = track.album.images[2].url;
+      }
+
+      let { artists, name } = track;
+      const artistsTitle = artists.reduce((acc, artist) => `${acc}, ${artist.name}`, '').slice(2);
+      const { id } = track;
+      name = name.length > 20 ? `${name.slice(0, 20)}...` : name;
+      artists = artists.length > 20 ? `${artists.slice(0, 20)}...` : artists;
+      return {
+        id, name, artists: artistsTitle, imageExists, albumArt
+      };
+    });
     const currentSongs = this.state.songs;
     this.setState({ songs: [...currentSongs, ...newSongs], next: data.next });
   }
@@ -31,19 +50,7 @@ class LibrarySongsScreen extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Button
-          onPress={() => console.log('close current songs')}
-          style={styles.button}
-          type="clear"
-          icon={(
-            <Icon
-              type="material"
-              name="close"
-              size={30}
-              color="#555"
-            />
-          )}
-        />
+        <Text style={styles.title}>Your Songs</Text>
         <FlatList
           data={this.state.songs}
           keyExtractor={item => item.id}
@@ -70,9 +77,11 @@ const styles = {
     flex: 1,
     backgroundColor: '#fff'
   },
-  button: {
-    marginTop: 25,
-    alignSelf: 'flex-start'
+  title: {
+    alignSelf: 'center',
+    fontSize: 24,
+    fontWeight: 'bold',
+    margin: 15
   }
 };
 

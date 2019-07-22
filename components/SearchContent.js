@@ -52,6 +52,13 @@ class SearchContent extends Component {
     });
   }
 
+  clearSearch = () => this.setState({
+    search: '',
+    songs: [],
+    artists: [],
+    playlists: []
+  });
+
   render() {
     return (
       <View style={styles.container}>
@@ -70,7 +77,7 @@ class SearchContent extends Component {
           />
           <Button
             type="clear"
-            onPress={() => this.props.navigation.navigate('CreateRoom')}
+            onPress={() => this.clearSearch()}
             icon={(<Icon type="material" name="close" />)}
           />
         </View>

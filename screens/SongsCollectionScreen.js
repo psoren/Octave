@@ -33,12 +33,16 @@ class SongsCollectionScreen extends Component {
         imageSource: data.images[0].url
       });
     }
-
-    const { next } = data.tracks;
-    this.setState({ name: data.name, next });
+    this.setState({ name: data.name });
 
     // Get songs
     const { data: songsData } = await axios.get(`https://api.spotify.com/v1/${type}s/${id}/tracks`, config);
+    // If there are no more songs to get
+    if (!Object.prototype.hasOwnProperty.call(songsData, 'next')) {
+      this.setState({ next: null });
+    } else {
+      this.setState({ next: songsData.next });
+    }
     if (type === 'album') {
       const songs = songsData.items.map(song => getAlbumSongData(song, imageExists, imageSource));
       this.setState({ songs });
@@ -49,13 +53,29 @@ class SongsCollectionScreen extends Component {
   }
 
   onEndReached = async () => {
-    const { data } = await axios.get(this.state.next, this.state.config);
-    if (this.state.type === 'playlist') {
-      const newSongs = data.items.map(item => getPlaylistSongData(item));
-      const currentSongs = this.state.songs;
-      this.setState({ songs: [...currentSongs, ...newSongs], next: data.next });
+    if (this.state.next) {
+      const { data } = await axios.get(this.state.next, this.state.config);
+      if (this.state.type === 'playlist') {
+        const newSongs = data.items.map(item => getPlaylistSongData(item));
+        const currentSongs = this.state.songs;
+        this.setState({ songs: [...currentSongs, ...newSongs] });
+        // If there are no more songs to get
+        if (!Object.prototype.hasOwnProperty.call(data, 'next')) {
+          this.setState({ next: null });
+        } else {
+          const { next } = data;
+          this.setState({ next });
+        }
+      }
     }
   }
+
+  keyExtractor = ((item) => {
+    if (this.state.type === 'playlist') {
+      return item.key;
+    }
+    return item.id;
+  })
 
   render() {
     return (
@@ -69,7 +89,7 @@ class SongsCollectionScreen extends Component {
         />
         <FlatList
           data={this.state.songs}
-          keyExtractor={item => item.id}
+          keyExtractor={this.keyExtractor}
           onEndReachedThreshold={0.5}
           onEndReached={this.onEndReached}
           renderItem={({ item }) => (
