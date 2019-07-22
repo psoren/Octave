@@ -78,12 +78,7 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
-  },
-  greeting: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
+  }
 };
 
 export default connect(null, actions)(LoginScreen);
