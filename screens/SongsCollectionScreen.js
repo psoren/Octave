@@ -32,7 +32,9 @@ class SongsCollectionScreen extends Component {
         imageSource: data.images[0].url
       });
     }
-    this.setState({ name: data.name });
+
+    const { next } = data.tracks;
+    this.setState({ name: data.name, next });
 
     // Get songs
     const { data: songsData } = await axios.get(`https://api.spotify.com/v1/${type}s/${id}/tracks`, config);
@@ -41,9 +43,18 @@ class SongsCollectionScreen extends Component {
       this.setState({ songs });
     } else if (type === 'playlist') {
       const songs = songsData.items.map(song => getSongData(song));
-      this.setState({ songs });
+      this.setState({ songs, config });
     }
   }
+
+
+  onEndReached = async () => {
+    const { data } = await axios.get(this.state.next, this.state.config);
+    const newSongs = data.items.map(item => getSongData(item));
+    const currentSongs = this.state.songs;
+    this.setState({ songs: [...currentSongs, ...newSongs], next: data.next });
+  }
+
 
   render() {
     return (
@@ -58,6 +69,8 @@ class SongsCollectionScreen extends Component {
         <FlatList
           data={this.state.songs}
           keyExtractor={item => item.id}
+          onEndReachedThreshold={0.5}
+          onEndReached={this.onEndReached}
           renderItem={({ item }) => (
             <Song
               id={item.id}
