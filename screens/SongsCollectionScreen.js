@@ -6,71 +6,67 @@ import axios from 'axios';
 import { connect } from 'react-redux';
 
 import Song from '../components/Song';
+import getSongData from '../functions/getSongData';
+import getAlbumSongData from '../functions/getAlbumSongData';
 
 class SongsCollectionScreen extends Component {
-  state = { imageExists: false, uris: [] };
+  state = { imageExists: false, songs: [] };
 
   componentDidMount = async () => {
-    let infoArr;
-    if (this.props.uri) {
-      infoArr = this.props.uri.split(':');
-    } else {
-      infoArr = this.props.navigation.getParam('uri').split(':');
-    }
+    const { accessToken, navigation } = this.props;
+    const id = navigation.getParam('id');
+    const type = navigation.getParam('type');
 
-    const id = infoArr[2];
-    const type = `${infoArr[1]}s`;
-    const { accessToken } = this.props;
-
-    // Get playlist
+    // Get info
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-    const { data: playlistData } = await axios.get(`https://api.spotify.com/v1/${type}/${id}`, config);
+    const { data } = await axios.get(`https://api.spotify.com/v1/${type}s/${id}`, config);
 
-    if (playlistData.images
-      && playlistData.images[0]
-      && playlistData.images[0].url) {
+    let imageExists = false;
+    let imageSource = '';
+
+    if (data.images && data.images[0] && data.images[0].url) {
+      imageExists = true;
+      imageSource = data.images[0].url;
       this.setState({
         imageExists: true,
-        albumArt: playlistData.images[0].url
+        imageSource: data.images[0].url
       });
     }
-    this.setState({ name: playlistData.name });
+    this.setState({ name: data.name });
 
     // Get songs
-    const { data: songsData } = await axios.get(`https://api.spotify.com/v1/${type}/${id}/tracks`, config);
-    let uris = [];
-    if (type === 'playlists') {
-      uris = songsData.items.map(songObj => songObj.track.uri);
+    const { data: songsData } = await axios.get(`https://api.spotify.com/v1/${type}s/${id}/tracks`, config);
+    let songs = [];
+    if (type === 'album') {
+      songs = songsData.items.map(song => getAlbumSongData(song, imageExists, imageSource));
     } else {
-      uris = songsData.items.map(songObj => songObj.uri);
+      songs = songsData.items.map(song => getSongData(song));
     }
-    this.setState({ uris });
+    this.setState({ songs });
   }
-
-  keyExtractor = item => item;
 
   render() {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>{this.state.name}</Text>
-        {this.state.imageExists
-          ? (
-            <Image
-              source={{ uri: this.state.albumArt }}
-              style={styles.albumArt}
-            />
-          )
-          : (
-            <Image
-              source={require('../assets/default_album.png')}
-              style={styles.albumArt}
-            />
-          )
-        }
+        <Image
+          source={this.state.imageExists
+            ? { uri: this.state.imageSource }
+            : require('../assets/default_album.png')}
+          style={styles.albumArt}
+        />
         <FlatList
-          data={this.state.uris}
-          renderItem={({ item }) => <Song uri={item} />}
-          keyExtractor={this.keyExtractor}
+          data={this.state.songs}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <Song
+              id={item.id}
+              name={item.name}
+              artists={item.artists}
+              imageExists={item.imageExists}
+              albumArt={item.albumArt}
+            />
+          )}
         />
       </View>
     );

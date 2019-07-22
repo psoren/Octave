@@ -8,80 +8,90 @@ import { connect } from 'react-redux';
 
 import Song from '../components/Song';
 import Thumbnail from '../components/Thumbnail';
+import getSongData from '../functions/getSongData';
 
 class ArtistScreen extends Component {
-    state = { songUris: [], albumUris: [] };
+  state = { songs: [], albums: [] };
 
-    componentDidMount = async () => {
-      let infoArr;
-      if (this.props.uri) {
-        infoArr = this.props.uri.split(':');
-      } else {
-        infoArr = this.props.navigation.getParam('uri').split(':');
+  componentDidMount = async () => {
+    const { accessToken, navigation } = this.props;
+    const id = navigation.getParam('id');
+
+    // Get artist info
+    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
+    const { data: artistData } = await axios.get(`https://api.spotify.com/v1/artists/${id}`, config);
+    this.setState({ name: artistData.name, artistImage: artistData.images[1].url });
+
+    // Get top tracks
+    const { data: songsData } = await axios.get(`https://api.spotify.com/v1/artists/${id}/top-tracks?`,
+      { ...config, params: { country: 'US' } });
+    const songs = songsData.tracks.map(item => getSongData(item));
+    this.setState({ songs });
+
+    // Get albums
+    const { data: albumData } = await axios.get(`https://api.spotify.com/v1/artists/${id}/albums?`,
+      {
+        ...config,
+        params: qs.stringify({
+          limit: 25,
+          country: 'US',
+          include_groups: 'album'
+        })
+      });
+    const albums = albumData.items.map((item) => {
+      const { name, id: albumId, type } = item;
+      let imageSource = '../assets/default_album.png';
+      let imageExists = false;
+      if (item.images && item.images[0] && item.images[0].url) {
+        imageExists = true;
+        imageSource = item.images[0].url;
       }
+      return {
+        name, albumId, imageExists, imageSource, type
+      };
+    });
+    this.setState({ albums });
+  }
 
-      const id = infoArr[2];
-      const { accessToken } = this.props;
+  selectAlbum = uri => console.log(`go to album with uri${uri}`);
 
-      // Get artist info
-      const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-      const { data: artistData } = await axios.get(`https://api.spotify.com/v1/artists/${id}`, config);
-      this.setState({ name: artistData.name, artistImage: artistData.images[1].url });
-
-      // Get top tracks
-      const { data: songsData } = await axios.get(`https://api.spotify.com/v1/artists/${id}/top-tracks?`,
-        { ...config, params: { country: 'US' } });
-      const songUris = songsData.tracks.map(item => item.uri);
-      this.setState({ songUris });
-
-      // Get albums
-      const { data: albumData } = await axios.get(`https://api.spotify.com/v1/artists/${id}/albums?`,
-        {
-          ...config,
-          params: qs.stringify({
-            limit: 25,
-            country: 'US',
-            include_groups: 'album'
-          })
-        });
-      const albumUris = albumData.items.map(item => item.uri);
-      this.setState({ albumUris });
-    }
-
-    selectAlbum = uri => console.log(`go to album with uri${uri}`);
-
-    render() {
-      return (
-        <View style={styles.container}>
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <Text style={styles.name}>{this.state.name}</Text>
-            <Image
-              source={{ uri: this.state.artistImage }}
-              style={styles.image}
-            />
-            <View style={styles.songsContainer}>
-              {this.state.songUris.map(uri => (
-                <Song
-                  uri={uri}
-                  key={uri}
-                  playNow={() => {}}
-                  playLater={() => {}}
-                />
-              ))}
-            </View>
-            <View style={styles.albumsContainer}>
-              {this.state.albumUris.map(uri => (
-                <Thumbnail
-                  uri={uri}
-                  key={uri}
-                  onPress={() => this.selectAlbum(uri)}
-                />
-              ))}
-            </View>
-          </ScrollView>
-        </View>
-      );
-    }
+  render() {
+    return (
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <Text style={styles.name}>{this.state.name}</Text>
+          <Image
+            source={{ uri: this.state.artistImage }}
+            style={styles.image}
+          />
+          <View>
+            {this.state.songs.map(item => (
+              <Song
+                id={item.id}
+                name={item.name}
+                artists={item.artists}
+                imageExists={item.imageExists}
+                albumArt={item.albumArt}
+                key={item.id}
+              />
+            ))}
+          </View>
+          <View style={styles.albumsContainer}>
+            {this.state.albums.map(item => (
+              <Thumbnail
+                key={item.albumId}
+                id={item.albumId}
+                name={item.name}
+                imageExists={item.imageExists}
+                imageSource={item.imageSource}
+                type={item.type}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 }
 
 const styles = {
@@ -111,9 +121,6 @@ const styles = {
     flexDirection: 'row',
     backgroundColor: 'orange',
     height: 200
-  },
-  songsContainer: {
-
   },
   albumsContainer: {
     flex: 1,

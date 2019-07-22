@@ -7,28 +7,16 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
 class Song extends Component {
-  state = {
-    imageExists: false,
-    modalVisible: false
-  };
-
-  componentDidMount = async () => {
-    const {
-      id, name, artists, imageExists, albumArt
-    } = this.props;
-    this.setState({
-      id, name, artists, imageExists, albumArt
-    });
-  }
+  state = { modalVisible: false };
 
   handlePlayNow = async () => {
     this.setState({ modalVisible: false });
-    console.log(`play ${this.state.id}now...`);
+    console.log(`Play ${this.props.id} now...`);
   }
 
   handlePlayLater = async () => {
     this.setState({ modalVisible: false });
-    console.log(`play ${this.state.id}later...`);
+    console.log(`Play ${this.props.id} later...`);
   }
 
   toggleModal = () => {
@@ -42,23 +30,15 @@ class Song extends Component {
   render() {
     return (
       <View style={styles.container}>
-        {this.state.imageExists
-          ? (
-            <Image
-              source={{ uri: this.state.albumArt }}
-              style={styles.albumArt}
-            />
-          )
-          : (
-            <Image
-              source={require('../assets/default_album.png')}
-              style={styles.albumArt}
-            />
-          )
-        }
+        <Image
+          source={this.props.imageExists
+            ? { uri: this.props.albumArt }
+            : require('../assets/default_album.png')}
+          style={styles.albumArt}
+        />
         <View style={styles.songInfoContainer}>
-          <Text style={styles.name}>{this.state.name}</Text>
-          <Text style={styles.artists}>{this.state.artists}</Text>
+          <Text style={styles.name}>{this.props.name}</Text>
+          <Text style={styles.artists}>{this.props.artists}</Text>
         </View>
         <Button
           onPress={this.toggleModal}

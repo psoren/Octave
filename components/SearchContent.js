@@ -10,6 +10,8 @@ import * as actions from '../actions';
 
 import Song from './Song';
 import SearchResult from './SearchResult';
+import getSongData from '../functions/getSongData';
+import getSearchResultData from '../functions/getSearchResultData';
 
 class SearchContent extends Component {
   state = {
@@ -19,12 +21,9 @@ class SearchContent extends Component {
     playlists: []
   };
 
-  componentDidMount = async () => {
-    const { accessToken } = this.props;
-    this.setState({ accessToken });
-  }
-
   performSearch = async (search) => {
+    const { accessToken } = this.props;
+
     this.setState({ search }, async () => {
       // Search songs
       const query = {
@@ -32,23 +31,23 @@ class SearchContent extends Component {
         type: 'track',
         limit: 3
       };
-      const config = { headers: { Authorization: `Bearer ${this.state.accessToken}` } };
+      const config = { headers: { Authorization: `Bearer ${accessToken}` } };
       const { data: songData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({ ...query })}`, config);
-      const songs = songData.tracks.items.map(item => item.uri);
+      const songs = songData.tracks.items.map(item => getSongData(item));
       this.setState({ songs });
 
       // Search Artists
       const { data: artistData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({
         ...query, type: 'artist'
       })}`, config);
-      const artists = artistData.artists.items.map(item => item.uri);
+      const artists = artistData.artists.items.map(item => getSearchResultData(item));
       this.setState({ artists });
 
       // Search Playlists
       const { data: playlistData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({
         ...query, type: 'playlist'
       })}`, config);
-      const playlists = playlistData.playlists.items.map(item => item.uri);
+      const playlists = playlistData.playlists.items.map(item => getSearchResultData(item));
       this.setState({ playlists });
     });
   }
@@ -80,6 +79,7 @@ class SearchContent extends Component {
             renderSectionHeader={({ section: { title } }) => (
               <Text style={styles.sectionHeader}>{title}</Text>
             )}
+            keyExtractor={item => item.id}
             sections={[
               {
                 id: 0,
@@ -87,10 +87,11 @@ class SearchContent extends Component {
                 data: this.state.songs,
                 renderItem: ({ item }) => (
                   <Song
-                    uri={item}
-                    key={item}
-                    playNow={() => this.props.prependSongToQueue(item)}
-                    playLater={() => this.props.appendSongToQueue(item)}
+                    id={item.id}
+                    name={item.name}
+                    artists={item.artists}
+                    imageExists={item.imageExists}
+                    albumArt={item.albumArt}
                   />
                 )
               }, {
@@ -99,8 +100,11 @@ class SearchContent extends Component {
                 data: this.state.artists,
                 renderItem: ({ item }) => (
                   <SearchResult
-                    uri={item}
-                    key={item}
+                    id={item.id}
+                    name={item.name}
+                    type={item.type}
+                    imageExists={item.imageExists}
+                    albumArt={item.albumArt}
                   />
                 )
               }, {
@@ -109,13 +113,15 @@ class SearchContent extends Component {
                 data: this.state.playlists,
                 renderItem: ({ item }) => (
                   <SearchResult
-                    uri={item}
-                    key={item}
+                    id={item.id}
+                    name={item.name}
+                    type={item.type}
+                    imageExists={item.imageExists}
+                    albumArt={item.albumArt}
                   />
                 )
               }
             ]}
-            keyExtractor={item => item}
           />
         </View>
       </View>

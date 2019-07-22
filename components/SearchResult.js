@@ -3,61 +3,45 @@ import {
   Text, View, Image, TouchableOpacity
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import axios from 'axios';
-import AsyncStorage from '@react-native-community/async-storage';
 import { withNavigation } from 'react-navigation';
 
 class SearchResult extends Component {
-  state = {
-    imageExists: false,
-    image: '../assets/default_album.png'
-  };
-
-  componentDidMount = async () => {
-    const infoArr = this.props.uri.split(':');
-    const id = infoArr[2];
-    const type = `${infoArr[1]}s`;
-    const accessToken = await AsyncStorage.getItem('accessToken');
-    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-    const { data } = await axios.get(`https://api.spotify.com/v1/${type}/${id}`, config);
-    const contentType = type.charAt(0).toUpperCase()
-      + type.slice(1, type.length - 1);
-
-    console.log(contentType);
-
-    if (data.images
-      && data.images[0]
-      && data.images[0].url) {
-      this.setState({ imageExists: true, image: data.images[0].url });
-    }
-    this.setState({ contentType, name: data.name });
-  }
-
   navigate = () => {
-    switch (this.state.contentType) {
-      case 'Artist':
-        this.props.navigation.navigate('CreateRoomSearchArtist', { uri: this.props.uri });
-        return;
-      case 'Playlist':
-        this.props.navigation.navigate('CreateRoomSearchPlaylist', { uri: this.props.uri });
-        return;
+    switch (this.props.type) {
+      case 'artist':
+        this.props.navigation.navigate('CreateRoomSearchArtist', {
+          id: this.props.id,
+          type: this.props.type
+        });
+        break;
+      case 'playlist':
+        this.props.navigation.navigate('CreateRoomSearchPlaylist', {
+          id: this.props.id,
+          type: this.props.type
+        });
+        break;
       default:
-        console.log('bad param');
+        console.error('type was not as expected, type should be either artist or playlist');
     }
   }
 
   render() {
+    const { type } = this.props;
+    const contentType = type.charAt(0).toUpperCase()
+      + type.slice(1, type.length - 1);
+
     return (
       <TouchableOpacity onPress={this.navigate}>
         <View style={styles.container}>
-          {
-            this.state.imageExists
-              ? (<Image source={{ uri: this.state.image }} style={styles.image} />)
-              : (<Image source={require('../assets/default_album.png')} style={styles.image} />)
-          }
+          <Image
+            source={this.props.imageExists
+              ? { uri: this.props.albumArt }
+              : require('../assets/default_album.png')}
+            style={styles.image}
+          />
           <View style={styles.infoContainer}>
-            <Text style={styles.name}>{this.state.name}</Text>
-            <Text style={styles.type}>{this.state.contentType}</Text>
+            <Text style={styles.name}>{this.props.name}</Text>
+            <Text style={styles.type}>{contentType}</Text>
           </View>
           <Icon
             type="material"

@@ -36,7 +36,17 @@ class LibraryPlaylists extends Component {
     // // We now have strings of requests, we need to await each of them
     await Promise.all(requests.map(async (req) => {
       const { data: playlistData } = await axios.get(req, config);
-      const playlist = playlistData.items.map(item => item.uri);
+      const playlist = playlistData.items.map((item) => {
+        const imageExists = item.images.length > 0;
+        const imageSource = imageExists ? item.images[0].url : '';
+        return {
+          id: item.id,
+          type: item.type,
+          name: item.name,
+          imageExists,
+          imageSource
+        };
+      });
       playlists.push(...playlist);
     }));
     return playlists;
@@ -53,11 +63,15 @@ class LibraryPlaylists extends Component {
           <Text style={styles.title}>Your Playlists</Text>
           <View style={styles.playlistsContainer}>
             <LibrarySongsThumbnail onPress={this.goToLibrary} />
-            {this.state.playlists.map(uri => (
+            {this.state.playlists.map(playlist => (
               <Thumbnail
-                uri={uri}
-                key={uri}
-                onPress={() => this.selectAlbum(uri)}
+                id={playlist.id}
+                key={playlist.id}
+                name={playlist.name}
+                type={playlist.type}
+                imageExists={playlist.imageExists}
+                imageSource={playlist.imageSource}
+                onPress={() => this.selectAlbum(playlist.id)}
               />
             ))}
           </View>
