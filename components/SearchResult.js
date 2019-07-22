@@ -7,18 +7,13 @@ import { withNavigation } from 'react-navigation';
 
 class SearchResult extends Component {
   navigate = () => {
+    const { id, type } = this.props;
     switch (this.props.type) {
       case 'artist':
-        this.props.navigation.navigate('CreateRoomSearchArtist', {
-          id: this.props.id,
-          type: this.props.type
-        });
+        this.props.navigation.navigate('CreateRoomSearchArtist', { id, type });
         break;
       case 'playlist':
-        this.props.navigation.navigate('CreateRoomSearchPlaylist', {
-          id: this.props.id,
-          type: this.props.type
-        });
+        this.props.navigation.navigate('CreateRoomSearchPlaylist', { id, type });
         break;
       default:
         console.error('type was not as expected, type should be either artist or playlist');
@@ -27,8 +22,7 @@ class SearchResult extends Component {
 
   render() {
     const { type } = this.props;
-    const contentType = type.charAt(0).toUpperCase()
-      + type.slice(1, type.length - 1);
+    const contentType = type.charAt(0).toUpperCase() + type.slice(1);
 
     return (
       <TouchableOpacity onPress={this.navigate}>
@@ -81,7 +75,7 @@ const styles = {
   },
   moreButton: {
     alignSelf: 'flex-end'
-  },
+  }
 };
 
 export default withNavigation(SearchResult);

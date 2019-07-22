@@ -36,13 +36,13 @@ class SongsCollectionScreen extends Component {
 
     // Get songs
     const { data: songsData } = await axios.get(`https://api.spotify.com/v1/${type}s/${id}/tracks`, config);
-    let songs = [];
     if (type === 'album') {
-      songs = songsData.items.map(song => getAlbumSongData(song, imageExists, imageSource));
-    } else {
-      songs = songsData.items.map(song => getSongData(song));
+      const songs = songsData.items.map(song => getAlbumSongData(song, imageExists, imageSource));
+      this.setState({ songs });
+    } else if (type === 'playlist') {
+      const songs = songsData.items.map(song => getSongData(song));
+      this.setState({ songs });
     }
-    this.setState({ songs });
   }
 
   render() {

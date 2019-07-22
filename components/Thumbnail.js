@@ -23,11 +23,8 @@ class Thumbnail extends Component {
   }
 
   render() {
-    console.log(this.props);
-
     let { name } = this.props;
     name = name.length > 20 ? `${name.slice(0, 20)}...` : name;
-
     return (
       <TouchableOpacity onPress={this.navigate}>
         <View style={styles.container}>

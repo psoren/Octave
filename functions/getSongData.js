@@ -1,4 +1,7 @@
-export default (track) => {
+export default (song) => {
+  const { track } = song;
+
+
   let imageExists = false;
   let albumArt = '../assets/default_album.png';
 
