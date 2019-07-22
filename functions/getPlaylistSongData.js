@@ -1,11 +1,13 @@
-export default (track) => {
+export default (song) => {
+  const { track } = song;
+
   let imageExists = false;
   let albumArt = '../assets/default_album.png';
 
   if (track.album
-      && track.album.images
-      && track.album.images[2]
-      && track.album.images[2].url) {
+        && track.album.images
+        && track.album.images[2]
+        && track.album.images[2].url) {
     imageExists = true;
     albumArt = track.album.images[2].url;
   }

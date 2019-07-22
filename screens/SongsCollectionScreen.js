@@ -6,7 +6,7 @@ import axios from 'axios';
 import { connect } from 'react-redux';
 
 import Song from '../components/Song';
-import getSongData from '../functions/getSongData';
+import getPlaylistSongData from '../functions/getPlaylistSongData';
 import getAlbumSongData from '../functions/getAlbumSongData';
 
 class SongsCollectionScreen extends Component {
@@ -16,6 +16,7 @@ class SongsCollectionScreen extends Component {
     const { accessToken, navigation } = this.props;
     const id = navigation.getParam('id');
     const type = navigation.getParam('type');
+    this.setState({ type });
 
     // Get info
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
@@ -42,19 +43,19 @@ class SongsCollectionScreen extends Component {
       const songs = songsData.items.map(song => getAlbumSongData(song, imageExists, imageSource));
       this.setState({ songs });
     } else if (type === 'playlist') {
-      const songs = songsData.items.map(song => getSongData(song));
+      const songs = songsData.items.map(song => getPlaylistSongData(song));
       this.setState({ songs, config });
     }
   }
 
-
   onEndReached = async () => {
     const { data } = await axios.get(this.state.next, this.state.config);
-    const newSongs = data.items.map(item => getSongData(item));
-    const currentSongs = this.state.songs;
-    this.setState({ songs: [...currentSongs, ...newSongs], next: data.next });
+    if (this.state.type === 'playlist') {
+      const newSongs = data.items.map(item => getPlaylistSongData(item));
+      const currentSongs = this.state.songs;
+      this.setState({ songs: [...currentSongs, ...newSongs], next: data.next });
+    }
   }
-
 
   render() {
     return (
