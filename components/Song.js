@@ -28,7 +28,10 @@ class Song extends Component {
 
   render() {
     return (
-      <View style={styles.container}>
+      <View
+        style={styles.container}
+        onPress={this.hideModal}
+      >
         <Image
           source={this.props.imageExists
             ? { uri: this.props.albumArt }
@@ -53,6 +56,8 @@ class Song extends Component {
           )}
         />
         <SongModal
+          song={this.props.name}
+          artist={this.props.artists}
           handlePlayNow={this.handlePlayNow}
           handlePlayLater={this.handlePlayLater}
           modalVisible={this.state.modalVisible}

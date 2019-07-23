@@ -18,7 +18,7 @@ export default (song) => {
 
   const key = id + song.added_at;
 
-  name = name.length > 20 ? `${name.slice(0, 20)}...` : name;
+  name = name.length > 32 ? `${name.slice(0, 32)}...` : name;
   artists = artists.length > 20 ? `${artists.slice(0, 20)}...` : artists;
   return {
     id, name, artists: artistsTitle, imageExists, albumArt, key

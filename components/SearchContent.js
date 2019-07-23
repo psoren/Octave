@@ -78,58 +78,71 @@ class SearchContent extends Component {
           <Button
             type="clear"
             onPress={() => this.clearSearch()}
-            icon={(<Icon type="material" name="close" />)}
+            icon={(
+              <Icon
+                type="material"
+                name="close"
+                size={30}
+                color="#222"
+              />
+            )}
           />
         </View>
         <View style={styles.list}>
-          <SectionList
-            renderSectionHeader={({ section: { title } }) => (
-              <Text style={styles.sectionHeader}>{title}</Text>
-            )}
-            keyExtractor={item => item.id}
-            sections={[
-              {
-                id: 0,
-                title: 'Songs',
-                data: this.state.songs,
-                renderItem: ({ item }) => (
-                  <Song
-                    id={item.id}
-                    name={item.name}
-                    artists={item.artists}
-                    imageExists={item.imageExists}
-                    albumArt={item.albumArt}
-                  />
-                )
-              }, {
-                id: 1,
-                title: 'Artists',
-                data: this.state.artists,
-                renderItem: ({ item }) => (
-                  <SearchResult
-                    id={item.id}
-                    name={item.name}
-                    type={item.type}
-                    imageExists={item.imageExists}
-                    albumArt={item.albumArt}
-                  />
-                )
-              }, {
-                id: 2,
-                title: 'Playlists',
-                data: this.state.playlists,
-                renderItem: ({ item }) => (
-                  <SearchResult
-                    id={item.id}
-                    name={item.name}
-                    type={item.type}
-                    imageExists={item.imageExists}
-                    albumArt={item.albumArt}
-                  />
-                )
-              }
-            ]}
-          />
+          {this.state.search !== ''
+            ? (
+              <SectionList
+                renderSectionHeader={({ section: { title } }) => (
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionHeaderText}>{title}</Text>
+                  </View>
+                )}
+                keyExtractor={item => item.id}
+                sections={[
+                  {
+                    id: 0,
+                    title: 'Songs',
+                    data: this.state.songs,
+                    renderItem: ({ item }) => (
+                      <Song
+                        id={item.id}
+                        name={item.name}
+                        artists={item.artists}
+                        imageExists={item.imageExists}
+                        albumArt={item.albumArt}
+                      />
+                    )
+                  }, {
+                    id: 1,
+                    title: 'Artists',
+                    data: this.state.artists,
+                    renderItem: ({ item }) => (
+                      <SearchResult
+                        id={item.id}
+                        name={item.name}
+                        type={item.type}
+                        imageExists={item.imageExists}
+                        albumArt={item.albumArt}
+                      />
+                    )
+                  }, {
+                    id: 2,
+                    title: 'Playlists',
+                    data: this.state.playlists,
+                    renderItem: ({ item }) => (
+                      <SearchResult
+                        id={item.id}
+                        name={item.name}
+                        type={item.type}
+                        imageExists={item.imageExists}
+                        albumArt={item.albumArt}
+                      />
+                    )
+                  }
+                ]}
+              />
+            ) : <Text style={styles.search}>Search for songs, artists, and playlists</Text>}
+
         </View>
       </View>
     );
@@ -146,10 +159,11 @@ const styles = {
   searchContainer: {
     width: 400,
     flexDirection: 'row',
-    justifyContent: 'flex-start'
+    justifyContent: 'flex-start',
+    alignItems: 'center'
   },
   input: {
-    marginLeft: 25,
+    marginLeft: 10,
     fontSize: 24,
     width: 300
   },
@@ -158,9 +172,22 @@ const styles = {
     flexDirection: 'row'
   },
   sectionHeader: {
-    fontSize: 16,
+    height: 50,
+    backgroundColor: 'rgba(0,201,255, 0.5)',
+    justifyContent: 'center'
+  },
+  sectionHeaderText: {
+    marginLeft: 10,
+    fontSize: 20,
     fontWeight: 'bold',
-    backgroundColor: '#555'
+    color: '#fff'
+  },
+  search: {
+    marginTop: 100,
+    fontSize: 36,
+    fontWeight: 'bold',
+    marginRight: 25,
+    marginLeft: 25
   }
 };
 

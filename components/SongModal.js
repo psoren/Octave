@@ -1,14 +1,27 @@
 import React from 'react';
-import { View, Modal } from 'react-native';
+import {
+  Text, View, Modal, Dimensions
+} from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
+import { BlurView } from '@react-native-community/blur';
+
+const { height } = Dimensions.get('window');
+const modalHeight = height / 4;
+const marginHeight = 3 * (height / 4);
 
 const SongModal = props => (
   <Modal
-    animationType="slide"
+    animationType="fade"
     visible={props.modalVisible}
+    style={styles.modal}
+    transparent
   >
-    <View style={styles.modal}>
+    <BlurView
+      blurType="light"
+      blurAmount={10}
+      style={styles.container}
+    >
       <Button
         buttonStyle={styles.closeButton}
         type="clear"
@@ -20,40 +33,80 @@ const SongModal = props => (
             size={30}
             color="#000"
           />
-            )}
+        )}
       />
-      <Button
-        title="Play Now"
-        onPress={props.handlePlayNow}
-      />
-      <Button
-        title="Play Later"
-        onPress={props.handlePlayLater}
-      />
-    </View>
+      <View style={styles.songInfoContainer}>
+        <Text style={styles.song}>{props.song}</Text>
+        <Text style={styles.artist}>{props.artist}</Text>
+      </View>
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Play Now"
+          type="outline"
+          titleStyle={{ fontSize: 12 }}
+          containerStyle={styles.buttonView}
+          raised
+          onPress={props.handlePlayNow}
+        />
+        <Button
+          title="Play Later"
+          type="outline"
+          titleStyle={{ fontSize: 12 }}
+          containerStyle={styles.buttonView}
+          raised
+          onPress={props.handlePlayLater}
+        />
+      </View>
+    </BlurView>
   </Modal>
 );
 
 SongModal.propTypes = {
   handlePlayNow: PropTypes.func.isRequired,
   handlePlayLater: PropTypes.func.isRequired,
-  hideModal: PropTypes.func.isRequired
+  hideModal: PropTypes.func.isRequired,
+  song: PropTypes.string.isRequired,
+  artist: PropTypes.string.isRequired
 };
 
 const styles = {
-  modal: {
-    flex: 1,
-    margin: 50,
-    flexDirection: 'column',
+  container: {
+    marginTop: marginHeight,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 500,
-    width: 300
+    height: modalHeight,
+    flex: 0,
+    backgroundColor: 'rgba(0,201,255, 0.5)'
+  },
+  songInfoContainer: {
+    flex: 2,
+    flexDirection: 'column',
+    marginLeft: 25
+  },
+  buttonContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'space-between',
+    marginRight: 25,
   },
   closeButton: {
     alignSelf: 'flex-start',
-    position: 'relative',
-    left: -30
+    position: 'relative'
+  },
+  modal: {
+    flex: 0
+  },
+  song: {
+    fontSize: 24,
+    fontWeight: 'bold'
+  },
+  artist: {
+    fontSize: 16
+  },
+  buttonView: {
+    margin: 10
   }
 };
 

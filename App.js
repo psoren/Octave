@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Provider } from 'react-redux';
+import { Icon } from 'react-native-elements';
 import {
   createBottomTabNavigator,
   createAppContainer,
@@ -23,15 +24,30 @@ const Navigator = createBottomTabNavigator({
   Main: createBottomTabNavigator({
     Home: HomeScreen,
     RoomSearch: RoomSearchScreen,
-    CreateRoomMain: createStackNavigator({
-      CreateRoom: CreateRoomScreen,
-      AddSongs: AddSongsScreen,
-      CreateRoomSearchArtist: ArtistScreen,
-      CreateRoomSearchAlbum: SongsCollectionScreen,
-      CreateRoomSearchPlaylist: SongsCollectionScreen,
-      CreateRoomLibraryPlaylist: SongsCollectionScreen,
-      CreateRoomLibrarySongs: LibrarySongsScreen
-    }),
+    CreateRoomMain: {
+      screen: createStackNavigator({
+        CreateRoom: CreateRoomScreen,
+        AddSongs: AddSongsScreen,
+        CreateRoomSearchArtist: ArtistScreen,
+        CreateRoomSearchAlbum: SongsCollectionScreen,
+        CreateRoomSearchPlaylist: SongsCollectionScreen,
+        CreateRoomLibraryPlaylist: SongsCollectionScreen,
+        CreateRoomLibrarySongs: LibrarySongsScreen
+      }),
+      navigationOptions: () => ({
+        title: 'Create Room',
+        tabBarIcon: ({ tintColor }) => (
+          <Icon
+            type="material"
+            name="add-circle-outline"
+            size={30}
+            color={tintColor}
+          />
+        )
+      })
+    },
+
+
     Settings: SettingsScreen
   })
 },
