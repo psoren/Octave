@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import {
-  Text, View, Image, Modal
-} from 'react-native';
+import { Text, View, Image } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+
+import SongModal from './SongModal';
 
 class Song extends Component {
   state = { modalVisible: false };
@@ -20,9 +20,8 @@ class Song extends Component {
   }
 
   toggleModal = () => {
-    if (!this.state.modalVisible) {
-      this.setState({ modalVisible: true });
-    }
+    const currentModalVisible = this.state.modalVisible;
+    this.setState({ modalVisible: !currentModalVisible });
   }
 
   hideModal = () => this.setState({ modalVisible: false });
@@ -53,34 +52,12 @@ class Song extends Component {
             />
           )}
         />
-        <Modal
-          animationType="slide"
-          visible={this.state.modalVisible}
-        >
-          <View style={styles.modal}>
-            <Button
-              buttonStyle={styles.closeButton}
-              type="clear"
-              onPress={this.hideModal}
-              icon={(
-                <Icon
-                  type="material"
-                  name="close"
-                  size={30}
-                  color="#000"
-                />
-              )}
-            />
-            <Button
-              title="Play Now"
-              onPress={this.handlePlayNow}
-            />
-            <Button
-              title="Play Later"
-              onPress={this.handlePlayLater}
-            />
-          </View>
-        </Modal>
+        <SongModal
+          handlePlayNow={this.handlePlayNow}
+          handlePlayLater={this.handlePlayLater}
+          modalVisible={this.state.modalVisible}
+          hideModal={this.hideModal}
+        />
       </View>
     );
   }
@@ -121,20 +98,6 @@ const styles = {
   },
   moreButton: {
     alignSelf: 'flex-end'
-  },
-  modal: {
-    flex: 1,
-    margin: 50,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 500,
-    width: 300
-  },
-  closeButton: {
-    alignSelf: 'flex-start',
-    position: 'relative',
-    left: -30
   }
 };
 
