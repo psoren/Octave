@@ -3,11 +3,20 @@ import {
   Text, View, Image, TouchableOpacity, Dimensions
 } from 'react-native';
 import { withNavigation } from 'react-navigation';
+import { connect } from 'react-redux';
 
 const { width: imageSize } = Dimensions.get('window');
 
+const navigate = (props) => {
+  if (props.currentRoom === '') {
+    props.navigation.navigate('CreateRoomLibrarySongs');
+  } else {
+    props.navigation.navigate('LibrarySongsRoom');
+  }
+};
+
 const LibrarySongsThumbnail = props => (
-  <TouchableOpacity onPress={() => props.navigation.navigate('CreateRoomLibrarySongs')}>
+  <TouchableOpacity onPress={() => navigate(props)}>
     <View style={styles.container}>
       <Image source={require('../assets/spotify_icon.png')} style={styles.image} />
       <Text style={styles.name}>Your Songs</Text>
@@ -32,4 +41,6 @@ const styles = {
   }
 };
 
-export default withNavigation(LibrarySongsThumbnail);
+const mapStateToProps = ({ newRoom }) => ({ currentRoom: newRoom.currentRoom });
+
+export default connect(mapStateToProps, null)(withNavigation(LibrarySongsThumbnail));

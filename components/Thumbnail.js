@@ -11,14 +11,26 @@ const { width: imageSize } = Dimensions.get('window');
 class Thumbnail extends Component {
   navigate = () => {
     const { id, type } = this.props;
-    switch (this.props.type) {
-      case 'album':
-        this.props.navigation.navigate('CreateRoomSearchAlbum', { id, type });
-        break;
-      case 'playlist':
-        this.props.navigation.navigate('CreateRoomSearchAlbum', { id, type });
-        break;
-      default:
+    if (this.props.currentRoom === '') {
+      switch (this.props.type) {
+        case 'album':
+          this.props.navigation.navigate('CreateRoomSearchAlbum', { id, type });
+          break;
+        case 'playlist':
+          this.props.navigation.navigate('CreateRoomSearchPlaylist', { id, type });
+          break;
+        default:
+      }
+    } else {
+      switch (this.props.type) {
+        case 'album':
+          this.props.navigation.navigate('SearchAlbumRoom', { id, type });
+          break;
+        case 'playlist':
+          this.props.navigation.navigate('SearchPlaylistRoom', { id, type });
+          break;
+        default:
+      }
     }
   }
 
@@ -65,6 +77,9 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+const mapStateToProps = ({ auth, newRoom }) => ({
+  accessToken: auth.accessToken,
+  currentRoom: newRoom.currentRoom
+});
 
 export default connect(mapStateToProps, null)(withNavigation(Thumbnail));

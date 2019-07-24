@@ -4,26 +4,40 @@ import {
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { withNavigation } from 'react-navigation';
+import { connect } from 'react-redux';
 
 class SearchResult extends Component {
   navigate = () => {
     const { id, type } = this.props;
-    switch (this.props.type) {
-      case 'artist':
-        this.props.navigation.navigate('CreateRoomSearchArtist', { id, type });
-        break;
-      case 'playlist':
-        this.props.navigation.navigate('CreateRoomSearchPlaylist', { id, type });
-        break;
-      default:
-        console.error('type was not as expected, type should be either artist or playlist');
+
+    if (this.props.currentRoom === '') {
+      switch (this.props.type) {
+        case 'artist':
+          this.props.navigation.navigate('CreateRoomSearchArtist', { id, type });
+          break;
+        case 'playlist':
+          this.props.navigation.navigate('CreateRoomSearchPlaylist', { id, type });
+          break;
+        default:
+          console.error('type was not as expected, type should be either artist or playlist');
+      }
+    } else {
+      switch (this.props.type) {
+        case 'artist':
+          this.props.navigation.navigate('SearchArtistRoom', { id, type });
+          break;
+        case 'playlist':
+          this.props.navigation.navigate('SearchPlaylistRoom', { id, type });
+          break;
+        default:
+          console.error('type was not as expected, type should be either artist or playlist');
+      }
     }
   }
 
   render() {
     const { type } = this.props;
     const contentType = type.charAt(0).toUpperCase() + type.slice(1);
-
     return (
       <TouchableOpacity onPress={this.navigate}>
         <View style={styles.container}>
@@ -78,4 +92,6 @@ const styles = {
   }
 };
 
-export default withNavigation(SearchResult);
+const mapStateToProps = ({ newRoom }) => ({ currentRoom: newRoom.currentRoom });
+
+export default connect(mapStateToProps, null)(withNavigation(SearchResult));

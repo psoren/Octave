@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  View, FlatList, TextInput, Alert
+  Text, View, FlatList, TextInput, Alert
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { connect } from 'react-redux';
@@ -50,12 +50,24 @@ class CreateRoomScreen extends Component {
       this.props.createRoom({
         songs,
         roomName,
-        roomCreatorURI: uri
+        roomCreatorURI: uri,
+        navigation: this.props.navigation
       });
     }
   }
 
   render() {
+    // If the user is in a room
+    if (this.props.currentRoom !== '') {
+      return (
+        <View style={styles.container}>
+          <Text style={{ margin: 15, fontSize: 18 }}>
+            Please leave your current room before creating a new one.
+          </Text>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.container}>
         <TextInput
@@ -121,8 +133,8 @@ const styles = {
 };
 
 function mapStateToProps({ newRoom }) {
-  const { roomName, songs } = newRoom;
-  return { roomName, songs };
+  const { roomName, songs, currentRoom } = newRoom;
+  return { roomName, songs, currentRoom };
 }
 
 export default connect(mapStateToProps, actions)(CreateRoomScreen);

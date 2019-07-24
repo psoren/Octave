@@ -25,7 +25,8 @@ export const appendSongToQueue = song => ({
 export const createRoom = ({
   songs,
   roomName,
-  roomCreatorURI
+  roomCreatorURI,
+  navigation
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
@@ -36,6 +37,7 @@ export const createRoom = ({
       type: CREATE_ROOM,
       payload: newRoomId
     });
+    navigation.navigate('NowPlaying');
   } catch (err) {
     console.error(err);
   }

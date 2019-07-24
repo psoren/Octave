@@ -15,10 +15,10 @@ import LoginScreen from './screens/LoginScreen';
 import RoomSearchScreen from './screens/RoomSearchScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import AddSongsScreen from './screens/AddSongsScreen';
-
 import ArtistScreen from './screens/ArtistScreen';
 import LibrarySongsScreen from './screens/LibrarySongsScreen';
 import SongsCollectionScreen from './screens/SongsCollectionScreen';
+import NowPlayingScreen from './screens/NowPlayingScreen';
 
 const Navigator = createBottomTabNavigator({
   Login: LoginScreen,
@@ -48,7 +48,18 @@ const Navigator = createBottomTabNavigator({
       })
     },
     Settings: SettingsScreen
-  })
+  }),
+  NowPlayingMain: {
+    screen: createStackNavigator({
+      NowPlaying: NowPlayingScreen,
+      AddSongsRoom: AddSongsScreen,
+      SearchArtistRoom: ArtistScreen,
+      SearchAlbumRoom: SongsCollectionScreen,
+      SearchPlaylistRoom: SongsCollectionScreen,
+      LibraryPlaylistRoom: SongsCollectionScreen,
+      LibrarySongsRoom: LibrarySongsScreen
+    })
+  }
 },
 { defaultNavigationOptions: { tabBarVisible: false } });
 
