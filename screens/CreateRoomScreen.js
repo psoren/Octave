@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
-import { View, FlatList, TextInput } from 'react-native';
+import {
+  View, FlatList, TextInput, Alert
+} from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { connect } from 'react-redux';
+import Spotify from 'rn-spotify-sdk';
 import * as actions from '../actions';
 
 import Song from '../components/Song';
@@ -19,30 +22,64 @@ class CreateRoomScreen extends Component {
     ),
   });
 
-  state = { roomName: '' };
-
-  keyExtractor = item => item;
-
   addSongs = () => this.props.navigation.navigate('AddSongs');
 
-  createRoom = () => console.log('create room');
+  createRoom = async () => {
+    const { uri } = await Spotify.getMe();
+    const { songs, roomName } = this.props;
+
+    if (songs.length === 0) {
+      Alert.alert(
+        'Please add at least one song',
+        '', [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    } else if (roomName === '') {
+      Alert.alert(
+        'Please add a room name',
+        '', [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    } else if (!uri) {
+      Alert.alert(
+        "You don't appear to be logged in.  There is an issue",
+        '', [{ text: 'OK' }],
+        { cancelable: false }
+      );
+    } else {
+      this.props.createRoom({
+        songs,
+        roomName,
+        roomCreatorURI: uri
+      });
+    }
+  }
 
   render() {
     return (
       <View style={styles.container}>
-
         <TextInput
           style={styles.roomName}
-          onChangeText={roomName => this.setState({ roomName })}
-          value={this.state.roomName}
+          onChangeText={roomName => this.props.changeRoomName(roomName)}
+          value={this.props.roomName}
           placeholder="Your Room Name"
+          autoCapitalize="none"
+          autoCompleteType="off"
+          autoCorrect={false}
         />
-
         <View style={styles.songList}>
           <FlatList
             data={this.props.songs}
-            renderItem={({ item }) => <Song uri={item} playNow={() => { }} playLater={() => { }} />}
-            keyExtractor={this.keyExtractor}
+            renderItem={({ item }) => (
+              <Song
+                id={item.id}
+                name={item.name}
+                artists={item.artists}
+                imageExists={item.imageExists}
+                albumArt={item.albumArt}
+              />
+            )}
+            keyExtractor={item => item.id}
           />
         </View>
         <Button
@@ -84,10 +121,8 @@ const styles = {
 };
 
 function mapStateToProps({ newRoom }) {
-  return {
-    roomName: newRoom.roomName,
-    songs: newRoom.songs
-  };
+  const { roomName, songs } = newRoom;
+  return { roomName, songs };
 }
 
 export default connect(mapStateToProps, actions)(CreateRoomScreen);

@@ -3,25 +3,50 @@ import { Text, View, Image } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import * as actions from '../actions';
 
 import SongModal from './SongModal';
 
 class Song extends Component {
-  state = { modalVisible: false };
+  state = { modalVisible: false, userIsInRoom: false };
 
   handlePlayNow = async () => {
+    if (!this.state.userIsInRoom) {
+      const {
+        id, name, artists, imageExists, albumArt
+      } = this.props;
+      this.props.prependSongToQueue({
+        id, name, artists, imageExists, albumArt
+      });
+    } else {
+      console.log(`Play ${this.props.id} now...`);
+    }
     this.setState({ modalVisible: false });
-    console.log(`Play ${this.props.id} now...`);
   }
 
   handlePlayLater = async () => {
+    if (!this.state.userIsInRoom) {
+      const {
+        id, name, artists, imageExists, albumArt
+      } = this.props;
+      this.props.appendSongToQueue({
+        id, name, artists, imageExists, albumArt
+      });
+    } else {
+      console.log(`Play ${this.props.id} later...`);
+    }
     this.setState({ modalVisible: false });
-    console.log(`Play ${this.props.id} later...`);
   }
 
   toggleModal = () => {
     const currentModalVisible = this.state.modalVisible;
     this.setState({ modalVisible: !currentModalVisible });
+  }
+
+  componentDidMount = () => {
+    const { currentRoom } = this.props;
+    const userIsInRoom = currentRoom !== '';
+    this.setState({ userIsInRoom });
   }
 
   hideModal = () => this.setState({ modalVisible: false });
@@ -62,6 +87,7 @@ class Song extends Component {
           handlePlayLater={this.handlePlayLater}
           modalVisible={this.state.modalVisible}
           hideModal={this.hideModal}
+          userIsInRoom={this.state.userIsInRoom}
         />
       </View>
     );
@@ -106,6 +132,9 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+const mapStateToProps = ({ auth, newRoom }) => ({
+  accessToken: auth.accessToken,
+  currentRoom: newRoom.currentRoom
+});
 
-export default connect(mapStateToProps, null)(Song);
+export default connect(mapStateToProps, actions)(Song);

@@ -6,6 +6,7 @@ import {
   createAppContainer,
   createStackNavigator,
 } from 'react-navigation';
+import firebase from 'firebase';
 
 import store from './store';
 import CreateRoomScreen from './screens/CreateRoomScreen';
@@ -46,8 +47,6 @@ const Navigator = createBottomTabNavigator({
         )
       })
     },
-
-
     Settings: SettingsScreen
   })
 },
@@ -56,6 +55,19 @@ const Navigator = createBottomTabNavigator({
 const AppContainer = createAppContainer(Navigator);
 
 class App extends Component {
+  componentDidMount = () => {
+    const firebaseConfig = {
+      apiKey: 'AIzaSyBCfVBTHezqkYGN6VBjFiNAaWAiJa4tJWQ',
+      authDomain: 'octave-c5cd1.firebaseapp.com',
+      databaseURL: 'https://octave-c5cd1.firebaseio.com',
+      projectId: 'octave-c5cd1',
+      storageBucket: 'octave-c5cd1.appspot.com',
+      messagingSenderId: '657931064278',
+      appId: '1:657931064278:web:c73efc56d3404293'
+    };
+    firebase.initializeApp(firebaseConfig);
+  }
+
   render() {
     return (
       <Provider store={store}>
