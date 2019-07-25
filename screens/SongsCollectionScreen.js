@@ -69,7 +69,7 @@ class SongsCollectionScreen extends Component {
         <FlatList
           data={this.state.songs}
           keyExtractor={item => (this.state.type === 'playlist' ? item.key : item.id)}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.35}
           onEndReached={this.onEndReached}
           renderItem={({ item }) => (
             <Song
