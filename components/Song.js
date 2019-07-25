@@ -3,37 +3,45 @@ import { Text, View, Image } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import * as actions from '../actions';
+import * as firebase from 'firebase';
+import _ from 'lodash';
 
+import * as actions from '../actions';
+import 'firebase/firestore';
 import SongModal from './SongModal';
 
 class Song extends Component {
-  state = { modalVisible: false, userIsInRoom: false };
+  state = { modalVisible: false };
 
-  handlePlayNow = async () => {
-    if (!this.state.userIsInRoom) {
-      const {
-        id, name, artists, images
-      } = this.props;
-      this.props.prependSongToPendingQueue({
-        id, name, artists, images
-      });
+  handlePlay = async (playNow) => {
+    const {
+      id, name, artists, images
+    } = this.props;
+    const newSong = {
+      id, name, artists, images
+    };
+    if (!this.props.currentRoom) {
+      if (playNow) {
+        this.props.prependSongToPendingQueue(newSong);
+      } else { this.props.appendSongToPendingQueue(newSong); }
     } else {
-      console.log(`Play ${this.props.id} now...`);
-    }
-    this.setState({ modalVisible: false });
-  }
-
-  handlePlayLater = async () => {
-    if (!this.state.userIsInRoom) {
-      const {
-        id, name, artists, images
-      } = this.props;
-      this.props.appendSongToPendingQueue({
-        id, name, artists, images
-      });
-    } else {
-      console.log(`Play ${this.props.id} later...`);
+      const db = firebase.firestore();
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+      try {
+        const room = await roomRef.get();
+        if (room.exists) {
+          let { songs } = room.data();
+          if (playNow) {
+            songs.splice(1, 0, newSong);
+          } else { songs.push(newSong); }
+          songs = _.uniqBy(songs, 'id');
+          roomRef.update({ songs });
+        } else {
+          console.error('Could not find room');
+        }
+      } catch (err) {
+        console.error(`${err}. We could not update the room.`);
+      }
     }
     this.setState({ modalVisible: false });
   }
@@ -42,14 +50,6 @@ class Song extends Component {
     const currentModalVisible = this.state.modalVisible;
     this.setState({ modalVisible: !currentModalVisible });
   }
-
-  componentDidMount = () => {
-    const { currentRoom } = this.props;
-    const userIsInRoom = currentRoom !== '';
-    this.setState({ userIsInRoom });
-  }
-
-  hideModal = () => this.setState({ modalVisible: false });
 
   render() {
     return (
@@ -83,11 +83,10 @@ class Song extends Component {
         <SongModal
           song={this.props.name}
           artist={this.props.artists}
-          handlePlayNow={this.handlePlayNow}
-          handlePlayLater={this.handlePlayLater}
+          handlePlay={this.handlePlay}
           modalVisible={this.state.modalVisible}
-          hideModal={this.hideModal}
-          userIsInRoom={this.state.userIsInRoom}
+          hideModal={() => this.setState({ modalVisible: false })}
+          userIsInRoom={this.props.currentRoom !== ''}
         />
       </View>
     );
@@ -131,9 +130,10 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth, newRoom }) => ({
+const mapStateToProps = ({ auth, newRoom, room }) => ({
   accessToken: auth.accessToken,
-  currentRoom: newRoom.currentRoom
+  currentRoom: newRoom.currentRoom,
+  room
 });
 
 export default connect(mapStateToProps, actions)(Song);

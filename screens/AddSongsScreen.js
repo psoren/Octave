@@ -16,7 +16,7 @@ class AddSongsScreen extends Component {
 
       return (
         <View style={[styles.container,
-          this.props.currentRoom ? {} : { marginTop: 50 }]}
+          this.props.currentRoom ? { marginTop: 50 } : {}]}
         >
           <ButtonGroup
             onPress={this.updateIndex}

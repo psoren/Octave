@@ -19,9 +19,9 @@ export default function (state = INITIAL_STATE, action) {
     case CHANGE_PENDING_ROOM_NAME:
       return { ...state, roomName: action.payload };
     case PREPEND_SONG_TO_CREATE_ROOM_QUEUE:
-      return { ...state, songs: _.uniq([action.payload, ...state.songs]) };
+      return { ...state, songs: _.uniqBy([action.payload, ...state.songs], 'id') };
     case APPEND_SONG_TO_CREATE_ROOM_QUEUE:
-      return { ...state, songs: _.uniq([...state.songs, action.payload]) };
+      return { ...state, songs: _.uniqBy([...state.songs, action.payload], 'id') };
     case CREATE_ROOM:
       return {
         ...INITIAL_STATE,

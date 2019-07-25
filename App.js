@@ -61,7 +61,9 @@ const Navigator = createBottomTabNavigator({
     }, { headerMode: 'none' })
   }
 },
-{ defaultNavigationOptions: { tabBarVisible: false } });
+{
+  defaultNavigationOptions: { tabBarVisible: false }
+});
 
 const AppContainer = createAppContainer(Navigator);
 

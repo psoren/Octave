@@ -41,12 +41,12 @@ const SongModal = props => (
       </View>
       <View style={styles.buttonContainer}>
         <Button
-          title={props.userIsInRoom ? 'Play Now' : 'Prepend to queue'}
+          title={props.userIsInRoom ? 'Play Next' : 'Prepend to queue'}
           type="outline"
           titleStyle={{ fontSize: 12 }}
           containerStyle={styles.buttonView}
           raised
-          onPress={props.handlePlayNow}
+          onPress={() => props.handlePlay(true)}
         />
         <Button
           title={props.userIsInRoom ? 'Play Later' : 'Append to queue'}
@@ -54,7 +54,7 @@ const SongModal = props => (
           titleStyle={{ fontSize: 12 }}
           containerStyle={styles.buttonView}
           raised
-          onPress={props.handlePlayLater}
+          onPress={() => props.handlePlay(false)}
         />
       </View>
     </BlurView>
@@ -62,8 +62,7 @@ const SongModal = props => (
 );
 
 SongModal.propTypes = {
-  handlePlayNow: PropTypes.func.isRequired,
-  handlePlayLater: PropTypes.func.isRequired,
+  handlePlay: PropTypes.func.isRequired,
   hideModal: PropTypes.func.isRequired,
   song: PropTypes.string.isRequired,
   artist: PropTypes.string.isRequired,
