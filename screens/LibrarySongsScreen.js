@@ -16,34 +16,13 @@ class LibrarySongsScreen extends Component {
     this.setState({ config });
     const params = qs.stringify({ limit: this.state.limit });
     const { data } = await axios.get(`https://api.spotify.com/v1/me/tracks?${params}`, config);
-    const songs = data.items.map(item => getSongData(item.track));
+    const songs = data.items.map(item => getSongData(item, { type: 'playlist' }));
     this.setState({ songs, next: data.next });
   }
 
   onEndReached = async () => {
     const { data } = await axios.get(this.state.next, this.state.config);
-    const newSongs = data.items.map(({ track }) => {
-      let imageExists = false;
-      let albumArt = '../assets/default_album.png';
-
-      if (track.album
-        && track.album.images
-        && track.album.images[2]
-        && track.album.images[2].url) {
-        imageExists = true;
-        albumArt = track.album.images[2].url;
-      }
-
-      let { artists, name } = track;
-      const artistsTitle = artists.reduce((acc, artist) => `${acc}, ${artist.name}`, '').slice(2);
-      const { id } = track;
-      name = name.length > 32 ? `${name.slice(0, 32)}...` : name;
-
-      artists = artists.length > 20 ? `${artists.slice(0, 20)}...` : artists;
-      return {
-        id, name, artists: artistsTitle, imageExists, albumArt
-      };
-    });
+    const newSongs = data.items.map(item => getSongData(item, { type: 'playlist' }));
     const currentSongs = this.state.songs;
     this.setState({ songs: [...currentSongs, ...newSongs], next: data.next });
   }
@@ -63,8 +42,7 @@ class LibrarySongsScreen extends Component {
               id={item.id}
               name={item.name}
               artists={item.artists}
-              imageExists={item.imageExists}
-              albumArt={item.albumArt}
+              images={item.images}
             />
           )}
         />

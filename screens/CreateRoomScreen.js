@@ -26,6 +26,7 @@ class CreateRoomScreen extends Component {
 
   createRoom = async () => {
     const { uri } = await Spotify.getMe();
+    const roomCreatorID = uri.split(':')[2];
     const { songs, roomName } = this.props;
 
     if (songs.length === 0) {
@@ -50,7 +51,7 @@ class CreateRoomScreen extends Component {
       this.props.createRoom({
         songs,
         roomName,
-        roomCreatorURI: uri,
+        roomCreatorID,
         navigation: this.props.navigation
       });
     }
@@ -87,8 +88,7 @@ class CreateRoomScreen extends Component {
                 id={item.id}
                 name={item.name}
                 artists={item.artists}
-                imageExists={item.imageExists}
-                albumArt={item.albumArt}
+                images={item.images}
               />
             )}
             keyExtractor={item => item.id}

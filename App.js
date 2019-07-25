@@ -58,7 +58,7 @@ const Navigator = createBottomTabNavigator({
       SearchPlaylistRoom: SongsCollectionScreen,
       LibraryPlaylistRoom: SongsCollectionScreen,
       LibrarySongsRoom: LibrarySongsScreen
-    })
+    }, { headerMode: 'none' })
   }
 },
 { defaultNavigationOptions: { tabBarVisible: false } });

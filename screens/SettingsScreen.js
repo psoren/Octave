@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Text, View } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { Button, Icon } from 'react-native-elements';
 
 class SettingsScreen extends Component {
     static navigationOptions = () => ({
@@ -23,6 +23,10 @@ class SettingsScreen extends Component {
           <Text>SettingsScreen</Text>
           <Text>SettingsScreen</Text>
           <Text>SettingsScreen</Text>
+          <Button
+            title="Now Playing"
+            onPress={() => this.props.navigation.navigate('NowPlaying')}
+          />
         </View>
       );
     }

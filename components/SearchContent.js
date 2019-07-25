@@ -32,8 +32,8 @@ class SearchContent extends Component {
         limit: 3
       };
       const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-      const { data: songData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({ ...query })}`, config);
-      const songs = songData.tracks.items.map(item => getSongData(item));
+      const { data: songsData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({ ...query })}`, config);
+      const songs = songsData.tracks.items.map(item => getSongData(item, null));
       this.setState({ songs });
 
       // Search Artists
@@ -108,8 +108,7 @@ class SearchContent extends Component {
                         id={item.id}
                         name={item.name}
                         artists={item.artists}
-                        imageExists={item.imageExists}
-                        albumArt={item.albumArt}
+                        images={item.images}
                       />
                     )
                   }, {

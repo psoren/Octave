@@ -58,8 +58,8 @@ class Song extends Component {
         onPress={this.hideModal}
       >
         <Image
-          source={this.props.imageExists
-            ? { uri: this.props.albumArt }
+          source={this.props.images.length > 0
+            ? { uri: this.props.images[this.props.images.length - 1].url }
             : require('../assets/default_album.png')}
           style={styles.albumArt}
         />
@@ -98,8 +98,7 @@ Song.propTypes = {
   id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   artists: PropTypes.string.isRequired,
-  imageExists: PropTypes.bool.isRequired,
-  albumArt: PropTypes.string.isRequired,
+  images: PropTypes.instanceOf(Array).isRequired
 };
 
 const styles = {

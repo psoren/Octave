@@ -70,8 +70,7 @@ class ArtistScreen extends Component {
                 id={item.id}
                 name={item.name}
                 artists={item.artists}
-                imageExists={item.imageExists}
-                albumArt={item.albumArt}
+                images={item.images}
                 key={item.id}
               />
             ))}

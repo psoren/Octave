@@ -9,7 +9,7 @@ import {
 
 const INITIAL_STATE = {
   currentRoom: '',
-  roomId: '',
+  roomName: '',
   songs: []
 };
 

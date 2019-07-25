@@ -25,13 +25,13 @@ export const appendSongToQueue = song => ({
 export const createRoom = ({
   songs,
   roomName,
-  roomCreatorURI,
+  roomCreatorID,
   navigation
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
     const { id: newRoomId } = await db.collection('rooms').add({
-      songs, roomName, roomCreatorURI
+      songs, roomName, roomCreatorID
     });
     dispatch({
       type: CREATE_ROOM,
