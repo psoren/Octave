@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { ButtonGroup } from 'react-native-elements';
 import { View } from 'react-native';
+import { connect } from 'react-redux';
 import SearchContent from '../components/SearchContent';
 import LibraryPlaylists from '../components/LibraryPlaylists';
 
@@ -14,7 +15,9 @@ class AddSongsScreen extends Component {
       const { selectedIndex } = this.state;
 
       return (
-        <View style={styles.container}>
+        <View style={[styles.container,
+          this.props.currentRoom ? {} : { marginTop: 50 }]}
+        >
           <ButtonGroup
             onPress={this.updateIndex}
             selectedIndex={selectedIndex}
@@ -38,4 +41,6 @@ const styles = {
   }
 };
 
-export default AddSongsScreen;
+const mapStateToProps = ({ newRoom }) => ({ currentRoom: newRoom.currentRoom });
+
+export default connect(mapStateToProps, null)(AddSongsScreen);

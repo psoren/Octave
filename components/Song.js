@@ -13,10 +13,10 @@ class Song extends Component {
   handlePlayNow = async () => {
     if (!this.state.userIsInRoom) {
       const {
-        id, name, artists, imageExists, albumArt
+        id, name, artists, images
       } = this.props;
       this.props.prependSongToQueue({
-        id, name, artists, imageExists, albumArt
+        id, name, artists, images
       });
     } else {
       console.log(`Play ${this.props.id} now...`);
@@ -27,10 +27,10 @@ class Song extends Component {
   handlePlayLater = async () => {
     if (!this.state.userIsInRoom) {
       const {
-        id, name, artists, imageExists, albumArt
+        id, name, artists, images
       } = this.props;
       this.props.appendSongToQueue({
-        id, name, artists, imageExists, albumArt
+        id, name, artists, images
       });
     } else {
       console.log(`Play ${this.props.id} later...`);
