@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Image, ActivityIndicator, Dimensions
+  Text, View, TextInput, Image, ActivityIndicator, Dimensions, StyleSheet
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import * as firebase from 'firebase';
@@ -11,67 +11,61 @@ import Spotify from 'rn-spotify-sdk';
 import * as actions from '../actions';
 import NextSongsModal from '../components/NextSongsModal';
 import CurrentListenersModal from '../components/CurrentListenersModal';
+import ControlsContainer from '../components/ControlsContainer';
 
-// When the component is minimized, it will not be unmounted, so when
-// we are setting up the creator initially, we can begin playback right away
-
-// When a new listener joins the room, send that info to each client that is
-// in that room.  When the creator of that room receives that information, get
-// the current position in the track from the rn-spotify-sdk, and send it to firebase.
-// Then the new listener can wait for that information to be uploaded, and then join the room
-// have the playback be somewhat close to that of the creator.
-// We will see how long this takes.
+/* When the component is minimized, it will not be unmounted, so when
+we are setting up the creator initially, we can begin playback right away
+When a new listener joins the room, send that info to each client that is
+in that room.  When the creator of that room receives that information, get
+the current position in the track from the rn-spotify-sdk, and send it to firebase.
+Then the new listener can wait for that information to be uploaded, and then join the room
+have the playback be somewhat close to that of the creator.
+We will see how long this takes. */
 
 const { width: screenWidth } = Dimensions.get('window');
 
 class NowPlayingScreen extends Component {
   state = {
-    roomName: '',
+    changingName: false,
+    localName: '',
     loading: true,
     showNextSongs: false,
     showCurrentListeners: false,
-    songs: []
+    playing: true
   };
 
-  setupCreator = async (roomInfo, userInfo) => {
-    console.log(roomInfo);
-    console.log(userInfo);
-
-    const { roomName, songs } = roomInfo;
+  setupCreator = async (roomInfo) => {
+    this.props.updateRoom(roomInfo);
+    this.setState({ loading: false, creator: true });
     const currentSong = roomInfo.songs[0];
-    const song = roomInfo.songs[0].name;
-    const { artists } = roomInfo.songs[0];
-
-    this.setState({
-      currentSong,
-      song,
-      artists,
-      roomName,
-      loading: false,
-      creator: true,
-      songs
-    });
-
     await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
   };
 
-  // setupListener = (roomInfo, userInfo) => {
-  //   this.setState({ creator: false });
-  // };
-
-
-  // 3. Set the visual state of the application and start playback
-  // 4. Create the listeners screen
-  // 5. Create the up next songs screen
-  // 6. When the creator presses next, previous, or pause,
-  //    emit that event to the database and setup a listener
-  //    for database changes.  We can then listen for those changes
-  //    (such as new song, change of song order, and new listeners),
-  //    and change the UI accordingly.
+  setupListener = (roomInfo) => {
+    this.props.updateRoom(roomInfo);
+    this.setState({ loading: false, creator: false });
+  };
 
   componentDidMount = async () => {
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+
+    db.collection('rooms').doc(this.props.currentRoom)
+      .onSnapshot(async (room) => {
+        const roomData = room.data();
+        // If the creator paused it,
+        // no need to re-render the whole component
+        if (roomData.playing !== this.state.playing) {
+          this.setState({ playing: roomData.playing });
+          try {
+            await Spotify.setPlaying(roomData.playing);
+          } catch (err) {
+            console.error('Could not toggle playback');
+          }
+          return;
+        }
+        this.props.updateRoom(roomData);
+      });
 
     try {
       const room = await roomRef.get();
@@ -91,25 +85,40 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  minimize = () => {
-    this.props.navigation.navigate('Home');
+  updateRoomName = async () => {
+    this.setState({ changingName: false });
+    const db = firebase.firestore();
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+    try {
+      await roomRef.update({ roomName: this.state.localName });
+    } catch (err) {
+      console.error(`${err}We could not update the room name.`);
+    }
   }
 
-  leave = () => {
-    this.props.leaveRoom({ navigation: this.props.navigation });
+  minimize = () => this.props.navigation.navigate('Home');
+
+  leave = () => this.props.leaveRoom({ navigation: this.props.navigation });
+
+  previous = () => console.log('previous');
+
+  togglePlay = async () => {
+    try {
+      const db = firebase.firestore();
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+      const room = await roomRef.get();
+      if (room.exists) {
+        const { playing: currentPlayState } = room.data();
+        roomRef.update({ playing: !currentPlayState });
+      } else {
+        console.error('Room does not exist');
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-  previous = () => {
-    console.log('previous');
-  }
-
-  togglePlay = () => {
-    console.log('togglePlay');
-  }
-
-  next = () => {
-    console.log('next');
-  }
+  next = () => console.log('next');
 
   render() {
     if (this.state.loading) {
@@ -120,12 +129,15 @@ class NowPlayingScreen extends Component {
       );
     }
 
+    const { name, artists } = this.props.room.songs[0];
+    const { url: uri } = this.props.room.songs[0].images[0];
+
     return (
       <View style={styles.container}>
         <NextSongsModal
           visible={this.state.showNextSongs}
           closeModal={() => this.setState({ showNextSongs: false })}
-          songs={this.state.songs}
+          songs={this.props.room.songs}
         />
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}
@@ -143,35 +155,28 @@ class NowPlayingScreen extends Component {
           type="outline"
           title="Leave"
         />
-        <Text style={styles.roomName}>{this.state.roomName}</Text>
+        <TextInput
+          onChangeText={localName => this.setState({ changingName: true, localName })}
+          value={this.state.changingName ? this.state.localName : this.props.roomName}
+          onEndEditing={this.updateRoomName}
+          style={styles.roomName}
+        />
         <Image
-          source={this.state.currentSong.images.length > 0
-            ? { uri: this.state.currentSong.images[0].url }
+          source={this.props.room.songs.length > 0 ? { uri }
             : require('../assets/default_album.png')}
           style={styles.image}
         />
         <View style={styles.songInfoContainer}>
-          <Text style={styles.song}>{this.state.song}</Text>
-          <Text style={styles.artists}>{this.state.artists}</Text>
+          <Text style={styles.song}>{name}</Text>
+          <Text style={styles.artists}>{artists}</Text>
         </View>
         {this.state.creator ? (
-          <View style={styles.controlsContainer}>
-            <Button
-              onPress={this.previous}
-              type="clear"
-              icon={(<Icon type="material" size={60} name="skip-previous" />)}
-            />
-            <Button
-              onPress={this.togglePlay}
-              type="clear"
-              icon={(<Icon type="material" size={60} name="play-arrow" />)}
-            />
-            <Button
-              onPress={this.next}
-              type="clear"
-              icon={(<Icon type="material" size={60} name="skip-next" />)}
-            />
-          </View>
+          <ControlsContainer
+            playing={this.state.playing}
+            next={this.next}
+            togglePlay={this.togglePlay}
+            previous={this.previous}
+          />
         ) : null}
         <View
           style={{
@@ -202,12 +207,13 @@ class NowPlayingScreen extends Component {
   }
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+    marginTop: 50
   },
   minimizeButton: {
     position: 'absolute',
@@ -222,8 +228,9 @@ const styles = {
     zIndex: 10
   },
   roomName: {
+    margin: 50,
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   songInfoContainer: {
     alignItems: 'center',
@@ -240,13 +247,6 @@ const styles = {
   artists: {
     fontSize: 20
   },
-  controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    flex: 1,
-    width: screenWidth
-  },
   bottomButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -254,8 +254,8 @@ const styles = {
     flex: 1,
     width: screenWidth
   }
-};
+});
 
-const mapStateToProps = ({ newRoom }) => ({ currentRoom: newRoom.currentRoom });
+const mapStateToProps = ({ newRoom, room }) => ({ currentRoom: newRoom.currentRoom, room });
 
 export default connect(mapStateToProps, actions)(NowPlayingScreen);

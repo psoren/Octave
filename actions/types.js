@@ -12,8 +12,10 @@ export const JOIN_ROOM = 'join_room';
 export const LEAVE_ROOM = 'leave_room';
 
 // Room Actions
-export const APPEND_TO_QUEUE = 'add_to_queue';
-export const CHANGE_ROOM_NAME = 'change_room_name';
+export const UPDATE_ROOM = 'update_room';
 export const LISTENER_JOINED = 'listener_joined';
 export const LISTENER_LEFT = 'listener_left';
 export const CREATOR_LEFT = 'creator_left';
+export const TOGGLE_PLAYBACK = 'toggle_playbacl';
+export const NEXT_SONG = 'next_song';
+export const PREVIOUS_SONG = 'previous_song';

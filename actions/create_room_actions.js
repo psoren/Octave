@@ -46,7 +46,7 @@ export const createRoom = ({
   try {
     const db = firebase.firestore();
     const { id: newRoomId } = await db.collection('rooms').add({
-      songs, roomName, roomCreatorID
+      songs, roomName, roomCreatorID, currentSongIndex: 0, playing: true
     });
     dispatch({
       type: CREATE_ROOM,

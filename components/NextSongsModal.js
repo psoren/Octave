@@ -24,17 +24,31 @@ class NextSongsModal extends Component {
           <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
               <Text style={styles.title}>Up Next</Text>
-              <View style={styles.playlistsContainer}>
-                {this.props.songs.map(song => (
-                  <Song
-                    id={song.id}
-                    name={song.name}
-                    artists={song.artists}
-                    images={song.images}
-                    key={song.id}
-                  />
-                ))}
-              </View>
+              {
+                this.props.songs.length !== 1
+                  ? (
+                    <View style={styles.playlistsContainer}>
+                      {this.props.songs.map((song, index) => (
+                        index === 0 ? null
+                          : (
+                            <Song
+                              id={song.id}
+                              name={song.name}
+                              artists={song.artists}
+                              images={song.images}
+                              key={song.id}
+                            />
+                          )
+                      ))}
+                    </View>
+                  )
+                  : (
+                    <Text style={styles.noMoreSongs}>
+                    Add some songs to the queue
+                    </Text>
+                  )
+              }
+
             </ScrollView>
           </View>
 
@@ -64,6 +78,10 @@ const styles = {
   },
   container: {
     marginTop: 50
+  },
+  noMoreSongs: {
+    fontSize: 28,
+    fontWeight: 'bold'
   }
 };
 
