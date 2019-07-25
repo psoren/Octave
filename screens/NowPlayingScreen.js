@@ -70,13 +70,8 @@ class NowPlayingScreen extends Component {
   //    and change the UI accordingly.
 
   componentDidMount = async () => {
-    // 1. Get the room info firestore, check if creator
     const db = firebase.firestore();
-
-    // 2. Get currentRoom (the id) from the redux state
-    const testRoomId = this.props.currentRoom;
-
-    const roomRef = db.collection('rooms').doc(testRoomId);
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom);
 
     try {
       const room = await roomRef.get();
@@ -96,8 +91,12 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  closeNowPlaying = () => {
+  minimize = () => {
     this.props.navigation.navigate('Home');
+  }
+
+  leave = () => {
+    this.props.leaveRoom({ navigation: this.props.navigation });
   }
 
   previous = () => {
@@ -133,10 +132,16 @@ class NowPlayingScreen extends Component {
           closeModal={() => this.setState({ showCurrentListeners: false })}
         />
         <Button
-          containerStyle={styles.closeButton}
-          onPress={this.closeNowPlaying}
-          type="clear"
-          icon={(<Icon type="material" name="cancel" size={45} />)}
+          containerStyle={styles.minimizeButton}
+          onPress={this.minimize}
+          type="outline"
+          title="Minimize"
+        />
+        <Button
+          containerStyle={styles.leaveButton}
+          onPress={this.leave}
+          type="outline"
+          title="Leave"
         />
         <Text style={styles.roomName}>{this.state.roomName}</Text>
         <Image
@@ -149,7 +154,7 @@ class NowPlayingScreen extends Component {
           <Text style={styles.song}>{this.state.song}</Text>
           <Text style={styles.artists}>{this.state.artists}</Text>
         </View>
-        { this.state.creator ? (
+        {this.state.creator ? (
           <View style={styles.controlsContainer}>
             <Button
               onPress={this.previous}
@@ -204,9 +209,15 @@ const styles = {
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
-  closeButton: {
+  minimizeButton: {
     position: 'absolute',
     left: 25,
+    top: 25,
+    zIndex: 10
+  },
+  leaveButton: {
+    position: 'absolute',
+    right: 25,
     top: 25,
     zIndex: 10
   },

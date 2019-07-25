@@ -4,7 +4,8 @@ import {
   CHANGE_PENDING_ROOM_NAME,
   PREPEND_SONG_TO_CREATE_ROOM_QUEUE,
   APPEND_SONG_TO_CREATE_ROOM_QUEUE,
-  CREATE_ROOM
+  CREATE_ROOM,
+  LEAVE_ROOM
 } from '../actions/types';
 
 const INITIAL_STATE = {
@@ -26,6 +27,8 @@ export default function (state = INITIAL_STATE, action) {
         ...INITIAL_STATE,
         currentRoom: action.payload
       };
+    case LEAVE_ROOM:
+      return INITIAL_STATE;
     default:
       return state;
   }

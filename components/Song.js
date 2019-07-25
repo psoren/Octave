@@ -15,7 +15,7 @@ class Song extends Component {
       const {
         id, name, artists, images
       } = this.props;
-      this.props.prependSongToQueue({
+      this.props.prependSongToPendingQueue({
         id, name, artists, images
       });
     } else {
@@ -29,7 +29,7 @@ class Song extends Component {
       const {
         id, name, artists, images
       } = this.props;
-      this.props.appendSongToQueue({
+      this.props.appendSongToPendingQueue({
         id, name, artists, images
       });
     } else {

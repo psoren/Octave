@@ -73,7 +73,7 @@ class CreateRoomScreen extends Component {
       <View style={styles.container}>
         <TextInput
           style={styles.roomName}
-          onChangeText={roomName => this.props.changeRoomName(roomName)}
+          onChangeText={roomName => this.props.changePendingRoomName(roomName)}
           value={this.props.roomName}
           placeholder="Your Room Name"
           autoCapitalize="none"
