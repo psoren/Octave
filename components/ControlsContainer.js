@@ -8,7 +8,7 @@ const { width } = Dimensions.get('window');
 const ControlsContainer = props => (
   <View style={styles.controlsContainer}>
     <Button
-      onPress={props.previous}
+      onPress={() => props.changeSong(-1)}
       type="clear"
       icon={(<Icon type="material" size={60} name="skip-previous" />)}
     />
@@ -26,7 +26,7 @@ const ControlsContainer = props => (
     )}
     />
     <Button
-      onPress={props.next}
+      onPress={() => props.changeSong(1)}
       type="clear"
       icon={(<Icon type="material" size={60} name="skip-next" />)}
     />
@@ -34,9 +34,8 @@ const ControlsContainer = props => (
 );
 
 ControlsContainer.propTypes = {
-  previous: PropTypes.func.isRequired,
   togglePlay: PropTypes.func.isRequired,
-  next: PropTypes.func.isRequired,
+  changeSong: PropTypes.func.isRequired,
   playing: PropTypes.bool.isRequired
 };
 

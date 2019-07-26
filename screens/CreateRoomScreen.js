@@ -28,25 +28,12 @@ class CreateRoomScreen extends Component {
     const { uri } = await Spotify.getMe();
     const roomCreatorID = uri.split(':')[2];
     const { songs, roomName } = this.props;
-
     if (songs.length === 0) {
-      Alert.alert(
-        'Please add at least one song',
-        '', [{ text: 'OK' }],
-        { cancelable: false }
-      );
+      Alert.alert('Please add at least one song');
     } else if (roomName === '') {
-      Alert.alert(
-        'Please add a room name',
-        '', [{ text: 'OK' }],
-        { cancelable: false }
-      );
+      Alert.alert('Please add a room name');
     } else if (!uri) {
-      Alert.alert(
-        "You don't appear to be logged in.  There is an issue",
-        '', [{ text: 'OK' }],
-        { cancelable: false }
-      );
+      Alert.alert("You don't appear to be logged in.  There is an issue");
     } else {
       this.props.createRoom({
         songs,

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Text, View, TextInput, Image, ActivityIndicator, Dimensions, StyleSheet
+  Text, View, TextInput, Image, ActivityIndicator, Dimensions, StyleSheet, Alert
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import * as firebase from 'firebase';
@@ -31,7 +31,8 @@ class NowPlayingScreen extends Component {
     loading: true,
     showNextSongs: false,
     showCurrentListeners: false,
-    playing: true
+    playing: true,
+    currentSongIndex: 0
   };
 
   setupCreator = async (roomInfo) => {
@@ -53,6 +54,7 @@ class NowPlayingScreen extends Component {
     db.collection('rooms').doc(this.props.currentRoom)
       .onSnapshot(async (room) => {
         const roomData = room.data();
+        this.setState({ currentSongIndex: roomData.currentSongIndex });
         // If the creator paused it,
         // no need to re-render the whole component
         if (roomData.playing !== this.state.playing) {
@@ -100,7 +102,36 @@ class NowPlayingScreen extends Component {
 
   leave = () => this.props.leaveRoom({ navigation: this.props.navigation });
 
-  previous = () => console.log('previous');
+  changeSong = async (distance) => {
+    const db = firebase.firestore();
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+    const room = await roomRef.get();
+    if (room.exists) {
+      const roomData = room.data();
+      const numSongs = roomData.songs.length;
+      const newIndex = roomData.currentSongIndex + distance;
+
+      if (newIndex < 0) {
+        try {
+          await Spotify.playURI(`spotify:track:${roomData.songs[0].id}`, 0, 0);
+          Alert.alert('No previous songs');
+        } catch (err) {
+          console.error(`Could not play ${roomData.songs[0].name}: ${err}`);
+        }
+      } else if (newIndex + 1 > numSongs) {
+        Alert.alert('No upcoming songs');
+      } else {
+        // The user has specified a valid index
+        // console.log(`the previous index is ${this.state.currentSongIndex}`);
+        // console.log(`the new index is ${roomData.currentSongIndex + distance}`);
+
+        roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(distance) });
+        Spotify.playURI(`spotify:track:${roomData.songs[roomData.currentSongIndex + distance].id}`, 0, 0);
+      }
+    } else {
+      console.error('Room does not exist');
+    }
+  }
 
   togglePlay = async () => {
     try {
@@ -118,8 +149,6 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  next = () => console.log('next');
-
   render() {
     if (this.state.loading) {
       return (
@@ -129,8 +158,8 @@ class NowPlayingScreen extends Component {
       );
     }
 
-    const { name, artists } = this.props.room.songs[0];
-    const { url: uri } = this.props.room.songs[0].images[0];
+    const { name, artists } = this.props.room.songs[this.state.currentSongIndex];
+    const { url: uri } = this.props.room.songs[this.state.currentSongIndex].images[0];
 
     return (
       <View style={styles.container}>
@@ -173,9 +202,8 @@ class NowPlayingScreen extends Component {
         {this.state.creator ? (
           <ControlsContainer
             playing={this.state.playing}
-            next={this.next}
             togglePlay={this.togglePlay}
-            previous={this.previous}
+            changeSong={this.changeSong}
           />
         ) : null}
         <View
