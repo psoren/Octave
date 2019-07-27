@@ -10,7 +10,7 @@ class SearchResult extends Component {
   navigate = () => {
     const { id, type } = this.props;
 
-    if (this.props.currentRoom === '') {
+    if (this.props.currentRoomID === '') {
       switch (this.props.type) {
         case 'artist':
           this.props.navigation.navigate('CreateRoomSearchArtist', { id, type });
@@ -92,6 +92,6 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ newRoom }) => ({ currentRoom: newRoom.currentRoom });
+const mapStateToProps = ({ currentRoom }) => ({ currentRoomID: currentRoom.id });
 
 export default connect(mapStateToProps, null)(withNavigation(SearchResult));

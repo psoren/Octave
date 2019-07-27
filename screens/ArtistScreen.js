@@ -53,8 +53,6 @@ class ArtistScreen extends Component {
     this.setState({ albums });
   }
 
-  selectAlbum = uri => console.log(`go to album with uri${uri}`);
-
   render() {
     return (
       <View style={styles.container}>

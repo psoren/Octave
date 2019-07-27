@@ -20,22 +20,25 @@ class Song extends Component {
     const newSong = {
       id, name, artists, images
     };
-    if (!this.props.currentRoom) {
+    if (!this.props.currentRoom.id) {
       if (playNow) {
         this.props.prependSongToPendingQueue(newSong);
       } else { this.props.appendSongToPendingQueue(newSong); }
     } else {
       const db = firebase.firestore();
-      const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       try {
         const room = await roomRef.get();
         if (room.exists) {
           let { songs } = room.data();
           if (playNow) {
             songs.splice(1, 0, newSong);
-          } else { songs.push(newSong); }
+          } else {
+            songs.push(newSong);
+          }
           songs = _.uniqBy(songs, 'id');
-          roomRef.update({ songs });
+
+          await roomRef.update({ songs });
         } else {
           console.error('Could not find room');
         }
@@ -86,7 +89,7 @@ class Song extends Component {
           handlePlay={this.handlePlay}
           modalVisible={this.state.modalVisible}
           hideModal={() => this.setState({ modalVisible: false })}
-          userIsInRoom={this.props.currentRoom !== ''}
+          userIsInRoom={this.props.currentRoomID !== ''}
         />
       </View>
     );
@@ -130,10 +133,8 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth, newRoom, room }) => ({
-  accessToken: auth.accessToken,
-  currentRoom: newRoom.currentRoom,
-  room
+const mapStateToProps = ({ auth, currentRoom }) => ({
+  accessToken: auth.accessToken, currentRoom
 });
 
 export default connect(mapStateToProps, actions)(Song);

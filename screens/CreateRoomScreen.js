@@ -27,17 +27,17 @@ class CreateRoomScreen extends Component {
   createRoom = async () => {
     const { uri } = await Spotify.getMe();
     const roomCreatorID = uri.split(':')[2];
-    const { songs, roomName } = this.props;
+    const { songs, name } = this.props;
     if (songs.length === 0) {
       Alert.alert('Please add at least one song');
-    } else if (roomName === '') {
+    } else if (name === '') {
       Alert.alert('Please add a room name');
     } else if (!uri) {
       Alert.alert("You don't appear to be logged in.  There is an issue");
     } else {
       this.props.createRoom({
         songs,
-        roomName,
+        name,
         roomCreatorID,
         navigation: this.props.navigation
       });
@@ -46,7 +46,7 @@ class CreateRoomScreen extends Component {
 
   render() {
     // If the user is in a room
-    if (this.props.currentRoom !== '') {
+    if (this.props.currentRoom.id !== '') {
       return (
         <View style={styles.container}>
           <Text style={{ margin: 15, fontSize: 18 }}>
@@ -59,9 +59,9 @@ class CreateRoomScreen extends Component {
     return (
       <View style={styles.container}>
         <TextInput
-          style={styles.roomName}
-          onChangeText={roomName => this.props.changePendingRoomName(roomName)}
-          value={this.props.roomName}
+          style={styles.name}
+          onChangeText={name => this.props.changePendingRoomName(name)}
+          value={this.props.name}
           placeholder="Your Room Name"
           autoCapitalize="none"
           autoCompleteType="off"
@@ -109,7 +109,7 @@ const styles = {
     height: 400,
     width: 400
   },
-  roomName: {
+  name: {
     margin: 15,
     fontSize: 30,
     height: 40
@@ -119,9 +119,9 @@ const styles = {
   }
 };
 
-function mapStateToProps({ newRoom }) {
-  const { roomName, songs, currentRoom } = newRoom;
-  return { roomName, songs, currentRoom };
-}
+const mapStateToProps = ({ pendingRoom, currentRoom }) => {
+  const { name, songs } = pendingRoom;
+  return { name, songs, currentRoom };
+};
 
 export default connect(mapStateToProps, actions)(CreateRoomScreen);

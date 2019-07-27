@@ -39,8 +39,8 @@ class LoginScreen extends PureComponent {
   componentDidMount = async () => {
     try {
       await this.initializeIfNeeded();
-    } catch (error) {
-      console.log(`There was an error${error.message}`);
+    } catch (err) {
+      console.error(`There was an error${err.message}`);
     }
   }
 

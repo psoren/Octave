@@ -52,10 +52,6 @@ class LibraryPlaylists extends Component {
     return playlists;
   }
 
-  selectAlbum = uri => console.log(`go to playlist with uri${uri}`);
-
-  goToLibrary = () => console.log('go to library');
-
   render() {
     return (
       <View style={styles.container}>

@@ -11,7 +11,7 @@ const { width: imageSize } = Dimensions.get('window');
 class Thumbnail extends Component {
   navigate = () => {
     const { id, type } = this.props;
-    if (this.props.currentRoom === '') {
+    if (this.props.currentRoomID === '') {
       switch (this.props.type) {
         case 'album':
           this.props.navigation.navigate('CreateRoomSearchAlbum', { id, type });
@@ -77,9 +77,9 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth, newRoom }) => ({
+const mapStateToProps = ({ auth, currentRoom }) => ({
   accessToken: auth.accessToken,
-  currentRoom: newRoom.currentRoom
+  currentRoomID: currentRoom.id
 });
 
 export default connect(mapStateToProps, null)(withNavigation(Thumbnail));

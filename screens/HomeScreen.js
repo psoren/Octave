@@ -63,6 +63,7 @@ class HomeScreen extends Component {
           onPress={this.renewSession}
         />
         <Text>
+          {' '}
           Access token:
           {' '}
           {accessToken}

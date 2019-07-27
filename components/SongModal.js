@@ -12,7 +12,7 @@ const marginHeight = 3 * (height / 4);
 
 const SongModal = props => (
   <Modal
-    animationType="fade"
+    animationType="slide"
     visible={props.modalVisible}
     style={styles.modal}
     transparent

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { Text, View, FlatList } from 'react-native';
 import axios from 'axios';
 import qs from 'qs';
@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import Song from '../components/Song';
 import getSongData from '../functions/getSongData';
 
-class LibrarySongsScreen extends Component {
+class LibrarySongsScreen extends PureComponent {
   state = { songs: [], limit: 50 };
 
   componentDidMount = async () => {
@@ -22,9 +22,9 @@ class LibrarySongsScreen extends Component {
 
   onEndReached = async () => {
     const { data } = await axios.get(this.state.next, this.state.config);
+    console.log(data.next);
     const newSongs = data.items.map(item => getSongData(item, { type: 'playlist' }));
-    const currentSongs = this.state.songs;
-    this.setState({ songs: [...currentSongs, ...newSongs], next: data.next });
+    this.setState(prevState => ({ songs: prevState.songs.concat(newSongs), next: data.next }));
   }
 
   render() {

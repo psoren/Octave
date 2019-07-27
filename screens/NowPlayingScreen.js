@@ -25,15 +25,22 @@ We will see how long this takes. */
 const { width: screenWidth } = Dimensions.get('window');
 
 class NowPlayingScreen extends Component {
-  state = {
-    changingName: false,
-    localName: '',
-    loading: true,
-    showNextSongs: false,
-    showCurrentListeners: false,
-    playing: true,
-    currentSongIndex: 0
-  };
+  constructor(props) {
+    super(props);
+    // console.log('loading new room...');
+    // console.log(this.props.currentRoom);
+
+    this.state = {
+      changingName: false,
+      localName: '',
+      loading: true,
+      showNextSongs: false,
+      showCurrentListeners: false,
+      playing: true,
+      currentSongIndex: 0
+    };
+  }
+
 
   setupCreator = async (roomInfo) => {
     this.props.updateRoom(roomInfo);
@@ -48,10 +55,14 @@ class NowPlayingScreen extends Component {
   };
 
   componentDidMount = async () => {
-    const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+    // console.log('loading new room...');
+    // console.log('the current room is');
+    // console.log(this.props.currentRoom);
 
-    db.collection('rooms').doc(this.props.currentRoom)
+    const db = firebase.firestore();
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+
+    db.collection('rooms').doc(this.props.currentRoom.id)
       .onSnapshot(async (room) => {
         const roomData = room.data();
         this.setState({ currentSongIndex: roomData.currentSongIndex });
@@ -71,8 +82,13 @@ class NowPlayingScreen extends Component {
 
     try {
       const room = await roomRef.get();
+
+      // console.log('The room is:');
+      // console.log(room);
+
       if (room.exists) {
-        const roomInfo = room.data();
+        const roomData = room.data();
+        const roomInfo = { ...roomData, id: room.id };
         const userInfo = await Spotify.getMe();
         if (roomInfo.roomCreatorID === userInfo.id) {
           this.setupCreator(roomInfo, userInfo);
@@ -90,21 +106,17 @@ class NowPlayingScreen extends Component {
   updateRoomName = async () => {
     this.setState({ changingName: false });
     const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
     try {
-      await roomRef.update({ roomName: this.state.localName });
+      await roomRef.update({ name: this.state.localName });
     } catch (err) {
       console.error(`${err}We could not update the room name.`);
     }
   }
 
-  minimize = () => this.props.navigation.navigate('Home');
-
-  leave = () => this.props.leaveRoom({ navigation: this.props.navigation });
-
   changeSong = async (distance) => {
     const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
     const room = await roomRef.get();
     if (room.exists) {
       const roomData = room.data();
@@ -121,10 +133,6 @@ class NowPlayingScreen extends Component {
       } else if (newIndex + 1 > numSongs) {
         Alert.alert('No upcoming songs');
       } else {
-        // The user has specified a valid index
-        // console.log(`the previous index is ${this.state.currentSongIndex}`);
-        // console.log(`the new index is ${roomData.currentSongIndex + distance}`);
-
         roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(distance) });
         Spotify.playURI(`spotify:track:${roomData.songs[roomData.currentSongIndex + distance].id}`, 0, 0);
       }
@@ -136,7 +144,7 @@ class NowPlayingScreen extends Component {
   togglePlay = async () => {
     try {
       const db = firebase.firestore();
-      const roomRef = db.collection('rooms').doc(this.props.currentRoom);
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       const room = await roomRef.get();
       if (room.exists) {
         const { playing: currentPlayState } = room.data();
@@ -150,7 +158,7 @@ class NowPlayingScreen extends Component {
   }
 
   render() {
-    if (this.state.loading) {
+    if (this.state.loading || (!this.props.currentRoom.name)) {
       return (
         <View style={styles.container}>
           <ActivityIndicator size="large" color="#92f39d" animating />
@@ -158,15 +166,15 @@ class NowPlayingScreen extends Component {
       );
     }
 
-    const { name, artists } = this.props.room.songs[this.state.currentSongIndex];
-    const { url: uri } = this.props.room.songs[this.state.currentSongIndex].images[0];
+    const { name, artists } = this.props.currentRoom.songs[this.state.currentSongIndex];
+    const { url } = this.props.currentRoom.songs[this.state.currentSongIndex].images[0];
 
     return (
       <View style={styles.container}>
         <NextSongsModal
           visible={this.state.showNextSongs}
           closeModal={() => this.setState({ showNextSongs: false })}
-          songs={this.props.room.songs}
+          songs={this.props.currentRoom.songs}
         />
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}
@@ -174,24 +182,27 @@ class NowPlayingScreen extends Component {
         />
         <Button
           containerStyle={styles.minimizeButton}
-          onPress={this.minimize}
+          onPress={() => this.props.navigation.navigate('Home')}
           type="outline"
           title="Minimize"
         />
         <Button
           containerStyle={styles.leaveButton}
-          onPress={this.leave}
+          onPress={() => this.props.leaveRoom(this.props.navigation,
+            this.props.currentRoom.id)}
           type="outline"
           title="Leave"
         />
         <TextInput
           onChangeText={localName => this.setState({ changingName: true, localName })}
-          value={this.state.changingName ? this.state.localName : this.props.roomName}
+          value={this.state.changingName
+            ? this.state.localName
+            : this.props.currentRoom.name}
           onEndEditing={this.updateRoomName}
           style={styles.roomName}
         />
         <Image
-          source={this.props.room.songs.length > 0 ? { uri }
+          source={this.props.currentRoom.songs.length > 0 ? { url }
             : require('../assets/default_album.png')}
           style={styles.image}
         />
@@ -284,6 +295,6 @@ const styles = StyleSheet.create({
   }
 });
 
-const mapStateToProps = ({ newRoom, room }) => ({ currentRoom: newRoom.currentRoom, room });
+const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
 
 export default connect(mapStateToProps, actions)(NowPlayingScreen);

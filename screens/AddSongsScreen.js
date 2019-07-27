@@ -6,28 +6,28 @@ import SearchContent from '../components/SearchContent';
 import LibraryPlaylists from '../components/LibraryPlaylists';
 
 class AddSongsScreen extends Component {
-    state = { selectedIndex: 0 };
+  state = { selectedIndex: 0 };
 
-    updateIndex = newIndex => this.setState({ selectedIndex: newIndex });
+  updateIndex = newIndex => this.setState({ selectedIndex: newIndex });
 
-    render() {
-      const buttons = ['Spotify', 'Your Library'];
-      const { selectedIndex } = this.state;
+  render() {
+    const buttons = ['Spotify', 'Your Library'];
+    const { selectedIndex } = this.state;
 
-      return (
-        <View style={[styles.container,
-          this.props.currentRoom ? { marginTop: 50 } : {}]}
-        >
-          <ButtonGroup
-            onPress={this.updateIndex}
-            selectedIndex={selectedIndex}
-            buttons={buttons}
-            containerStyle={styles.buttonGroup}
-          />
-          {selectedIndex === 0 ? <SearchContent /> : <LibraryPlaylists />}
-        </View>
-      );
-    }
+    return (
+      <View style={[styles.container,
+        this.props.currentRoom.id ? { marginTop: 50 } : {}]}
+      >
+        <ButtonGroup
+          onPress={this.updateIndex}
+          selectedIndex={selectedIndex}
+          buttons={buttons}
+          containerStyle={styles.buttonGroup}
+        />
+        {selectedIndex === 0 ? <SearchContent /> : <LibraryPlaylists />}
+      </View>
+    );
+  }
 }
 
 const styles = {
@@ -41,6 +41,6 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ newRoom }) => ({ currentRoom: newRoom.currentRoom });
+const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
 
 export default connect(mapStateToProps, null)(AddSongsScreen);
