@@ -53,43 +53,45 @@ class NowPlayingScreen extends Component {
   }
 
   setupRoom = async () => {
-    const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-
-    db.collection('rooms').doc(this.props.currentRoom.id)
-      .onSnapshot(async (room) => {
-        const roomData = room.data();
-        this.setState({ currentSongIndex: roomData.currentSongIndex });
-        // If the creator paused it,
-        // no need to re-render the whole component
-        if (roomData.playing !== this.state.playing) {
-          this.setState({ playing: roomData.playing });
-          try {
-            await Spotify.setPlaying(roomData.playing);
-          } catch (err) {
-            console.error('Could not toggle playback');
+    if (this.props.currentRoom.id !== '') {
+      const db = firebase.firestore();
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+      this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
+        .onSnapshot(async (room) => {
+          const roomData = room.data();
+          this.setState({ currentSongIndex: roomData.currentSongIndex });
+          // If the creator paused it,
+          // no need to re-render the whole component
+          if (roomData.playing !== this.state.playing) {
+            this.setState({ playing: roomData.playing });
+            try {
+              await Spotify.setPlaying(roomData.playing);
+            } catch (err) {
+              console.error('Could not toggle playback');
+            }
+            return;
           }
-          return;
-        }
-        this.props.updateRoom(roomData);
-      });
+          this.props.updateRoom(roomData);
+        });
 
-    try {
-      const room = await roomRef.get();
-      if (room.exists) {
-        const roomData = room.data();
-        const roomInfo = { ...roomData, id: room.id };
-        const userInfo = await Spotify.getMe();
-        if (roomInfo.roomCreatorID === userInfo.id) {
-          this.setupCreator(roomInfo, userInfo);
+      try {
+        const room = await roomRef.get();
+        if (room.exists) {
+          const roomData = room.data();
+          const roomInfo = { ...roomData, id: room.id };
+          const userInfo = await Spotify.getMe();
+          if (roomInfo.roomCreatorID === userInfo.id) {
+            this.setupCreator(roomInfo, userInfo);
+          } else {
+            this.setupListener(roomInfo, userInfo);
+          }
         } else {
-          this.setupListener(roomInfo, userInfo);
+          console.error('Could not find room.');
         }
-      } else {
-        console.error('Could not find room.');
+      } catch (err) {
+        console.error(err);
+        console.error('Could not get room data.');
       }
-    } catch (err) {
-      console.error(err);
     }
   }
 
@@ -152,7 +154,6 @@ class NowPlayingScreen extends Component {
     this.setState({ loading: false, creator: false });
   };
 
-
   setupCreator = async (roomInfo) => {
     this.props.updateRoom(roomInfo);
     this.setState({ loading: false, creator: true });
@@ -160,6 +161,10 @@ class NowPlayingScreen extends Component {
     await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
   };
 
+  leaveRoom = () => {
+    this.unsubscribe();
+    this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id);
+  }
 
   render() {
     if (this.state.loading
@@ -194,8 +199,7 @@ class NowPlayingScreen extends Component {
         />
         <Button
           containerStyle={styles.leaveButton}
-          onPress={() => this.props.leaveRoom(this.props.navigation,
-            this.props.currentRoom.id)}
+          onPress={this.leaveRoom}
           type="outline"
           title="Leave"
         />
