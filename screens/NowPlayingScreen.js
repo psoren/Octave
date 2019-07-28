@@ -179,13 +179,14 @@ class NowPlayingScreen extends Component {
 
     const { name, artists } = this.props.currentRoom.songs[this.state.currentSongIndex];
     const { url } = this.props.currentRoom.songs[this.state.currentSongIndex].images[0];
+    const nextSongs = this.props.currentRoom.songs.slice(this.state.currentSongIndex);
 
     return (
       <View style={styles.container}>
         <NextSongsModal
           visible={this.state.showNextSongs}
           closeModal={() => this.setState({ showNextSongs: false })}
-          songs={this.props.currentRoom.songs}
+          songs={nextSongs}
         />
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}
