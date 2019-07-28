@@ -31,7 +31,7 @@ export const createRoom = ({
   try {
     const db = firebase.firestore();
     const { id: newRoomId } = await db.collection('rooms').add({
-      songs, name, roomCreatorID, currentSongIndex: 0, playing: true
+      songs, name, roomCreatorID, currentSongIndex: 0, playing: true, listeners: []
     });
     dispatch({ type: CREATE_ROOM, payload: newRoomId });
     navigation.navigate('NowPlaying');

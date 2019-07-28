@@ -93,7 +93,6 @@ class NowPlayingScreen extends Component {
     }
   }
 
-
   changeSong = async (distance) => {
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
@@ -137,7 +136,6 @@ class NowPlayingScreen extends Component {
     }
   }
 
-
   updateRoomName = async () => {
     this.setState({ changingName: false });
     const db = firebase.firestore();
@@ -164,7 +162,9 @@ class NowPlayingScreen extends Component {
 
 
   render() {
-    if (this.state.loading || (!this.props.currentRoom.name)) {
+    if (this.state.loading
+      || (!this.props.currentRoom.name)
+      || this.props.currentRoom.id === '') {
       return (
         <View style={styles.container}>
           <ActivityIndicator size="large" color="#92f39d" animating />
