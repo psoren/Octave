@@ -21,6 +21,14 @@ class LibraryPlaylists extends Component {
     this.setState({ playlists });
   }
 
+  goToLibrary = () => {
+    if (this.props.currentRoom.id === '') {
+      this.props.navigation.navigate('CreateRoomLibrarySongs');
+    } else {
+      this.props.navigation.navigate('LibrarySongsRoom');
+    }
+  }
+
   getPlaylists = async (id, total, config) => {
     // Construct strings of requests
     const requests = [];
@@ -108,6 +116,6 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+const mapStateToProps = ({ auth, currentRoom }) => ({ accessToken: auth.accessToken, currentRoom });
 
 export default connect(mapStateToProps, null)(LibraryPlaylists);

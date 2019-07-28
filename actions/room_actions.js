@@ -8,13 +8,12 @@ export const leaveRoom = (navigation, id) => async (dispatch) => {
   await navigation.navigate('Home');
   await dispatch({ type: LEAVE_ROOM });
 
-  // // 1. Leave the room in firebase
+  // 1. Leave the room in firebase
 
-  // // 2. Stop playback
+  // 2. Stop playback
   await Spotify.setPlaying(false);
 
-  // navigation.navigate('Home');
-  // // 3. Reset redux state
+  // 3. Reset redux state
 
-  // // 4. Navigate to the home screen
+  // 4. Navigate to the home screen
 };

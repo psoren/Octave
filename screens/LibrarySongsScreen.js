@@ -22,21 +22,24 @@ class LibrarySongsScreen extends PureComponent {
 
   onEndReached = async () => {
     const { data } = await axios.get(this.state.next, this.state.config);
-    console.log(data.next);
-    const newSongs = data.items.map(item => getSongData(item, { type: 'playlist' }));
-    this.setState(prevState => ({ songs: prevState.songs.concat(newSongs), next: data.next }));
+    if (data.next !== this.state.next) {
+      const newSongs = data.items.map(item => getSongData(item, { type: 'playlist' }));
+      this.setState(prevState => ({ songs: [...prevState.songs, ...newSongs], next: data.next }));
+    }
   }
 
   render() {
     return (
-      <View style={styles.container}>
+      <View
+        style={styles.container}
+        contentContainerStyle={{ flex: 1 }}
+      >
         <Text style={styles.title}>Your Songs</Text>
         <FlatList
           data={this.state.songs}
           keyExtractor={item => item.id}
-          onEndReachedThreshold={0.5}
-          onEndReached={this.onEndReached}
-          extraData={this.state}
+          onEndReachedThreshold={0.3}
+          onEndReached={() => this.onEndReached()}
           renderItem={({ item }) => (
             <Song
               id={item.id}

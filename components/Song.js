@@ -20,7 +20,7 @@ class Song extends Component {
     const newSong = {
       id, name, artists, images
     };
-    if (!this.props.currentRoom.id) {
+    if (this.props.currentRoom.id === '') {
       if (playNow) {
         this.props.prependSongToPendingQueue(newSong);
       } else { this.props.appendSongToPendingQueue(newSong); }
@@ -33,12 +33,9 @@ class Song extends Component {
           let { songs } = room.data();
           if (playNow) {
             songs.splice(1, 0, newSong);
-          } else {
-            songs.push(newSong);
-          }
+          } else { songs.push(newSong); }
           songs = _.uniqBy(songs, 'id');
-
-          await roomRef.update({ songs });
+          roomRef.update({ songs });
         } else {
           console.error('Could not find room');
         }
@@ -89,7 +86,7 @@ class Song extends Component {
           handlePlay={this.handlePlay}
           modalVisible={this.state.modalVisible}
           hideModal={() => this.setState({ modalVisible: false })}
-          userIsInRoom={this.props.currentRoomID !== ''}
+          userIsInRoom={this.props.currentRoom !== ''}
         />
       </View>
     );
@@ -133,8 +130,10 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth, currentRoom }) => ({
-  accessToken: auth.accessToken, currentRoom
+const mapStateToProps = ({ auth, pendingRoom, currentRoom }) => ({
+  accessToken: auth.accessToken,
+  pendingRoom,
+  currentRoom
 });
 
 export default connect(mapStateToProps, actions)(Song);

@@ -22,43 +22,37 @@ Then the new listener can wait for that information to be uploaded, and then joi
 have the playback be somewhat close to that of the creator.
 We will see how long this takes. */
 
+// The issue is that this component never unmounts, so componentdidmount
+// is not getting called again, so we are not setting up the room
+
 const { width: screenWidth } = Dimensions.get('window');
 
 class NowPlayingScreen extends Component {
-  constructor(props) {
-    super(props);
-    // console.log('loading new room...');
-    // console.log(this.props.currentRoom);
+  state = {
+    changingName: false,
+    localName: '',
+    loading: true,
+    showNextSongs: false,
+    showCurrentListeners: false,
+    playing: true,
+    currentSongIndex: 0
+  };
 
-    this.state = {
-      changingName: false,
-      localName: '',
-      loading: true,
-      showNextSongs: false,
-      showCurrentListeners: false,
-      playing: true,
-      currentSongIndex: 0
-    };
+  componentWillUnmount() {
+    console.log('Now Playing Screen unmounting...');
   }
 
+  componentDidMount = () => {
+    this.setupRoom();
+  }
 
-  setupCreator = async (roomInfo) => {
-    this.props.updateRoom(roomInfo);
-    this.setState({ loading: false, creator: true });
-    const currentSong = roomInfo.songs[0];
-    await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
-  };
+  componentDidUpdate = async (prevProps) => {
+    if (this.props.currentRoom.id !== prevProps.currentRoom.id) {
+      this.setupRoom();
+    }
+  }
 
-  setupListener = (roomInfo) => {
-    this.props.updateRoom(roomInfo);
-    this.setState({ loading: false, creator: false });
-  };
-
-  componentDidMount = async () => {
-    // console.log('loading new room...');
-    // console.log('the current room is');
-    // console.log(this.props.currentRoom);
-
+  setupRoom = async () => {
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
 
@@ -82,10 +76,6 @@ class NowPlayingScreen extends Component {
 
     try {
       const room = await roomRef.get();
-
-      // console.log('The room is:');
-      // console.log(room);
-
       if (room.exists) {
         const roomData = room.data();
         const roomInfo = { ...roomData, id: room.id };
@@ -103,16 +93,6 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  updateRoomName = async () => {
-    this.setState({ changingName: false });
-    const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-    try {
-      await roomRef.update({ name: this.state.localName });
-    } catch (err) {
-      console.error(`${err}We could not update the room name.`);
-    }
-  }
 
   changeSong = async (distance) => {
     const db = firebase.firestore();
@@ -156,6 +136,32 @@ class NowPlayingScreen extends Component {
       console.error(err);
     }
   }
+
+
+  updateRoomName = async () => {
+    this.setState({ changingName: false });
+    const db = firebase.firestore();
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+    try {
+      await roomRef.update({ name: this.state.localName });
+    } catch (err) {
+      console.error(`${err}We could not update the room name.`);
+    }
+  }
+
+  setupListener = (roomInfo) => {
+    this.props.updateRoom(roomInfo);
+    this.setState({ loading: false, creator: false });
+  };
+
+
+  setupCreator = async (roomInfo) => {
+    this.props.updateRoom(roomInfo);
+    this.setState({ loading: false, creator: true });
+    const currentSong = roomInfo.songs[0];
+    await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
+  };
+
 
   render() {
     if (this.state.loading || (!this.props.currentRoom.name)) {

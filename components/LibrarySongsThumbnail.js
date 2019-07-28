@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 const { width: imageSize } = Dimensions.get('window');
 
 const navigate = (props) => {
-  if (props.currentRoomID === '') {
+  if (props.currentRoom.id === '') {
     props.navigation.navigate('CreateRoomLibrarySongs');
   } else {
     props.navigation.navigate('LibrarySongsRoom');
@@ -41,6 +41,6 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ currentRoom }) => ({ currentRoomID: currentRoom.id });
+const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
 
 export default connect(mapStateToProps, null)(withNavigation(LibrarySongsThumbnail));
