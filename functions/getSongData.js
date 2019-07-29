@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 export default (item, data) => {
   let track;
   let images;
@@ -15,10 +16,12 @@ export default (item, data) => {
 
   let { artists, name } = track;
   const artistsTitle = artists.reduce((acc, artist) => `${acc}, ${artist.name}`, '').slice(2);
-  const { id } = track;
+  const { id, duration_ms, popularity } = track;
+  const preview_url = track.preview_url ? track.preview_url : null;
+
   name = name.length > 32 ? `${name.slice(0, 32)}...` : name;
   artists = artists.length > 20 ? `${artists.slice(0, 20)}...` : artists;
   return {
-    id, name, artists: artistsTitle, images, key
+    id, name, artists: artistsTitle, images, key, duration_ms, popularity, preview_url
   };
 };

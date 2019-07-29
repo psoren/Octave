@@ -109,6 +109,9 @@ class SearchContent extends Component {
                         name={item.name}
                         artists={item.artists}
                         images={item.images}
+                        popularity={item.popularity}
+                        duration_ms={item.duration_ms}
+                        preview_url={item.preview_url}
                       />
                     )
                   }, {

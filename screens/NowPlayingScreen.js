@@ -65,7 +65,10 @@ class NowPlayingScreen extends Component {
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
         .onSnapshot(async (room) => {
           const roomData = room.data();
-          this.setState({ currentSongIndex: roomData.currentSongIndex });
+          this.setState({
+            currentSongIndex: room.data().currentSongIndex,
+            listeners: room.data().listeners
+          });
           // If the creator paused it,
           // no need to re-render the whole component
           if (roomData.playing !== this.state.playing) {
@@ -236,6 +239,7 @@ class NowPlayingScreen extends Component {
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}
           closeModal={() => this.setState({ showCurrentListeners: false })}
+          listeners={this.state.listeners}
         />
         <Button
           containerStyle={styles.minimizeButton}

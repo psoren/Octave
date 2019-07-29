@@ -48,6 +48,10 @@ class Song extends Component {
   }
 
   toggleModal = () => {
+    console.log(`duration_ms: ${this.props.duration_ms}`);
+    console.log(`popularity: ${this.props.popularity}`);
+    console.log(`preview_url: ${this.props.preview_url}`);
+
     const currentModalVisible = this.state.modalVisible;
     this.setState({ modalVisible: !currentModalVisible });
   }

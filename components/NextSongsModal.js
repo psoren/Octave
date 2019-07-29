@@ -27,7 +27,7 @@ class NextSongsModal extends Component {
               {
                 this.props.songs.length !== 1
                   ? (
-                    <View style={styles.playlistsContainer}>
+                    <View style={styles.songsContainer}>
                       {this.props.songs.map((song, index) => (
                         index === 0 ? null
                           : (
@@ -43,9 +43,11 @@ class NextSongsModal extends Component {
                     </View>
                   )
                   : (
-                    <Text style={styles.noMoreSongs}>
-                    Add some songs to the queue
-                    </Text>
+                    <View style={styles.songsContainer}>
+                      <Text style={styles.noMoreSongs}>
+                        Add songs to the queue!
+                      </Text>
+                    </View>
                   )
               }
 
@@ -82,6 +84,9 @@ const styles = {
   noMoreSongs: {
     fontSize: 28,
     fontWeight: 'bold'
+  },
+  songsContainer: {
+    alignItems: 'center'
   }
 };
 

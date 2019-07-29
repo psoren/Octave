@@ -65,11 +65,14 @@ class ArtistScreen extends Component {
           <View>
             {this.state.songs.map(item => (
               <Song
+                key={item.id}
                 id={item.id}
                 name={item.name}
                 artists={item.artists}
                 images={item.images}
-                key={item.id}
+                popularity={item.popularity}
+                duration_ms={item.duration_ms}
+                preview_url={item.preview_url}
               />
             ))}
           </View>
