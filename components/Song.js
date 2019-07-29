@@ -30,9 +30,10 @@ class Song extends Component {
       try {
         const room = await roomRef.get();
         if (room.exists) {
+          const { currentSongIndex } = room.data();
           let { songs } = room.data();
           if (playNow) {
-            songs.splice(1, 0, newSong);
+            songs.splice(currentSongIndex + 1, 0, newSong);
           } else { songs.push(newSong); }
           songs = _.uniqBy(songs, 'id');
           roomRef.update({ songs });

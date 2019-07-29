@@ -7,11 +7,15 @@ import * as firebase from 'firebase';
 import 'firebase/firestore';
 import { connect } from 'react-redux';
 import Spotify from 'rn-spotify-sdk';
+import axios from 'axios';
+import qs from 'qs';
+import _ from 'lodash';
 
 import * as actions from '../actions';
 import NextSongsModal from '../components/NextSongsModal';
 import CurrentListenersModal from '../components/CurrentListenersModal';
 import ControlsContainer from '../components/ControlsContainer';
+import getSongData from '../functions/getSongData';
 
 /* When the component is minimized, it will not be unmounted, so when
 we are setting up the creator initially, we can begin playback right away
@@ -54,6 +58,8 @@ class NowPlayingScreen extends Component {
 
   setupRoom = async () => {
     if (this.props.currentRoom.id !== '') {
+      Spotify.addListener('audioDeliveryDone', () => this.changeSong(1));
+
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
@@ -95,12 +101,39 @@ class NowPlayingScreen extends Component {
     }
   }
 
+  // eslint-disable-next-line consistent-return
+  recommendSong = async (room) => {
+    // // Get recommendation from Spotify
+    const { accessToken } = this.props;
+    const seedTracks = _.map(room.data().songs.slice(
+      -Math.min(room.data().songs.length, 5)
+    ), song => song.id);
+    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
+    const query = qs.stringify({
+      limit: 1,
+      market: 'US',
+      min_popularity: '50',
+      seed_tracks: seedTracks.join()
+    });
+
+    try {
+      const { data } = await axios.get(`https://api.spotify.com/v1/recommendations?${query}`, config);
+      if (data.tracks.length > 0) {
+        return getSongData(data.tracks[0], null);
+      }
+      console.error('Could not get recommendations');
+      return {};
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   changeSong = async (distance) => {
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
     const room = await roomRef.get();
     if (room.exists) {
-      const roomData = room.data();
+      const roomData = await room.data();
       const numSongs = roomData.songs.length;
       const newIndex = roomData.currentSongIndex + distance;
 
@@ -112,10 +145,22 @@ class NowPlayingScreen extends Component {
           console.error(`Could not play ${roomData.songs[0].name}: ${err}`);
         }
       } else if (newIndex + 1 > numSongs) {
-        Alert.alert('No upcoming songs');
+        Alert.alert('There were no upcoming songs. Up next is a recommendation from Spotify');
+        const newSong = await this.recommendSong(room);
+        let { songs } = room.data();
+        songs.push(newSong);
+        songs = _.uniqBy(songs, 'id');
+        await roomRef.update({ songs });
+        await roomRef.update({
+          currentSongIndex: firebase.firestore.FieldValue.increment(distance)
+        });
+        const newRoom = await roomRef.get();
+        await Spotify.playURI(`spotify:track:${newRoom.data().songs[newRoom.data().currentSongIndex].id}`, 0, 0);
       } else {
-        roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(distance) });
-        Spotify.playURI(`spotify:track:${roomData.songs[roomData.currentSongIndex + distance].id}`, 0, 0);
+        await roomRef.update({
+          currentSongIndex: firebase.firestore.FieldValue.increment(distance)
+        });
+        await Spotify.playURI(`spotify:track:${roomData.songs[roomData.currentSongIndex + distance].id}`, 0, 0);
       }
     } else {
       console.error('Room does not exist');
@@ -306,6 +351,8 @@ const styles = StyleSheet.create({
   }
 });
 
-const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
+const mapStateToProps = ({ currentRoom, auth }) => ({
+  currentRoom, accessToken: auth.accessToken
+});
 
 export default connect(mapStateToProps, actions)(NowPlayingScreen);
