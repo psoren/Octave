@@ -11,11 +11,5 @@ export const CREATE_ROOM = 'create_room';
 
 // Room Actions
 export const UPDATE_ROOM = 'update_room';
-export const LISTENER_JOINED = 'listener_joined';
-export const LISTENER_LEFT = 'listener_left';
-export const CREATOR_LEFT = 'creator_left';
-export const TOGGLE_PLAYBACK = 'toggle_playback';
-export const NEXT_SONG = 'next_song';
-export const PREVIOUS_SONG = 'previous_song';
 export const JOIN_ROOM = 'join_room';
 export const LEAVE_ROOM = 'leave_room';

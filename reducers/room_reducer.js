@@ -1,7 +1,8 @@
 import {
   CREATE_ROOM,
   UPDATE_ROOM,
-  LEAVE_ROOM
+  LEAVE_ROOM,
+  JOIN_ROOM
 } from '../actions/types';
 
 const INITIAL_STATE = {
@@ -16,6 +17,12 @@ const INITIAL_STATE = {
 export default function (state = INITIAL_STATE, action) {
   switch (action.type) {
     case CREATE_ROOM:
+      return {
+        ...INITIAL_STATE,
+        id: action.payload.newRoomID,
+        test: action.payload.test
+      };
+    case JOIN_ROOM:
       return { ...INITIAL_STATE, id: action.payload };
     case UPDATE_ROOM:
       return { ...state, ...action.payload };

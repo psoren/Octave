@@ -26,25 +26,24 @@ class SearchContent extends Component {
 
     this.setState({ search }, async () => {
       // Search songs
-      const query = {
-        q: this.state.search,
-        type: 'track',
-        limit: 3
-      };
+      const ROOT_URL = 'https://api.spotify.com/v1/search?';
+      const query = { q: this.state.search, type: 'track', limit: 3 };
       const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-      const { data: songsData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({ ...query })}`, config);
+      const { data: songsData } = await axios.get(`${ROOT_URL}${qs.stringify({ ...query })}`, config);
       const songs = songsData.tracks.items.map(item => getSongData(item, null));
+
+      console.log(songs);
       this.setState({ songs });
 
       // Search Artists
-      const { data: artistData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({
+      const { data: artistData } = await axios.get(`${ROOT_URL}${qs.stringify({
         ...query, type: 'artist'
       })}`, config);
       const artists = artistData.artists.items.map(item => getSearchResultData(item));
       this.setState({ artists });
 
       // Search Playlists
-      const { data: playlistData } = await axios.get(`https://api.spotify.com/v1/search?${qs.stringify({
+      const { data: playlistData } = await axios.get(`${ROOT_URL}${qs.stringify({
         ...query, type: 'playlist'
       })}`, config);
       const playlists = playlistData.playlists.items.map(item => getSearchResultData(item));

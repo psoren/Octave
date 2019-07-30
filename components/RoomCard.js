@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Text, View, ActivityIndicator
+  Text, View, ActivityIndicator, Alert
 } from 'react-native';
 import { Button } from 'react-native-elements';
 import PropTypes from 'prop-types';
@@ -8,73 +8,103 @@ import * as firebase from 'firebase';
 import 'firebase/firestore';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
+import { withNavigation } from 'react-navigation';
 import ProgressBar from 'react-native-progress/Bar';
+import * as actions from '../actions';
 
 import RoomCardImageContainer from './RoomCardImageContainer';
 
 class RoomCard extends Component {
-  state = { loading: true, deviceWidth: 0 };
+  state = { loading: true };
+
+  componentWillUnmount = () => this.unsubscribe();
 
   componentDidMount = async () => {
     const db = firebase.firestore();
-    const roomRef = this.props.test ? db.collection('testRooms').doc(this.props.roomID)
-      : db.collection('rooms').doc(this.props.roomID);
+    const roomRef = db.collection('rooms').doc(this.props.roomID);
 
-    try {
-      const room = await roomRef.get();
-      if (room.exists) {
-        const currentSong = room.data().songs[room.data().currentSongIndex];
-        const { name } = room.data();
-        const { name: song, artists } = currentSong;
-        const numListeners = (room.data().listeners.length) + 1;
-        const progress = room.data().currentPosition;
-
-        const numSongs = room.data().songs.length;
-        this.setState({
-          name,
-          currentSong,
-          song,
-          artists,
-          loading: false,
-          numListeners,
-          numSongs,
-          deviceWidth: this.props.deviceWidth,
-          deviceHeight: this.props.deviceHeight,
-          progress
-        });
-
-        if (this.props.isCurrent && this.props.currentRoom.id === '') {
-          const progressInSeconds = (currentSong.duration_ms / 1000) * room.data().currentPosition;
-          await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, progressInSeconds);
-        }
-        this.progressInterval = setInterval(this.updateProgress, 1000);
-      }
-    } catch (err) {
-      console.error(`(RoomCard.js) Could not find room${err}`);
+    // Check for initial playback
+    const roomInfo = await roomRef.get();
+    if (roomInfo.exists
+      && this.props.isCurrent
+      && this.props.currentRoom.id === ''
+    ) {
+      const { songs, currentPosition } = roomInfo.data();
+      const currentSong = songs[roomInfo.data().currentSongIndex];
+      const progressInSeconds = currentPosition / (currentSong.duration_ms / 1000);
+      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, progressInSeconds);
     }
+    this.setupRoom();
   }
 
-  componentWillUnmount = () => clearInterval(this.progressInterval);
+  setupRoom = async () => {
+    const { deviceHeight, deviceWidth } = this.props;
+    const db = firebase.firestore();
+    this.unsubscribe = db.collection('rooms').doc(this.props.roomID)
+      .onSnapshot(async (room) => {
+        const {
+          name, currentPosition, currentSongIndex, listeners, songs
+        } = room.data();
+        const currentSong = songs[currentSongIndex];
+        const songLength = songs[currentSongIndex].duration_ms / 1000;
+        const progress = currentPosition / songLength;
 
-  // Add one second to the progress
-  updateProgress= () => this.setState(prevState => ({
-    progress: ((prevState.progress * (prevState.currentSong.duration_ms / 1000)) + 1)
-        / (prevState.currentSong.duration_ms / 1000)
-  }));
+        this.setState({
+          loading: false,
+          name,
+          currentPosition,
+          numListeners: listeners.length + 1,
+          numSongs: songs.length,
+          currentSong,
+          progress,
+          deviceHeight,
+          deviceWidth
+        });
+      });
+  }
 
   componentDidUpdate = async (prevProps) => {
+    // Only update the room when it is in view
+    if (this.props.isCurrent) {
+      this.setupRoom();
+    } else {
+      this.unsubscribe();
+    }
+
+    // Check to see if we need to start playback
     if (prevProps.isCurrent !== this.props.isCurrent
       && this.props.isCurrent
       && this.props.currentRoom.id === ''
     ) {
-      // Get length of song and use room.data().currentPosition
-      // to get the current song position in seconds
-      const progressInSeconds = (this.state.currentSong.duration_ms / 1000) * this.state.progress;
-      await Spotify.playURI(`spotify:track:${this.state.currentSong.id}`, 0, progressInSeconds);
+      const { currentSong, currentPosition } = this.state;
+      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, currentPosition);
     }
   }
 
-  joinRoom = () => console.log('Joining room...');
+  joinRoom = async () => {
+    const { id: userId } = await Spotify.getMe();
+    if (userId === this.props.roomCreatorID) {
+      Alert.alert('You cannot join the room you created!');
+    } else if (this.props.currentRoom.id !== '') {
+      // If they are in a room already, prompt the user
+      // to see if they want to leave their current room
+      const { name: newRoom } = this.props.currentRoom;
+      Alert.alert(`Do you want to leave the room ${newRoom} and join the room ${this.state.name}?`, '',
+        [
+          {
+            text: 'OK',
+            onPress: () => this.props.joinRoom(this.props.navigation,
+              this.state.id),
+            style: 'cancel'
+          },
+          { text: 'Cancel' }
+        ],
+        { cancelable: false });
+    } else {
+      // They are not in a room, join it
+      this.props.joinRoom(this.props.navigation, this.state.id);
+    }
+  }
 
   render() {
     if (this.state.loading) {
@@ -84,7 +114,6 @@ class RoomCard extends Component {
         </View>
       );
     }
-
     return (
       <View style={[styles.container, {
         width: 0.75 * this.state.deviceWidth,
@@ -98,10 +127,9 @@ class RoomCard extends Component {
           numSongs={this.state.numSongs}
         />
         <View style={styles.songInfoContainer}>
-          <Text style={styles.song}>{this.state.song}</Text>
-          <Text style={styles.artists}>{this.state.artists}</Text>
+          <Text style={styles.song}>{this.state.currentSong.name}</Text>
+          <Text style={styles.artists}>{this.state.currentSong.artists}</Text>
         </View>
-
         <ProgressBar
           animated
           progress={this.state.progress}
@@ -109,8 +137,6 @@ class RoomCard extends Component {
           color="#fff"
           animationType="timing"
         />
-
-        <Text style={styles.location} />
         <Button
           title="Join Room"
           onPress={this.joinRoom}
@@ -141,7 +167,6 @@ const styles = {
     color: '#fff',
     margin: 20
   },
-
   songInfoContainer: {
     padding: 10,
     flexDirection: 'column',
@@ -156,20 +181,15 @@ const styles = {
     fontSize: 16,
     color: '#fff'
   },
-  location: {
-    fontSize: 24,
-    fontWeight: 'bold'
-  },
   buttonContainer: {
     margin: 20
   }
 };
 
 RoomCard.propTypes = {
-  roomID: PropTypes.string.isRequired,
-  test: PropTypes.bool.isRequired
+  roomID: PropTypes.string.isRequired
 };
 
 const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
 
-export default connect(mapStateToProps, null)(RoomCard);
+export default connect(mapStateToProps, actions)(withNavigation(RoomCard));

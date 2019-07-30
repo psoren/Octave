@@ -39,7 +39,8 @@ class CreateRoomScreen extends Component {
         songs,
         name,
         roomCreatorID,
-        navigation: this.props.navigation
+        navigation: this.props.navigation,
+        test: false
       });
     }
   }

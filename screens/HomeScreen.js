@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Dimensions } from 'react-native';
+import { Text, View, Dimensions } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
@@ -37,15 +37,14 @@ class HomeScreen extends Component {
       this.props.refreshTokens(sessionInfo);
     }, 1000 * 60 * 30);
 
-    // Get all of the test rooms
+    // Get all of the room IDs
     const db = firebase.firestore();
-    const roomsSnapshot = await db.collection('testRooms').get();
-
+    const roomsSnapshot = await db.collection('rooms').get();
     const rooms = [];
     roomsSnapshot.forEach((room) => {
       rooms.push({
         id: room.id,
-        data: room.data()
+        roomCreatorID: room.data().roomCreatorID
       });
     });
     this.setState({ rooms, deviceWidth, deviceHeight });
@@ -72,28 +71,36 @@ class HomeScreen extends Component {
   }
 
   render() {
+    const roomCards = this.state.rooms.map((room, index) => (
+      <View key={room.id} style={styles.roomCardContainer}>
+        <RoomCard
+          roomID={room.id}
+          roomCreatorID={room.roomCreatorID}
+          deviceWidth={this.state.deviceWidth}
+          deviceHeight={this.state.deviceHeight}
+          isCurrent={index === this.state.currentRoom}
+        />
+      </View>
+    ));
+
     return (
       <View style={styles.container}>
+        <View style={styles.nowPlayingContainer}>
+          <Text style={styles.nowPlaying}>Now Playing</Text>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           pagingEnabled
           onMomentumScrollEnd={this.handleScroll}
         >
-          {this.state.rooms.map((room, index) => (
-            <View
-              key={room.id}
-              style={styles.roomCardContainer}
-            >
-              <RoomCard
-                roomID={room.id}
-                test
-                deviceWidth={this.state.deviceWidth}
-                deviceHeight={this.state.deviceHeight}
-                isCurrent={index === this.state.currentRoom}
-              />
+          {roomCards.length === 0 ? (
+            <View style={styles.roomCardContainer}>
+              <Text style={styles.noRooms}>
+                Create a room to get started!
+              </Text>
             </View>
-          ))}
+          ) : roomCards}
         </ScrollView>
         <Button
           style={styles.button}
@@ -114,7 +121,6 @@ const styles = {
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 100,
     alignItems: 'center'
   },
   roomCardContainer: {
@@ -123,6 +129,24 @@ const styles = {
   },
   button: {
     margin: 15
+  },
+  noRooms: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#00c9ff'
+  },
+  nowPlaying: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff'
+  },
+  nowPlayingContainer: {
+    width: deviceWidth,
+    height: 100,
+    backgroundColor: '#00c9ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 50
   }
 };
 

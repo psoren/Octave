@@ -97,7 +97,7 @@ class NowPlayingScreen extends Component {
             this.setupListener(roomInfo, userInfo);
           }
         } else {
-          console.error('Could not find room.');
+          console.error(' 105 Could not find room.');
         }
       } catch (err) {
         console.error(err);
@@ -227,7 +227,7 @@ class NowPlayingScreen extends Component {
       if (room.exists) {
         await roomRef.update({ currentPosition });
       } else {
-        console.error('Could not find room.');
+        console.error(' 235 Could not find room.');
       }
     } catch (err) {
       console.error(`Could not get room data: ${err}`);

@@ -26,11 +26,12 @@ export const createRoom = ({
   songs,
   name,
   roomCreatorID,
-  navigation
+  navigation,
+  test
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
-    const { id: newRoomId } = await db.collection('rooms').add({
+    const { id: newRoomID } = await db.collection('rooms').add({
       songs,
       name,
       roomCreatorID,
@@ -39,8 +40,14 @@ export const createRoom = ({
       listeners: [],
       currentPosition: 0
     });
-    dispatch({ type: CREATE_ROOM, payload: newRoomId });
-    navigation.navigate('NowPlaying');
+    dispatch({
+      type: CREATE_ROOM,
+      payload: {
+        newRoomID,
+        test
+      }
+    });
+    navigation.navigate('NowPlaying', { test: false });
   } catch (err) {
     console.error(err);
   }

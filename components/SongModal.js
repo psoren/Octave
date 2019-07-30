@@ -65,8 +65,7 @@ SongModal.propTypes = {
   handlePlay: PropTypes.func.isRequired,
   hideModal: PropTypes.func.isRequired,
   song: PropTypes.string.isRequired,
-  artist: PropTypes.string.isRequired,
-  userIsInRoom: PropTypes.bool.isRequired
+  artist: PropTypes.string.isRequired
 };
 
 const styles = {
