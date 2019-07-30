@@ -6,9 +6,6 @@ import { Button, Icon } from 'react-native-elements';
 
 class CurrentListenersModal extends Component {
   render() {
-    console.log(this.props.listeners.length);
-
-
     return (
       <Modal
         animationType="slide"
@@ -36,11 +33,9 @@ class CurrentListenersModal extends Component {
                   )
                   : (
                     <View style={styles.listenersContainer}>
-
-
                       <Text style={styles.noListeners}>
                       Invite people to your room!
-                    </Text>
+                      </Text>
                     </View>
                   )
               }

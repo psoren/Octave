@@ -20,49 +20,47 @@ class RoomCard extends Component {
     const roomRef = this.props.test ? db.collection('testRooms').doc(this.props.roomID)
       : db.collection('rooms').doc(this.props.roomID);
 
-    const room = await roomRef.get();
+    try {
+      const room = await roomRef.get();
+      if (room.exists) {
+        const currentSong = room.data().songs[room.data().currentSongIndex];
+        const { name } = room.data();
+        const { name: song, artists } = currentSong;
+        const numListeners = (room.data().listeners.length) + 1;
+        const progress = room.data().currentPosition;
 
-    if (room.exists) {
-      const currentSong = room.data().songs[room.data().currentSongIndex];
-      const { name } = room.data();
-      const { name: song, artists } = currentSong;
-      const numListeners = (room.data().listeners.length) + 1;
-      const progress = room.data().currentPosition;
+        const numSongs = room.data().songs.length;
+        this.setState({
+          name,
+          currentSong,
+          song,
+          artists,
+          loading: false,
+          numListeners,
+          numSongs,
+          deviceWidth: this.props.deviceWidth,
+          deviceHeight: this.props.deviceHeight,
+          progress
+        });
 
-      const numSongs = room.data().songs.length;
-      this.setState({
-        name,
-        currentSong,
-        song,
-        artists,
-        loading: false,
-        numListeners,
-        numSongs,
-        deviceWidth: this.props.deviceWidth,
-        deviceHeight: this.props.deviceHeight,
-        progress
-      });
-
-      if (this.props.isCurrent && this.props.currentRoom.id === '') {
-        const progressInSeconds = (currentSong.duration_ms / 1000) * room.data().currentPosition;
-        await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, progressInSeconds);
+        if (this.props.isCurrent && this.props.currentRoom.id === '') {
+          const progressInSeconds = (currentSong.duration_ms / 1000) * room.data().currentPosition;
+          await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, progressInSeconds);
+        }
+        this.progressInterval = setInterval(this.updateProgress, 1000);
       }
-      this.progressInterval = setInterval(this.updateProgress, 1000);
+    } catch (err) {
+      console.error(`(RoomCard.js) Could not find room${err}`);
     }
   }
 
-  componentWillUnmount = () => {
-    clearInterval(this.progressInterval);
-  }
+  componentWillUnmount = () => clearInterval(this.progressInterval);
 
-  updateProgress= () => {
-    // Add one second to the progress
-    this.setState(prevState => ({
-      progress: ((prevState.progress * (prevState.currentSong.duration_ms / 1000)) + 1)
+  // Add one second to the progress
+  updateProgress= () => this.setState(prevState => ({
+    progress: ((prevState.progress * (prevState.currentSong.duration_ms / 1000)) + 1)
         / (prevState.currentSong.duration_ms / 1000)
-    }));
-  }
-
+  }));
 
   componentDidUpdate = async (prevProps) => {
     if (prevProps.isCurrent !== this.props.isCurrent
@@ -76,9 +74,7 @@ class RoomCard extends Component {
     }
   }
 
-  joinRoom = () => {
-    console.log('Joining room...');
-  }
+  joinRoom = () => console.log('Joining room...');
 
   render() {
     if (this.state.loading) {
@@ -111,6 +107,7 @@ class RoomCard extends Component {
           progress={this.state.progress}
           width={this.state.deviceWidth * 0.6}
           color="#fff"
+          animationType="timing"
         />
 
         <Text style={styles.location} />

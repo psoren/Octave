@@ -15,10 +15,11 @@ class Song extends Component {
 
   handlePlay = async (playNow) => {
     const {
-      id, name, artists, images
+      // eslint-disable-next-line camelcase
+      id, name, artists, images, duration_ms, popularity, preview_url
     } = this.props;
     const newSong = {
-      id, name, artists, images
+      id, name, artists, images, duration_ms, popularity, preview_url
     };
     if (this.props.currentRoom.id === '') {
       if (playNow) {
@@ -41,17 +42,13 @@ class Song extends Component {
           console.error('Could not find room');
         }
       } catch (err) {
-        console.error(`${err}. We could not update the room.`);
+        console.error(`(Song.js) We could not update the room.${err}`);
       }
     }
     this.setState({ modalVisible: false });
   }
 
   toggleModal = () => {
-    console.log(`duration_ms: ${this.props.duration_ms}`);
-    console.log(`popularity: ${this.props.popularity}`);
-    console.log(`preview_url: ${this.props.preview_url}`);
-
     const currentModalVisible = this.state.modalVisible;
     this.setState({ modalVisible: !currentModalVisible });
   }

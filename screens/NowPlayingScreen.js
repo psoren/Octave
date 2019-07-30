@@ -10,24 +10,13 @@ import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
 import qs from 'qs';
 import _ from 'lodash';
+import ProgressBar from 'react-native-progress/Bar';
 
 import * as actions from '../actions';
 import NextSongsModal from '../components/NextSongsModal';
 import CurrentListenersModal from '../components/CurrentListenersModal';
 import ControlsContainer from '../components/ControlsContainer';
 import getSongData from '../functions/getSongData';
-
-/* When the component is minimized, it will not be unmounted, so when
-we are setting up the creator initially, we can begin playback right away
-When a new listener joins the room, send that info to each client that is
-in that room.  When the creator of that room receives that information, get
-the current position in the track from the rn-spotify-sdk, and send it to firebase.
-Then the new listener can wait for that information to be uploaded, and then join the room
-have the playback be somewhat close to that of the creator.
-We will see how long this takes. */
-
-// The issue is that this component never unmounts, so componentdidmount
-// is not getting called again, so we are not setting up the room
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -39,11 +28,14 @@ class NowPlayingScreen extends Component {
     showNextSongs: false,
     showCurrentListeners: false,
     playing: true,
-    currentSongIndex: 0
+    currentSongIndex: 0,
+    progress: 0
   };
 
   componentWillUnmount() {
     console.log('Now Playing Screen unmounting...');
+    clearInterval(this.creatorUpdateInterval);
+    this.changeSongSubscription.remove();
   }
 
   componentDidMount = () => {
@@ -56,21 +48,31 @@ class NowPlayingScreen extends Component {
     }
   }
 
+  leaveRoom = () => {
+    this.unsubscribe();
+    clearInterval(this.creatorUpdateInterval);
+    Spotify.removeListener('audioDeliveryDone', this.changeSongOne);
+    this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id);
+  }
+
+  changeSongOne = () => this.changeSong(1);
+
   setupRoom = async () => {
     if (this.props.currentRoom.id !== '') {
-      Spotify.addListener('audioDeliveryDone', () => this.changeSong(1));
-
+      Spotify.addListener('audioDeliveryDone', this.changeSongOne);
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
         .onSnapshot(async (room) => {
-          const roomData = room.data();
-          this.setState({
-            currentSongIndex: room.data().currentSongIndex,
-            listeners: room.data().listeners
-          });
+          const {
+            currentPosition, currentSongIndex, listeners, songs
+          } = room.data();
+          const songLength = songs[currentSongIndex].duration_ms / 1000;
+          const progress = currentPosition / songLength;
+          this.setState({ currentSongIndex, listeners, progress });
           // If the creator paused it,
           // no need to re-render the whole component
+          const roomData = room.data();
           if (roomData.playing !== this.state.playing) {
             this.setState({ playing: roomData.playing });
             try {
@@ -207,11 +209,29 @@ class NowPlayingScreen extends Component {
     this.setState({ loading: false, creator: true });
     const currentSong = roomInfo.songs[0];
     await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
+
+    this.creatorUpdateInterval = setInterval(this.updateCreatorPosition, 1000);
   };
 
-  leaveRoom = () => {
-    this.unsubscribe();
-    this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id);
+  updateCreatorPosition = async () => {
+    // 1. Get current position from playback
+    const { position: currentPosition } = await Spotify.getPlaybackStateAsync();
+
+    // 2. Get database reference
+    const db = firebase.firestore();
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+
+    // 3. Update room in database
+    try {
+      const room = await roomRef.get();
+      if (room.exists) {
+        await roomRef.update({ currentPosition });
+      } else {
+        console.error('Could not find room.');
+      }
+    } catch (err) {
+      console.error(`Could not get room data: ${err}`);
+    }
   }
 
   render() {
@@ -265,6 +285,15 @@ class NowPlayingScreen extends Component {
           source={this.props.currentRoom.songs.length > 0 ? { url }
             : require('../assets/default_album.png')}
           style={styles.image}
+        />
+        <ProgressBar
+          animated
+          progress={this.state.progress}
+          width={screenWidth}
+          color="#00c9ff"
+          animationType="timing"
+          borderRadius={0}
+          borderWidth={0}
         />
         <View style={styles.songInfoContainer}>
           <Text style={styles.song}>{name}</Text>

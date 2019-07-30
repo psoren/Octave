@@ -10,8 +10,6 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
   // 1. Leave the room in firebase
   const db = firebase.firestore();
   const roomRef = db.collection('rooms').doc(roomID);
-  db.collection('rooms').doc(roomID);
-
   try {
     const room = await roomRef.get();
     if (room.exists) {
@@ -36,7 +34,7 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
       console.error('Could not find room.');
     }
   } catch (err) {
-    console.error(err);
+    console.error(`room_actions${err}`);
   }
 
   // 2. Stop playback
