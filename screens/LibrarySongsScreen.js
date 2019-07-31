@@ -17,14 +17,20 @@ class LibrarySongsScreen extends PureComponent {
     const params = qs.stringify({ limit: this.state.limit });
     const { data } = await axios.get(`https://api.spotify.com/v1/me/tracks?${params}`, config);
     const songs = data.items.map(item => getSongData(item, { type: 'playlist' }));
-    this.setState({ songs, next: data.next });
+    if (!Object.prototype.hasOwnProperty.call(data, 'next')) {
+      this.setState({ songs, next: null });
+    } else {
+      this.setState({ songs, next: data.next });
+    }
   }
 
   onEndReached = async () => {
-    const { data } = await axios.get(this.state.next, this.state.config);
-    if (data.next !== this.state.next) {
-      const newSongs = data.items.map(item => getSongData(item, { type: 'playlist' }));
-      this.setState(prevState => ({ songs: [...prevState.songs, ...newSongs], next: data.next }));
+    if (this.state.next) {
+      const { data } = await axios.get(this.state.next, this.state.config);
+      if (data.next !== this.state.next) {
+        const newSongs = data.items.map(item => getSongData(item, { type: 'playlist' }));
+        this.setState(prevState => ({ songs: [...prevState.songs, ...newSongs], next: data.next }));
+      }
     }
   }
 
