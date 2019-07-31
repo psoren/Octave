@@ -52,6 +52,22 @@ class HomeScreen extends Component {
     this.setState({
       rooms, deviceWidth, deviceHeight, loading: false
     });
+
+
+    // Constantly listen for new rooms
+    db.collection('rooms')
+      .orderBy('name').limit(20)
+      .where('name', '>', '0')
+      .onSnapshot((querySnapshot) => {
+        const newRooms = [];
+        querySnapshot.forEach((room) => {
+          newRooms.push({
+            id: room.id,
+            roomCreatorID: room.data().roomCreatorID
+          });
+        });
+        this.setState({ rooms: newRooms });
+      });
   }
 
   componentWillUnmount() {
