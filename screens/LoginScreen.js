@@ -71,6 +71,7 @@ class LoginScreen extends PureComponent {
     }
   }
 
+
   render() {
     if (!this.state.spotifyInitialized) {
       return (

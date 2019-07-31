@@ -10,8 +10,8 @@ import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
 import qs from 'qs';
 import _ from 'lodash';
-import ProgressBar from 'react-native-progress/Bar';
 
+import ProgressBar from '../components/ProgressBar';
 import * as actions from '../actions';
 import NextSongsModal from '../components/NextSongsModal';
 import CurrentListenersModal from '../components/CurrentListenersModal';
@@ -214,13 +214,13 @@ class NowPlayingScreen extends Component {
     await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, currentPosition);
   };
 
-  setupCreator = async (roomInfo) => {
+  setupCreator = (roomInfo) => {
     this.props.updateRoom(roomInfo);
-    this.setState({ loading: false, creator: true });
-    const currentSong = roomInfo.songs[0];
-    await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
-
-    this.creatorUpdateInterval = setInterval(this.updateCreatorPosition, 2000);
+    this.setState({ loading: false, creator: true, updateInterval: 1500 }, async () => {
+      const currentSong = roomInfo.songs[0];
+      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
+      this.creatorUpdateInterval = setInterval(this.updateCreatorPosition, this.state.updateInterval);
+    });
   };
 
   updateCreatorPosition = async () => {
@@ -297,13 +297,10 @@ class NowPlayingScreen extends Component {
           style={styles.image}
         />
         <ProgressBar
-          animated
           progress={this.state.progress}
           width={screenWidth}
-          color="#00c9ff"
-          animationType="timing"
-          borderRadius={0}
-          borderWidth={0}
+          height={10}
+          duration={this.state.updateInterval}
         />
         <View style={styles.songInfoContainer}>
           <Text style={styles.song}>{name}</Text>

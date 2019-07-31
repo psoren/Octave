@@ -9,7 +9,7 @@ import 'firebase/firestore';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import { withNavigation } from 'react-navigation';
-import ProgressBar from 'react-native-progress/Bar';
+import ProgressBar from './ProgressBar';
 import * as actions from '../actions';
 
 import RoomCardImageContainer from './RoomCardImageContainer';
@@ -124,11 +124,10 @@ class RoomCard extends Component {
           <Text style={styles.artists}>{this.state.currentSong.artists}</Text>
         </View>
         <ProgressBar
-          animated
           progress={this.state.progress}
+          duration={1500}
           width={this.state.deviceWidth * 0.6}
-          color="#fff"
-          animationType="timing"
+          height={15}
         />
         <Button
           title="Join Room"

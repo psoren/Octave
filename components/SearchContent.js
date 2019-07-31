@@ -31,8 +31,6 @@ class SearchContent extends Component {
       const config = { headers: { Authorization: `Bearer ${accessToken}` } };
       const { data: songsData } = await axios.get(`${ROOT_URL}${qs.stringify({ ...query })}`, config);
       const songs = songsData.tracks.items.map(item => getSongData(item, null));
-
-      console.log(songs);
       this.setState({ songs });
 
       // Search Artists
