@@ -57,46 +57,45 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
   await navigation.navigate('Home');
 };
 
-export const joinRoom = (navigation, roomID, test) => async (dispatch) => {
-  console.log('joining room...');
+export const joinRoom = (navigation, roomID) => async (dispatch) => {
+  console.log(`joining room...${roomID}`);
 
   // 1. Check if the user has a username in firebase
   // If not, figure out a way to assign them a username
   // Else, just generate a random number that is not in that room
   // of listeners based on Math.random
-  // const username = `user${Math.floor(Math.random() * Math.floor(100000000))}`;
-  // const profilePictureExists = false;
+  const username = `user${Math.floor(Math.random() * Math.floor(100000000))}`;
+  const profilePictureExists = false;
 
-  // // 2. Join the room in firebase
-  // const db = firebase.firestore();
-  // const collection = test ? 'testRooms' : 'rooms';
-  // const roomRef = db.collection(collection).doc(roomID);
+  // 2. Join the room in firebase
+  const db = firebase.firestore();
+  const roomRef = db.collection('rooms').doc(roomID);
 
-  // try {
-  //   const room = await roomRef.get();
-  //   if (room.exists) {
-  //     // Get user data
-  //     const userInfo = await Spotify.getMe();
-  //     const newListener = {
-  //       username,
-  //       profilePictureExists,
-  //       spotifyID: userInfo.id
-  //     };
-  //     roomRef.update({
-  //       listeners: firebase.firestore.FieldValue.arrayUnion(newListener)
-  //     });
+  try {
+    const room = await roomRef.get();
+    if (room.exists) {
+      // Get user data
+      const userInfo = await Spotify.getMe();
+      const newListener = {
+        username,
+        profilePictureExists,
+        spotifyID: userInfo.id
+      };
+      roomRef.update({
+        listeners: firebase.firestore.FieldValue.arrayUnion(newListener)
+      });
 
-  //     // 3. Set redux state
-  //     await dispatch({ type: JOIN_ROOM, payload: roomID });
+      // 3. Set redux state
+      await dispatch({ type: JOIN_ROOM, payload: roomID });
 
-  //     // 4. Navigate to NowPlayingScreen
-  //     // We have to pass the test parameter so that
-  //     // The now playing screen knows to check which database
-  //     await navigation.navigate('NowPlaying', { test });
-  //   } else {
-  //     console.error('Could not find room.');
-  //   }
-  // } catch (err) {
-  //   console.error(`room_actions${err}`);
-  // }
+      // 4. Navigate to NowPlayingScreen
+      // We have to pass the test parameter so that
+      // The now playing screen knows to check which database
+      await navigation.navigate('NowPlaying');
+    } else {
+      console.error('Could not find room.');
+    }
+  } catch (err) {
+    console.error(`room_actions${err}`);
+  }
 };

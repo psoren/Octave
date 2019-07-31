@@ -12,48 +12,43 @@ class NextSongsModal extends Component {
       <Modal
         animationType="slide"
         visible={this.props.visible}
-        style={styles.modal}
       >
-        <View>
+        <View style={styles.container}>
           <Button
             containerStyle={styles.closeButton}
             onPress={this.props.closeModal}
             type="clear"
             icon={(<Icon type="material" name="cancel" size={45} />)}
           />
-          <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-              <Text style={styles.title}>Up Next</Text>
-              {
-                this.props.songs.length !== 1
-                  ? (
-                    <View style={styles.songsContainer}>
-                      {this.props.songs.map((song, index) => (
-                        index === 0 ? null
-                          : (
-                            <Song
-                              id={song.id}
-                              name={song.name}
-                              artists={song.artists}
-                              images={song.images}
-                              key={song.id}
-                            />
-                          )
-                      ))}
-                    </View>
-                  )
-                  : (
-                    <View style={styles.songsContainer}>
-                      <Text style={styles.noMoreSongs}>
-                        Add songs to the queue!
-                      </Text>
-                    </View>
-                  )
+          <ScrollView>
+            <Text style={styles.title}>Up Next</Text>
+            {
+              this.props.songs.length !== 1
+                ? (
+                  <View>
+                    {this.props.songs.map((song, index) => (
+                      index === 0 ? null
+                        : (
+                          <Song
+                            id={song.id}
+                            name={song.name}
+                            artists={song.artists}
+                            images={song.images}
+                            key={song.id}
+                          />
+                        )
+                    ))}
+                  </View>
+                )
+                : (
+                  <View style={styles.noMoreSongsContainer}>
+                    <Text style={styles.noMoreSongs}>
+                      Add songs to the queue!
+                    </Text>
+                  </View>
+                )
               }
-
-            </ScrollView>
-          </View>
-
+          </ScrollView>
         </View>
       </Modal>
     );
@@ -61,15 +56,14 @@ class NextSongsModal extends Component {
 }
 
 const styles = {
-  modal: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
+    marginTop: 35
   },
   closeButton: {
     position: 'absolute',
-    left: 25,
-    top: 25,
+    left: 5,
+    top: 5,
     zIndex: 10
   },
   title: {
@@ -78,15 +72,13 @@ const styles = {
     fontWeight: 'bold',
     margin: 15
   },
-  container: {
-    marginTop: 50
-  },
   noMoreSongs: {
     fontSize: 28,
     fontWeight: 'bold'
   },
-  songsContainer: {
-    alignItems: 'center'
+  noMoreSongsContainer: {
+    alignItems: 'center',
+    flex: 1
   }
 };
 

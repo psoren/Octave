@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
-import { Text, View, Dimensions } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import {
+  Text, View, Dimensions, ActivityIndicator
+} from 'react-native';
+import { Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
@@ -28,7 +30,7 @@ class HomeScreen extends Component {
     )
   });
 
-  state = { rooms: [], currentRoom: 0 };
+  state = { rooms: [], currentRoom: 0, loading: true };
 
   componentDidMount = async () => {
     this.tokenRefreshInterval = setInterval(async () => {
@@ -47,7 +49,9 @@ class HomeScreen extends Component {
         roomCreatorID: room.data().roomCreatorID
       });
     });
-    this.setState({ rooms, deviceWidth, deviceHeight });
+    this.setState({
+      rooms, deviceWidth, deviceHeight, loading: false
+    });
   }
 
   componentWillUnmount() {
@@ -55,22 +59,19 @@ class HomeScreen extends Component {
     clearInterval(this.tokenRefreshInterval);
   }
 
-  logout = async () => {
-    await Spotify.logout();
-    this.props.navigation.navigate('Login');
-  }
-
-  renewSession = async () => {
-    await Spotify.renewSession();
-    const sessionInfo = await Spotify.getSessionAsync();
-    this.props.refreshTokens(sessionInfo);
-  }
-
   handleScroll = (e) => {
     this.setState({ currentRoom: Math.round((e.nativeEvent.contentOffset.x) / deviceWidth) });
   }
 
   render() {
+    if (this.state.loading) {
+      return (
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color="#00c9ff" animating />
+        </View>
+      );
+    }
+
     const roomCards = this.state.rooms.map((room, index) => (
       <View key={room.id} style={styles.roomCardContainer}>
         <RoomCard
@@ -102,16 +103,7 @@ class HomeScreen extends Component {
             </View>
           ) : roomCards}
         </ScrollView>
-        <Button
-          style={styles.button}
-          title="Logout"
-          onPress={this.logout}
-        />
-        <Button
-          style={styles.button}
-          title="Renew Session"
-          onPress={this.renewSession}
-        />
+
       </View>
     );
   }
@@ -121,14 +113,12 @@ const styles = {
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   roomCardContainer: {
     width: deviceWidth,
     alignItems: 'center'
-  },
-  button: {
-    margin: 15
   },
   noRooms: {
     fontSize: 24,

@@ -20,10 +20,9 @@ class RoomCard extends Component {
   componentWillUnmount = () => this.unsubscribe();
 
   componentDidMount = async () => {
+    // Check for initial playback
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.roomID);
-
-    // Check for initial playback
     const roomInfo = await roomRef.get();
     if (roomInfo.exists
       && this.props.isCurrent
@@ -31,8 +30,7 @@ class RoomCard extends Component {
     ) {
       const { songs, currentPosition } = roomInfo.data();
       const currentSong = songs[roomInfo.data().currentSongIndex];
-      const progressInSeconds = currentPosition / (currentSong.duration_ms / 1000);
-      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, progressInSeconds);
+      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, currentPosition);
     }
     this.setupRoom();
   }
@@ -40,16 +38,18 @@ class RoomCard extends Component {
   setupRoom = async () => {
     const { deviceHeight, deviceWidth } = this.props;
     const db = firebase.firestore();
+
     this.unsubscribe = db.collection('rooms').doc(this.props.roomID)
-      .onSnapshot(async (room) => {
+      .onSnapshot((doc) => {
         const {
           name, currentPosition, currentSongIndex, listeners, songs
-        } = room.data();
+        } = doc.data();
         const currentSong = songs[currentSongIndex];
         const songLength = songs[currentSongIndex].duration_ms / 1000;
         const progress = currentPosition / songLength;
 
         this.setState({
+          id: this.props.roomID,
           loading: false,
           name,
           currentPosition,
@@ -64,13 +64,6 @@ class RoomCard extends Component {
   }
 
   componentDidUpdate = async (prevProps) => {
-    // Only update the room when it is in view
-    if (this.props.isCurrent) {
-      this.setupRoom();
-    } else {
-      this.unsubscribe();
-    }
-
     // Check to see if we need to start playback
     if (prevProps.isCurrent !== this.props.isCurrent
       && this.props.isCurrent
@@ -117,7 +110,7 @@ class RoomCard extends Component {
     return (
       <View style={[styles.container, {
         width: 0.75 * this.state.deviceWidth,
-        height: 0.5 * this.state.deviceHeight
+        height: 0.6 * this.state.deviceHeight
       }]}
       >
         <Text style={styles.roomName}>{this.state.name}</Text>

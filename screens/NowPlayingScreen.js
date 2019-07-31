@@ -67,22 +67,26 @@ class NowPlayingScreen extends Component {
           const {
             currentPosition, currentSongIndex, listeners, songs
           } = room.data();
+
+          // Detect song changes
+          if (this.state.currentSongIndex !== currentSongIndex) {
+            await Spotify.playURI(`spotify:track:${room.data().songs[room.data().currentSongIndex].id}`, 0, 0);
+          }
+
           const songLength = songs[currentSongIndex].duration_ms / 1000;
           const progress = currentPosition / songLength;
           this.setState({ currentSongIndex, listeners, progress });
-          // If the creator paused it,
-          // no need to re-render the whole component
-          const roomData = room.data();
-          if (roomData.playing !== this.state.playing) {
-            this.setState({ playing: roomData.playing });
+          if (room.data().playing !== this.state.playing) {
+            this.setState({ playing: room.data().playing });
             try {
-              await Spotify.setPlaying(roomData.playing);
+              await Spotify.setPlaying(room.data().playing);
             } catch (err) {
               console.error('Could not toggle playback');
             }
             return;
           }
-          this.props.updateRoom(roomData);
+
+          this.props.updateRoom(room.data());
         });
 
       try {
@@ -92,9 +96,9 @@ class NowPlayingScreen extends Component {
           const roomInfo = { ...roomData, id: room.id };
           const userInfo = await Spotify.getMe();
           if (roomInfo.roomCreatorID === userInfo.id) {
-            this.setupCreator(roomInfo, userInfo);
+            this.setupCreator(roomInfo);
           } else {
-            this.setupListener(roomInfo, userInfo);
+            this.setupListener(roomInfo);
           }
         } else {
           console.error(' 105 Could not find room.');
@@ -144,7 +148,6 @@ class NowPlayingScreen extends Component {
 
       if (newIndex < 0) {
         try {
-          await Spotify.playURI(`spotify:track:${roomData.songs[0].id}`, 0, 0);
           Alert.alert('No previous songs');
         } catch (err) {
           console.error(`Could not play ${roomData.songs[0].name}: ${err}`);
@@ -190,18 +193,25 @@ class NowPlayingScreen extends Component {
 
   updateRoomName = async () => {
     this.setState({ changingName: false });
-    const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-    try {
-      await roomRef.update({ name: this.state.localName });
-    } catch (err) {
-      console.error(`${err}We could not update the room name.`);
+    if (this.state.localName !== '') {
+      const db = firebase.firestore();
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+      try {
+        await roomRef.update({ name: this.state.localName });
+      } catch (err) {
+        console.error(`${err}We could not update the room name.`);
+      }
     }
   }
 
-  setupListener = (roomInfo) => {
+  setupListener = async (roomInfo) => {
     this.props.updateRoom(roomInfo);
     this.setState({ loading: false, creator: false });
+
+    // Start playing the same song as the creator
+    const { currentSongIndex, songs, currentPosition } = roomInfo;
+    const currentSong = songs[currentSongIndex];
+    await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, currentPosition);
   };
 
   setupCreator = async (roomInfo) => {
@@ -210,7 +220,7 @@ class NowPlayingScreen extends Component {
     const currentSong = roomInfo.songs[0];
     await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
 
-    this.creatorUpdateInterval = setInterval(this.updateCreatorPosition, 1000);
+    this.creatorUpdateInterval = setInterval(this.updateCreatorPosition, 2000);
   };
 
   updateCreatorPosition = async () => {
@@ -227,7 +237,7 @@ class NowPlayingScreen extends Component {
       if (room.exists) {
         await roomRef.update({ currentPosition });
       } else {
-        console.error(' 235 Could not find room.');
+        console.error(' (NowPlaying 235) Could not find room.');
       }
     } catch (err) {
       console.error(`Could not get room data: ${err}`);
