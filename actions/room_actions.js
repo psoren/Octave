@@ -13,38 +13,37 @@ export const updateRoom = data => ({ type: UPDATE_ROOM, payload: data });
 export const leaveRoom = (navigation, roomID) => async (dispatch) => {
   // 1. Leave the room in firebase
   const db = firebase.firestore();
-
-  // all of the test room IDs are short numbers, so just
-  // check that their length as a string is less that 4 digits
-  const roomIDStr = roomID.toString();
-  const collection = roomIDStr.length < 4 ? 'testRooms' : 'rooms';
-
-  const roomRef = db.collection(collection).doc(roomID);
+  const roomRef = db.collection('rooms').doc(roomID);
   try {
     const room = await roomRef.get();
     if (room.exists) {
-      const roomData = room.data();
-      const userInfo = await Spotify.getMe();
+      const { id: userID } = await Spotify.getMe();
       // Creator
-      if (roomData.creator.id === userInfo.id) {
+      if (room.data().creator.id === userID) {
         // Delete room
-        if (roomData.listeners.length === 0) {
+        if (room.data().listeners.length === 0) {
           try {
-            await db.collection(collection).doc(room.id).delete();
+            await db.collection('rooms').doc(room.id).delete();
           } catch (err) {
-            console.error(`Could not delete room${err}`);
+            console.error(`Could not delete room: ${err}`);
           }
+        } else {
+          // Promote oldest listener
+          const { listeners } = room.data();
+          const newCreator = listeners.shift();
+          roomRef.update({ creator: newCreator, listeners });
         }
-        // Promote oldest listener
       } else {
-        // Listener
-        console.log('listener case');
+        // Delete them from the room
+        const { listeners } = room.data();
+        const newListeners = listeners.filter(listener => userID !== listener.id);
+        roomRef.update({ listeners: newListeners });
       }
     } else {
       console.error('Could not find room.');
     }
   } catch (err) {
-    console.error(`room_actions${err}`);
+    console.error(`room_actions: ${err}`);
   }
 
   // 2. Stop playback

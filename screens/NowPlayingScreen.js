@@ -31,7 +31,8 @@ class NowPlayingScreen extends Component {
     creator: {},
     currentSongIndex: 0,
     progress: 0,
-    listeners: []
+    listeners: [],
+    userID: ''
   };
 
   componentWillUnmount() {
@@ -59,6 +60,9 @@ class NowPlayingScreen extends Component {
 
   setupRoom = async () => {
     if (this.props.currentRoom.id !== '') {
+      const { id: userID } = await Spotify.getMe();
+      this.setState({ userID });
+
       Spotify.addListener('audioDeliveryDone', this.changeSongOne);
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
@@ -91,6 +95,15 @@ class NowPlayingScreen extends Component {
           // Detect song changes
           if (this.state.currentSongIndex !== currentSongIndex) {
             await Spotify.playURI(`spotify:track:${room.data().songs[room.data().currentSongIndex].id}`, 0, 0);
+          }
+
+          // We have become the creator
+          if (creator.id === this.state.userID) {
+            this.setState({ isCreator: true });
+          } else if (this.state.isCreator
+            && this.state.creator.id !== userID) {
+            // We have given creator status to someone else
+            this.setState({ isCreator: false });
           }
 
           const songLength = songs[currentSongIndex].duration_ms / 1000;
