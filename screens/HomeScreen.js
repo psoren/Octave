@@ -46,13 +46,12 @@ class HomeScreen extends Component {
     roomsSnapshot.forEach((room) => {
       rooms.push({
         id: room.id,
-        roomCreatorID: room.data().roomCreatorID
+        creatorID: room.data().creator.id
       });
     });
     this.setState({
       rooms, deviceWidth, deviceHeight, loading: false
     });
-
 
     // Constantly listen for new rooms
     db.collection('rooms')
@@ -63,7 +62,7 @@ class HomeScreen extends Component {
         querySnapshot.forEach((room) => {
           newRooms.push({
             id: room.id,
-            roomCreatorID: room.data().roomCreatorID
+            creatorID: room.data().creator.id
           });
         });
         this.setState({ rooms: newRooms });
@@ -92,7 +91,7 @@ class HomeScreen extends Component {
       <View key={room.id} style={styles.roomCardContainer}>
         <RoomCard
           roomID={room.id}
-          roomCreatorID={room.roomCreatorID}
+          creatorID={room.creatorID}
           deviceWidth={this.state.deviceWidth}
           deviceHeight={this.state.deviceHeight}
           isCurrent={index === this.state.currentRoom}

@@ -28,8 +28,10 @@ class NowPlayingScreen extends Component {
     showNextSongs: false,
     showCurrentListeners: false,
     playing: true,
+    creator: {},
     currentSongIndex: 0,
-    progress: 0
+    progress: 0,
+    listeners: []
   };
 
   componentWillUnmount() {
@@ -38,9 +40,7 @@ class NowPlayingScreen extends Component {
     this.changeSongSubscription.remove();
   }
 
-  componentDidMount = () => {
-    this.setupRoom();
-  }
+  componentDidMount = () => this.setupRoom();
 
   componentDidUpdate = async (prevProps) => {
     if (this.props.currentRoom.id !== prevProps.currentRoom.id) {
@@ -62,10 +62,30 @@ class NowPlayingScreen extends Component {
       Spotify.addListener('audioDeliveryDone', this.changeSongOne);
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+
+      try {
+        const room = await roomRef.get();
+        if (room.exists) {
+          const roomData = room.data();
+          const roomInfo = { ...roomData, id: room.id };
+          const userInfo = await Spotify.getMe();
+
+          if (roomInfo.creator.id === userInfo.id) {
+            this.setupCreator(roomInfo);
+          } else {
+            this.setupListener(roomInfo);
+          }
+        } else {
+          console.error('Could not find room.');
+        }
+      } catch (err) {
+        console.error(`${err}. Could not get room data.`);
+      }
+
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
         .onSnapshot(async (room) => {
           const {
-            currentPosition, currentSongIndex, listeners, songs
+            currentPosition, currentSongIndex, listeners, songs, creator
           } = room.data();
 
           // Detect song changes
@@ -75,7 +95,9 @@ class NowPlayingScreen extends Component {
 
           const songLength = songs[currentSongIndex].duration_ms / 1000;
           const progress = currentPosition / songLength;
-          this.setState({ currentSongIndex, listeners, progress });
+          this.setState({
+            currentSongIndex, listeners, progress, creator
+          });
           if (room.data().playing !== this.state.playing) {
             this.setState({ playing: room.data().playing });
             try {
@@ -88,25 +110,6 @@ class NowPlayingScreen extends Component {
 
           this.props.updateRoom(room.data());
         });
-
-      try {
-        const room = await roomRef.get();
-        if (room.exists) {
-          const roomData = room.data();
-          const roomInfo = { ...roomData, id: room.id };
-          const userInfo = await Spotify.getMe();
-          if (roomInfo.roomCreatorID === userInfo.id) {
-            this.setupCreator(roomInfo);
-          } else {
-            this.setupListener(roomInfo);
-          }
-        } else {
-          console.error(' 105 Could not find room.');
-        }
-      } catch (err) {
-        console.error(err);
-        console.error('Could not get room data.');
-      }
     }
   }
 
@@ -199,14 +202,16 @@ class NowPlayingScreen extends Component {
       try {
         await roomRef.update({ name: this.state.localName });
       } catch (err) {
-        console.error(`${err}We could not update the room name.`);
+        console.error(`${err}. Could not update the room name.`);
       }
     }
   }
 
   setupListener = async (roomInfo) => {
+    console.log('setup listener called');
+
     this.props.updateRoom(roomInfo);
-    this.setState({ loading: false, creator: false });
+    this.setState({ loading: false, isCreator: false });
 
     // Start playing the same song as the creator
     const { currentSongIndex, songs, currentPosition } = roomInfo;
@@ -215,11 +220,14 @@ class NowPlayingScreen extends Component {
   };
 
   setupCreator = (roomInfo) => {
+    console.log('setup creator called');
+
     this.props.updateRoom(roomInfo);
-    this.setState({ loading: false, creator: true, updateInterval: 1500 }, async () => {
+    this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, async () => {
       const currentSong = roomInfo.songs[0];
       await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
-      this.creatorUpdateInterval = setInterval(this.updateCreatorPosition, this.state.updateInterval);
+      this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
+        this.state.updateInterval);
     });
   };
 
@@ -268,29 +276,30 @@ class NowPlayingScreen extends Component {
         />
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}
+          creator={this.state.creator}
           closeModal={() => this.setState({ showCurrentListeners: false })}
           listeners={this.state.listeners}
         />
-        <Button
-          containerStyle={styles.minimizeButton}
-          onPress={() => this.props.navigation.navigate('Home')}
-          type="outline"
-          title="Minimize"
-        />
-        <Button
-          containerStyle={styles.leaveButton}
-          onPress={this.leaveRoom}
-          type="outline"
-          title="Leave"
-        />
-        <TextInput
-          onChangeText={localName => this.setState({ changingName: true, localName })}
-          value={this.state.changingName
-            ? this.state.localName
-            : this.props.currentRoom.name}
-          onEndEditing={this.updateRoomName}
-          style={styles.roomName}
-        />
+        <View style={styles.header}>
+          <Button
+            containerStyle={styles.minimizeButton}
+            onPress={() => this.props.navigation.navigate('Home')}
+            title="Minimize"
+          />
+          <Button
+            containerStyle={styles.leaveButton}
+            onPress={this.leaveRoom}
+            title="Leave"
+          />
+          <TextInput
+            onChangeText={localName => this.setState({ changingName: true, localName })}
+            value={this.state.changingName
+              ? this.state.localName
+              : this.props.currentRoom.name}
+            onEndEditing={this.updateRoomName}
+            style={styles.roomName}
+          />
+        </View>
         <Image
           source={this.props.currentRoom.songs.length > 0 ? { url }
             : require('../assets/default_album.png')}
@@ -306,7 +315,7 @@ class NowPlayingScreen extends Component {
           <Text style={styles.song}>{name}</Text>
           <Text style={styles.artists}>{artists}</Text>
         </View>
-        {this.state.creator ? (
+        {this.state.isCreator ? (
           <ControlsContainer
             playing={this.state.playing}
             togglePlay={this.togglePlay}
@@ -347,8 +356,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-    marginTop: 50
+    backgroundColor: '#F5FCFF'
   },
   minimizeButton: {
     position: 'absolute',
@@ -363,13 +371,13 @@ const styles = StyleSheet.create({
     zIndex: 10
   },
   roomName: {
-    margin: 50,
+    margin: 10,
     fontSize: 24,
     fontWeight: 'bold',
   },
   songInfoContainer: {
     alignItems: 'center',
-    margin: 15
+    margin: 5
   },
   image: {
     width: screenWidth,
@@ -388,6 +396,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     width: screenWidth
+  },
+  header: {
+    width: screenWidth,
+    height: 75,
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center'
   }
 });
 

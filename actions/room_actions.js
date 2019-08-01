@@ -26,7 +26,7 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
       const roomData = room.data();
       const userInfo = await Spotify.getMe();
       // Creator
-      if (roomData.roomCreatorID === userInfo.id) {
+      if (roomData.creator.id === userInfo.id) {
         // Delete room
         if (roomData.listeners.length === 0) {
           try {
@@ -58,14 +58,9 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
 };
 
 export const joinRoom = (navigation, roomID) => async (dispatch) => {
-  console.log(`joining room...${roomID}`);
-
-  // 1. Check if the user has a username in firebase
-  // If not, figure out a way to assign them a username
-  // Else, just generate a random number that is not in that room
-  // of listeners based on Math.random
-  const username = `user${Math.floor(Math.random() * Math.floor(100000000))}`;
-  const profilePictureExists = false;
+  // 1. Get data from Spotify
+  const { id, display_name: name, images } = await Spotify.getMe();
+  const newListener = { id, name, images };
 
   // 2. Join the room in firebase
   const db = firebase.firestore();
@@ -74,13 +69,6 @@ export const joinRoom = (navigation, roomID) => async (dispatch) => {
   try {
     const room = await roomRef.get();
     if (room.exists) {
-      // Get user data
-      const userInfo = await Spotify.getMe();
-      const newListener = {
-        username,
-        profilePictureExists,
-        spotifyID: userInfo.id
-      };
       roomRef.update({
         listeners: firebase.firestore.FieldValue.arrayUnion(newListener)
       });

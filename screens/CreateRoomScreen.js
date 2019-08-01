@@ -25,22 +25,21 @@ class CreateRoomScreen extends Component {
   addSongs = () => this.props.navigation.navigate('AddSongs');
 
   createRoom = async () => {
-    const { uri } = await Spotify.getMe();
-    const roomCreatorID = uri.split(':')[2];
-    const { songs, name } = this.props;
+    const { id, display_name: name, images } = await Spotify.getMe();
+    const creator = { id, name, images };
+    const { songs, name: roomName } = this.props;
     if (songs.length === 0) {
       Alert.alert('Please add at least one song');
-    } else if (name === '') {
+    } else if (roomName === '') {
       Alert.alert('Please add a room name');
-    } else if (!uri) {
+    } else if (!id) {
       Alert.alert("You don't appear to be logged in.  There is an issue");
     } else {
       this.props.createRoom({
         songs,
-        name,
-        roomCreatorID,
-        navigation: this.props.navigation,
-        test: false
+        roomName,
+        creator,
+        navigation: this.props.navigation
       });
     }
   }

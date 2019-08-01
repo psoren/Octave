@@ -76,7 +76,7 @@ class RoomCard extends Component {
 
   joinRoom = async () => {
     const { id: userId } = await Spotify.getMe();
-    if (userId === this.props.roomCreatorID) {
+    if (userId === this.props.creatorID) {
       Alert.alert('You cannot join the room you created!');
     } else if (this.props.currentRoom.id !== '') {
       // If they are in a room already, prompt the user
@@ -179,7 +179,8 @@ const styles = {
 };
 
 RoomCard.propTypes = {
-  roomID: PropTypes.string.isRequired
+  roomID: PropTypes.string.isRequired,
+  creatorID: PropTypes.string.isRequired
 };
 
 const mapStateToProps = ({ currentRoom }) => ({ currentRoom });

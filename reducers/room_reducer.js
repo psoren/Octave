@@ -8,7 +8,7 @@ import {
 const INITIAL_STATE = {
   currentSongIndex: 0,
   playing: true,
-  roomCreatorID: '',
+  creator: {},
   name: '',
   songs: [],
   id: ''
@@ -19,8 +19,7 @@ export default function (state = INITIAL_STATE, action) {
     case CREATE_ROOM:
       return {
         ...INITIAL_STATE,
-        id: action.payload.newRoomID,
-        test: action.payload.test
+        id: action.payload.newRoomID
       };
     case JOIN_ROOM:
       return { ...INITIAL_STATE, id: action.payload };

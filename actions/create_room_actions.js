@@ -24,17 +24,16 @@ export const appendSongToPendingQueue = song => ({
 
 export const createRoom = ({
   songs,
-  name,
-  roomCreatorID,
-  navigation,
-  test
+  roomName,
+  creator,
+  navigation
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
     const { id: newRoomID } = await db.collection('rooms').add({
       songs,
-      name,
-      roomCreatorID,
+      name: roomName,
+      creator,
       currentSongIndex: 0,
       playing: true,
       listeners: [],
@@ -42,10 +41,7 @@ export const createRoom = ({
     });
     dispatch({
       type: CREATE_ROOM,
-      payload: {
-        newRoomID,
-        test
-      }
+      payload: { newRoomID }
     });
     navigation.navigate('NowPlaying', { test: false });
   } catch (err) {

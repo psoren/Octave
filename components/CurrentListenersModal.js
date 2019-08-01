@@ -3,6 +3,7 @@ import {
   Text, View, Modal, ScrollView
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
+import Listener from './Listener';
 
 class CurrentListenersModal extends Component {
   render() {
@@ -20,14 +21,24 @@ class CurrentListenersModal extends Component {
             icon={(<Icon type="material" name="cancel" size={45} />)}
           />
           <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <Text style={styles.title}>Creator</Text>
+            <Listener
+              key={this.props.creator.id}
+              images={this.props.creator.images}
+              name={this.props.creator.name}
+            />
+            <ScrollView>
               <Text style={styles.title}>Current Listeners</Text>
               {
                 this.props.listeners.length > 0
                   ? (
                     <View style={styles.listenersContainer}>
-                      {this.props.listeners.map((listeners, index) => (
-                        <Text key="sdfasfd">Listener 1</Text>
+                      {this.props.listeners.map(listener => (
+                        <Listener
+                          key={listener.id}
+                          images={listener.images}
+                          name={listener.name}
+                        />
                       ))}
                     </View>
                   )
@@ -73,7 +84,7 @@ const styles = {
     fontWeight: 'bold'
   },
   listenersContainer: {
-    alignItems: 'center'
+    alignItems: 'flex-start'
   }
 };
 
