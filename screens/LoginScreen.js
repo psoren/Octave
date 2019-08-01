@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Alert } from 'react-native';
 import Spotify from 'rn-spotify-sdk';
 import { Button } from 'react-native-elements';
 import { connect } from 'react-redux';
@@ -32,8 +32,12 @@ class LoginScreen extends PureComponent {
   }
 
   handleLogin = async () => {
-    const loginResult = await Spotify.login();
-    if (loginResult) { this.goToHome(); }
+    try {
+      const loginResult = await Spotify.login();
+      if (loginResult) { this.goToHome(); }
+    } catch (err) {
+      Alert.alert(`We ran into an issue: ${err}`);
+    }
   }
 
   componentDidMount = async () => {
