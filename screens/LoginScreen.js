@@ -33,7 +33,7 @@ class LoginScreen extends PureComponent {
 
   handleLogin = async () => {
     try {
-      const loginResult = await Spotify.login();
+      const loginResult = await Spotify.login({ showDialog: true });
       if (loginResult) { this.goToHome(); }
     } catch (err) {
       Alert.alert(`We ran into an issue: ${err}`);
@@ -74,7 +74,6 @@ class LoginScreen extends PureComponent {
       }
     }
   }
-
 
   render() {
     if (!this.state.spotifyInitialized) {
