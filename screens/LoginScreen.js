@@ -76,7 +76,7 @@ class LoginScreen extends PureComponent {
     if (!this.state.spotifyInitialized) {
       return (
         <View style={styles.container}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color="#00c9fd" animating />
         </View>
       );
     }

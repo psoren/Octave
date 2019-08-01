@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Text, View } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
+import firebase from 'firebase';
 
 class SettingsScreen extends Component {
     static navigationOptions = () => ({
@@ -27,6 +28,11 @@ class SettingsScreen extends Component {
       this.props.refreshTokens(sessionInfo);
     }
 
+    getUserInfo = async () => {
+      const user = firebase.auth().currentUser;
+      console.log(user);
+    }
+
     render() {
       return (
         <View style={styles.container}>
@@ -48,6 +54,10 @@ class SettingsScreen extends Component {
             style={styles.button}
             title="Renew Session"
             onPress={this.renewSession}
+          />
+          <Button
+            title="get user info"
+            onPress={this.getUserInfo}
           />
         </View>
       );
