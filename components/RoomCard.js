@@ -124,6 +124,8 @@ class RoomCard extends Component {
           <Text style={styles.artists}>{this.state.currentSong.artists}</Text>
         </View>
         <ProgressBar
+          startColor="#fff"
+          endColor="#fff"
           progress={this.state.progress}
           duration={1500}
           width={this.state.deviceWidth * 0.6}

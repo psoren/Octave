@@ -10,6 +10,7 @@ import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
 import qs from 'qs';
 import _ from 'lodash';
+import { showMessage } from 'react-native-flash-message';
 
 import ProgressBar from '../components/ProgressBar';
 import * as actions from '../actions';
@@ -164,12 +165,21 @@ class NowPlayingScreen extends Component {
 
       if (newIndex < 0) {
         try {
-          Alert.alert('No previous songs');
+          showMessage({
+            message: 'There were no previous songs',
+            type: 'danger'
+          });
         } catch (err) {
           console.error(`Could not play ${roomData.songs[0].name}: ${err}`);
         }
       } else if (newIndex + 1 > numSongs) {
-        Alert.alert('There were no upcoming songs. Up next is a recommendation from Spotify');
+        showMessage({
+          message: 'There were no upcoming songs. Up next is a recommendation from Spotify',
+          type: 'info',
+          backgroundColor: '#00c9ff',
+          color: '#fff',
+          duration: 2500
+        });
         const newSong = await this.recommendSong(room);
         let { songs } = room.data();
         songs.push(newSong);
@@ -265,13 +275,38 @@ class NowPlayingScreen extends Component {
     }
   }
 
+  saveSong = async () => {
+    const { songs, currentSongIndex } = this.props.currentRoom;
+    const { accessToken } = this.props;
+    const { id: songId, name: songName } = songs[currentSongIndex];
+    try {
+      await axios({
+        method: 'PUT',
+        url: 'https://api.spotify.com/v1/me/tracks',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        data: { ids: [songId] }
+      });
+      showMessage({
+        message: `Saved ${songName} to your library`,
+        type: 'info',
+        backgroundColor: '#00c9ff',
+        color: '#fff'
+      });
+    } catch (err) {
+      Alert.alert(`Could not save ${songName} to your library`);
+    }
+  }
+
   render() {
     if (this.state.loading
       || (!this.props.currentRoom.name)
       || this.props.currentRoom.id === '') {
       return (
         <View style={styles.container}>
-          <ActivityIndicator size="large" color="#92f39d" animating />
+          <ActivityIndicator size="large" color="#00c9ff" animating />
         </View>
       );
     }
@@ -319,15 +354,25 @@ class NowPlayingScreen extends Component {
           style={styles.image}
         />
         <ProgressBar
+
           progress={this.state.progress}
           width={screenWidth}
           height={10}
           duration={this.state.updateInterval}
         />
-        <View style={styles.songInfoContainer}>
-          <Text style={styles.song}>{name}</Text>
-          <Text style={styles.artists}>{artists}</Text>
+
+        <View style={styles.likeButtonContainer}>
+          <View style={styles.songInfoContainer}>
+            <Text style={styles.song}>{name}</Text>
+            <Text style={styles.artists}>{artists}</Text>
+          </View>
+          <Button
+            onPress={this.saveSong}
+            type="clear"
+            icon={(<Icon type="material" size={45} name="favorite-border" />)}
+          />
         </View>
+
         {this.state.isCreator ? (
           <ControlsContainer
             playing={this.state.playing}
@@ -417,6 +462,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center'
+  },
+  likeButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around'
   }
 });
 

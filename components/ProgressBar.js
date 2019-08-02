@@ -11,8 +11,8 @@ class ProgressBar extends Component {
     static defaultProps = {
       height: 10,
       width: 100,
-      startColor: '#4e4187',
-      endColor: '#3083dc',
+      startColor: '#00c9ff',
+      endColor: '#92fe9d',
       duration: 100
     };
 

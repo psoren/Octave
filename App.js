@@ -7,6 +7,7 @@ import {
   createStackNavigator,
 } from 'react-navigation';
 import firebase from 'firebase';
+import FlashMessage from 'react-native-flash-message';
 
 import store from './store';
 import CreateRoomScreen from './screens/CreateRoomScreen';
@@ -85,6 +86,7 @@ class App extends Component {
     return (
       <Provider store={store}>
         <AppContainer />
+        <FlashMessage position="top" />
       </Provider>
     );
   }

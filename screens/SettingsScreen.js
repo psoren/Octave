@@ -3,6 +3,8 @@ import { Text, View } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
 import firebase from 'firebase';
+import { connect } from 'react-redux';
+import * as actions from '../actions';
 
 class SettingsScreen extends Component {
     static navigationOptions = () => ({
@@ -25,6 +27,7 @@ class SettingsScreen extends Component {
     renewSession = async () => {
       await Spotify.renewSession();
       const sessionInfo = await Spotify.getSessionAsync();
+      console.log(sessionInfo);
       this.props.refreshTokens(sessionInfo);
     }
 
@@ -74,4 +77,4 @@ const styles = {
   },
 };
 
-export default SettingsScreen;
+export default connect(null, actions)(SettingsScreen);
