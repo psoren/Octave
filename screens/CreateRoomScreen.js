@@ -44,6 +44,13 @@ class CreateRoomScreen extends Component {
     }
   }
 
+  clearQueue = () => {
+    Alert.alert('Clear the queue?', '',
+      [{ text: 'Cancel', style: 'cancel' },
+        { text: 'OK', onPress: () => this.props.clearPendingQueue() }],
+      { cancelable: false },);
+  }
+
   render() {
     // If the user is in a room
     if (this.props.currentRoom.id !== '') {
@@ -81,6 +88,11 @@ class CreateRoomScreen extends Component {
             keyExtractor={item => item.id}
           />
         </View>
+        <Button
+          onPress={this.clearQueue}
+          type="clear"
+          icon={(<Icon type="material" size={60} name="close" />)}
+        />
         <Button
           style={styles.addSongsBtn}
           title="Add Songs"

@@ -101,7 +101,7 @@ class ArtistScreen extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView>
           <Text style={styles.name}>{this.state.name}</Text>
           <Image
             source={{ uri: this.state.artistImage }}
@@ -166,10 +166,6 @@ const styles = {
     marginBottom: 15
 
   },
-  scrollContainer: {
-    flexWrap: 'wrap',
-    justifyContent: 'center'
-  },
   name: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -190,9 +186,8 @@ const styles = {
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center'
-
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 };
 

@@ -5,12 +5,17 @@ import {
   CHANGE_PENDING_ROOM_NAME,
   APPEND_SONGS_TO_CREATE_ROOM_QUEUE,
   PREPEND_SONGS_TO_CREATE_ROOM_QUEUE,
+  CLEAR_PENDING_QUEUE,
   CREATE_ROOM,
 } from './types';
 
 export const changePendingRoomName = roomName => ({
   type: CHANGE_PENDING_ROOM_NAME,
   payload: roomName
+});
+
+export const clearPendingQueue = () => ({
+  type: CLEAR_PENDING_QUEUE
 });
 
 export const appendSongsToPendingQueue = songs => ({
