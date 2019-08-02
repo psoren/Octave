@@ -16,11 +16,13 @@ class Song extends Component {
   handlePlay = async (playNow) => {
     const {
       // eslint-disable-next-line camelcase
-      id, name, artists, images, duration_ms, popularity, preview_url
+      id, name, artists, images, duration_ms, popularity = 1, preview_url
     } = this.props;
+
     const newSong = {
       id, name, artists, images, duration_ms, popularity, preview_url
     };
+
     if (this.props.currentRoom.id === '') {
       if (playNow) {
         this.props.prependSongToPendingQueue(newSong);

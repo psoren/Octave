@@ -80,6 +80,7 @@ class RoomCard extends Component {
 
   joinRoom = async () => {
     const { id: userId } = await Spotify.getMe();
+    // if (userId === this.props.creatorID) {
     if (userId === this.props.creatorID) {
       Alert.alert('You cannot join the room you created!');
     } else if (this.props.currentRoom.id !== '') {

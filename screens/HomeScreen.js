@@ -8,6 +8,7 @@ import { connect } from 'react-redux';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import SplashScreen from 'react-native-splash-screen';
+import LinearGradient from 'react-native-linear-gradient';
 
 import { ScrollView } from 'react-native-gesture-handler';
 import * as actions from '../actions';
@@ -100,9 +101,14 @@ class HomeScreen extends Component {
 
     return (
       <View style={styles.container}>
-        <View style={styles.nowPlayingContainer}>
+        <LinearGradient
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          colors={['#00c9ff', '#92fe9d']}
+          style={styles.nowPlayingContainer}
+        >
           <Text style={styles.nowPlaying}>Now Playing</Text>
-        </View>
+        </LinearGradient>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -117,7 +123,6 @@ class HomeScreen extends Component {
             </View>
           ) : roomCards}
         </ScrollView>
-
       </View>
     );
   }
@@ -146,7 +151,7 @@ const styles = {
   },
   nowPlayingContainer: {
     width: deviceWidth,
-    height: 100,
+    height: 120,
     backgroundColor: '#00c9ff',
     justifyContent: 'center',
     alignItems: 'center',

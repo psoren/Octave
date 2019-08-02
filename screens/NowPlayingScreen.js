@@ -14,7 +14,7 @@ import { showMessage } from 'react-native-flash-message';
 
 import ProgressBar from '../components/ProgressBar';
 import * as actions from '../actions';
-import NextSongsModal from '../components/NextSongsModal';
+import QueueModal from '../components/QueueModal';
 import CurrentListenersModal from '../components/CurrentListenersModal';
 import ControlsContainer from '../components/ControlsContainer';
 import getSongData from '../functions/getSongData';
@@ -26,7 +26,7 @@ class NowPlayingScreen extends Component {
     changingName: false,
     localName: '',
     loading: true,
-    showNextSongs: false,
+    showQueue: false,
     showCurrentListeners: false,
     playing: true,
     creator: {},
@@ -231,8 +231,6 @@ class NowPlayingScreen extends Component {
   }
 
   setupListener = async (roomInfo) => {
-    console.log('setup listener called');
-
     this.props.updateRoom(roomInfo);
     this.setState({ loading: false, isCreator: false });
 
@@ -243,8 +241,6 @@ class NowPlayingScreen extends Component {
   };
 
   setupCreator = (roomInfo) => {
-    console.log('setup creator called');
-
     this.props.updateRoom(roomInfo);
     this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, async () => {
       const currentSong = roomInfo.songs[0];
@@ -300,10 +296,78 @@ class NowPlayingScreen extends Component {
     }
   }
 
+  savePlaylist = () => Alert.alert(
+    `Create the playlist ${this.props.currentRoom.name} from the songs in this room?`,
+    '', [{
+      text: 'Ok',
+      onPress: async () => {
+        const { accessToken } = this.props;
+        const { songs, name } = this.props.currentRoom;
+        const { id } = await Spotify.getMe();
+        const description = 'Created by Octave!';
+
+        try {
+          // Create Playlist
+          const { data } = await axios({
+            method: 'POST',
+            url: `https://api.spotify.com/v1/users/${id}/playlists`,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            data: { name, description }
+          });
+          const { id: playlistID } = data;
+
+          // // 1. Create an array of promises where we
+          // // add the songs in the song list to the
+          // // user's library
+          const songURIs = songs.map(song => `spotify:track:${song.id}`);
+
+          // Split them so we can every 50 in the correct order
+          const splitSongURIs = [];
+          for (let i = 0; i < songURIs.length; i += 50) {
+            splitSongURIs.push(songURIs.slice(i, i + 50));
+          }
+
+          const songsToAdd = splitSongURIs.map(uris => ({
+            method: 'POST',
+            url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            data: { uris }
+          }));
+
+          // // 2. Add them to the library
+          songsToAdd.reduce((promiseChain, currentTask) => promiseChain.then(async chainResults =>
+            // eslint-disable-next-line implicit-arrow-linebreak
+            axios(currentTask).then(currentResult =>
+              // eslint-disable-next-line implicit-arrow-linebreak
+              [...chainResults, currentResult])),
+          // eslint-disable-next-line no-unused-vars
+          Promise.resolve([])).then((arrayOfResults) => {
+            showMessage({
+              message: `Saved the playlist ${name} with ${songURIs.length} songs to your library`,
+              type: 'info',
+              backgroundColor: '#00c9ff',
+              color: '#fff',
+              duration: 8000
+            });
+          });
+        } catch (err) {
+          Alert.alert(`Could not create playlist: ${err}`);
+        }
+      }
+    },
+    { text: 'Cancel', style: 'cancel' }], { cancelable: false },
+  );
+
   render() {
     if (this.state.loading
-      || (!this.props.currentRoom.name)
-      || this.props.currentRoom.id === '') {
+    || (!this.props.currentRoom.name)
+    || this.props.currentRoom.id === '') {
       return (
         <View style={styles.container}>
           <ActivityIndicator size="large" color="#00c9ff" animating />
@@ -313,14 +377,15 @@ class NowPlayingScreen extends Component {
 
     const { name, artists } = this.props.currentRoom.songs[this.state.currentSongIndex];
     const { url } = this.props.currentRoom.songs[this.state.currentSongIndex].images[0];
-    const nextSongs = this.props.currentRoom.songs.slice(this.state.currentSongIndex);
 
     return (
       <View style={styles.container}>
-        <NextSongsModal
-          visible={this.state.showNextSongs}
-          closeModal={() => this.setState({ showNextSongs: false })}
-          songs={nextSongs}
+        <QueueModal
+          visible={this.state.showQueue}
+          closeModal={() => this.setState({ showQueue: false })}
+          savePlaylist={this.savePlaylist}
+          songs={this.props.currentRoom.songs}
+          currentSongIndex={this.state.currentSongIndex}
         />
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}
@@ -394,7 +459,7 @@ class NowPlayingScreen extends Component {
             icon={(<Icon type="material" size={45} name="playlist-add" />)}
           />
           <Button
-            onPress={() => this.setState({ showNextSongs: true })}
+            onPress={() => this.setState({ showQueue: true })}
             type="clear"
             icon={(<Icon type="material" size={45} name="queue-music" />)}
           />
