@@ -68,7 +68,7 @@ const Navigator = createBottomTabNavigator({
 const AppContainer = createAppContainer(Navigator);
 
 class App extends Component {
-  componentDidMount = () => {
+  componentDidMount = async () => {
     const firebaseConfig = {
       apiKey: 'AIzaSyBCfVBTHezqkYGN6VBjFiNAaWAiJa4tJWQ',
       authDomain: 'octave-c5cd1.firebaseapp.com',

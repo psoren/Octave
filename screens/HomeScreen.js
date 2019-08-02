@@ -7,6 +7,7 @@ import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
+import SplashScreen from 'react-native-splash-screen';
 
 import { ScrollView } from 'react-native-gesture-handler';
 import * as actions from '../actions';
@@ -30,9 +31,10 @@ class HomeScreen extends Component {
     )
   });
 
-  state = { rooms: [], currentRoom: 0, loading: true };
+  state = { rooms: [], currentRoom: 0 };
 
   componentDidMount = async () => {
+    SplashScreen.hide();
     this.tokenRefreshInterval = setInterval(async () => {
       await Spotify.renewSession();
       const sessionInfo = await Spotify.getSessionAsync();
@@ -49,9 +51,7 @@ class HomeScreen extends Component {
         creatorID: room.data().creator.id
       });
     });
-    this.setState({
-      rooms, deviceWidth, deviceHeight, loading: false
-    });
+    this.setState({ rooms, deviceWidth, deviceHeight });
 
     // Constantly listen for new rooms
     db.collection('rooms')
