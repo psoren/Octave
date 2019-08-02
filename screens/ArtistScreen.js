@@ -1,11 +1,16 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Image, ScrollView
+  Text, View, Image, ScrollView, Alert
 } from 'react-native';
+import { Button } from 'react-native-elements';
 import axios from 'axios';
 import qs from 'qs';
 import { connect } from 'react-redux';
+import * as firebase from 'firebase';
+import 'firebase/firestore';
+import _ from 'lodash';
 
+import * as actions from '../actions';
 import Song from '../components/Song';
 import Thumbnail from '../components/Thumbnail';
 import getSongData from '../functions/getSongData';
@@ -53,6 +58,46 @@ class ArtistScreen extends Component {
     this.setState({ albums });
   }
 
+  playTopSongs = async (shouldPrepend) => {
+    if (this.props.currentRoom.id === '') {
+      if (this.props.pendingRoom.songs.length > 4000) {
+        Alert.alert('You cannot add more than 4000 songs to a room');
+        return;
+      }
+      if (shouldPrepend) {
+        this.props.prependSongsToPendingQueue(this.state.songs);
+      } else {
+        this.props.appendSongsToPendingQueue(this.state.songs);
+      }
+    } else {
+      // Add to firebase
+      const db = firebase.firestore();
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+      try {
+        const room = await roomRef.get();
+        if (room.exists) {
+          let { songs: roomSongs } = room.data();
+          if (roomSongs.length > 4000) {
+            Alert.alert('You cannot add more than 4000 songs to a room');
+            return;
+          }
+          const { currentSongIndex } = room.data();
+          if (shouldPrepend) {
+            roomSongs.splice(currentSongIndex + 1, 0, ...this.state.songs);
+          } else {
+            roomSongs = [...roomSongs, ...this.state.songs];
+          }
+          roomSongs = _.uniqBy(roomSongs, 'id');
+          roomRef.update({ songs: roomSongs });
+        } else {
+          console.error('Could not find room');
+        }
+      } catch (err) {
+        console.error(`(Song.js) We could not update the room.${err}`);
+      }
+    }
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -62,6 +107,16 @@ class ArtistScreen extends Component {
             source={{ uri: this.state.artistImage }}
             style={styles.image}
           />
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Play Next"
+              onPress={() => this.playTopSongs(true)}
+            />
+            <Button
+              title="Play Later"
+              onPress={() => this.playTopSongs(false)}
+            />
+          </View>
           <View>
             {this.state.songs.map(item => (
               <Song
@@ -103,8 +158,17 @@ const styles = {
     marginTop: 50,
     height: 500,
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 15
+
+  },
   scrollContainer: {
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    justifyContent: 'center'
   },
   name: {
     fontSize: 24,
@@ -126,10 +190,16 @@ const styles = {
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    alignItems: 'center'
+
   }
 };
 
-const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+const mapStateToProps = ({ auth, currentRoom, pendingRoom }) => ({
+  accessToken: auth.accessToken,
+  currentRoom,
+  pendingRoom
+});
 
-export default connect(mapStateToProps, null)(ArtistScreen);
+export default connect(mapStateToProps, actions)(ArtistScreen);

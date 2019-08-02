@@ -3,8 +3,8 @@ import 'firebase/firestore';
 
 import {
   CHANGE_PENDING_ROOM_NAME,
-  APPEND_SONG_TO_CREATE_ROOM_QUEUE,
-  PREPEND_SONG_TO_CREATE_ROOM_QUEUE,
+  APPEND_SONGS_TO_CREATE_ROOM_QUEUE,
+  PREPEND_SONGS_TO_CREATE_ROOM_QUEUE,
   CREATE_ROOM,
 } from './types';
 
@@ -12,14 +12,15 @@ export const changePendingRoomName = roomName => ({
   type: CHANGE_PENDING_ROOM_NAME,
   payload: roomName
 });
-export const prependSongToPendingQueue = song => ({
-  type: PREPEND_SONG_TO_CREATE_ROOM_QUEUE,
-  payload: song
+
+export const appendSongsToPendingQueue = songs => ({
+  type: APPEND_SONGS_TO_CREATE_ROOM_QUEUE,
+  payload: songs
 });
 
-export const appendSongToPendingQueue = song => ({
-  type: APPEND_SONG_TO_CREATE_ROOM_QUEUE,
-  payload: song
+export const prependSongsToPendingQueue = songs => ({
+  type: PREPEND_SONGS_TO_CREATE_ROOM_QUEUE,
+  payload: songs
 });
 
 export const createRoom = ({

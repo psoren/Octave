@@ -4,10 +4,10 @@ import { Button, Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
+import 'firebase/firestore';
 import _ from 'lodash';
 
 import * as actions from '../actions';
-import 'firebase/firestore';
 import SongModal from './SongModal';
 
 class Song extends Component {
@@ -25,8 +25,8 @@ class Song extends Component {
 
     if (this.props.currentRoom.id === '') {
       if (playNow) {
-        this.props.prependSongToPendingQueue(newSong);
-      } else { this.props.appendSongToPendingQueue(newSong); }
+        this.props.prependSongsToPendingQueue([newSong]);
+      } else { this.props.appendSongsToPendingQueue([newSong]); }
     } else {
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);

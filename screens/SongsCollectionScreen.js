@@ -1,10 +1,16 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Image, FlatList
+  Text, View, Image, FlatList, Alert
 } from 'react-native';
+import { Button } from 'react-native-elements';
 import axios from 'axios';
 import { connect } from 'react-redux';
+import qs from 'qs';
+import * as firebase from 'firebase';
+import 'firebase/firestore';
+import _ from 'lodash';
 
+import * as actions from '../actions';
 import Song from '../components/Song';
 import getSongData from '../functions/getSongData';
 
@@ -15,12 +21,11 @@ class SongsCollectionScreen extends Component {
     const { accessToken, navigation } = this.props;
     const id = navigation.getParam('id');
     const type = navigation.getParam('type');
-    this.setState({ type });
+    this.setState({ type, id });
 
     // Get info
     const config = { headers: { Authorization: `Bearer ${accessToken}` } };
     const { data: collectionData } = await axios.get(`https://api.spotify.com/v1/${type}s/${id}`, config);
-
     if (collectionData.images && collectionData.images.length > 0) {
       this.setState({ images: collectionData.images });
     }
@@ -56,6 +61,77 @@ class SongsCollectionScreen extends Component {
     }
   }
 
+  playAll = async (shouldPrepend) => {
+    const numTracks = this.state.collectionData.tracks.total;
+    const { accessToken } = this.props;
+    const limit = 50;
+    const numRequests = Math.ceil(numTracks / limit);
+    const requests = [];
+
+    for (let i = 0; i < numRequests; i += 1) {
+      const params = qs.stringify({ limit, offset: i * limit });
+      requests.push(
+        axios({
+          method: 'GET',
+          url: `https://api.spotify.com/v1/${this.state.type}s/${this.state.id}/tracks?${params}`,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      );
+    }
+
+    const results = await Promise.all(requests);
+    let songs = [];
+    // eslint-disable-next-line array-callback-return
+    results.map((result) => {
+      const newSongs = result.data.items.map(item => getSongData(item, { type: this.state.type }));
+      songs = [...songs, ...newSongs];
+    });
+
+    if (this.props.currentRoom.id === '') {
+      if (this.props.pendingRoom.songs.length > 4000) {
+        Alert.alert('You cannot add more than 4000 songs to a room');
+        return;
+      }
+
+      if (shouldPrepend) {
+        this.props.prependSongsToPendingQueue(songs);
+      } else {
+        this.props.appendSongsToPendingQueue(songs);
+      }
+    } else {
+      // Add to firebase
+      const db = firebase.firestore();
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+      try {
+        const room = await roomRef.get();
+        if (room.exists) {
+          let { songs: roomSongs } = room.data();
+
+          if (roomSongs.length > 4000) {
+            Alert.alert('You cannot add more than 4000 songs to a room');
+            return;
+          }
+
+          const { currentSongIndex } = room.data();
+          if (shouldPrepend) {
+            roomSongs.splice(currentSongIndex + 1, 0, ...songs);
+          } else {
+            roomSongs = [...roomSongs, ...songs];
+          }
+          roomSongs = _.uniqBy(roomSongs, 'id');
+          roomRef.update({ songs: roomSongs });
+        } else {
+          console.error('Could not find room');
+        }
+      } catch (err) {
+        console.error(`(Song.js) We could not update the room.${err}`);
+      }
+    }
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -66,6 +142,16 @@ class SongsCollectionScreen extends Component {
             : require('../assets/default_album.png')}
           style={styles.albumArt}
         />
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Play Next"
+            onPress={() => this.playAll(true)}
+          />
+          <Button
+            title="Play Later"
+            onPress={() => this.playAll(false)}
+          />
+        </View>
         <FlatList
           data={this.state.songs}
           keyExtractor={item => (this.state.type === 'playlist' ? item.key : item.id)}
@@ -96,6 +182,12 @@ const styles = {
     alignItems: 'stretch',
     backgroundColor: '#fff'
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    margin: 15
+  },
   albumArt: {
     height: 200,
     width: 200,
@@ -108,6 +200,10 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+const mapStateToProps = ({ auth, currentRoom, pendingRoom }) => ({
+  accessToken: auth.accessToken,
+  currentRoom,
+  pendingRoom
+});
 
-export default connect(mapStateToProps, null)(SongsCollectionScreen);
+export default connect(mapStateToProps, actions)(SongsCollectionScreen);
