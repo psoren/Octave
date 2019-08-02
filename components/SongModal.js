@@ -5,6 +5,7 @@ import {
 import { Button, Icon } from 'react-native-elements';
 import PropTypes from 'prop-types';
 import LinearGradient from 'react-native-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
 
 const { height } = Dimensions.get('window');
 const modalHeight = height / 4;
@@ -17,11 +18,12 @@ const SongModal = props => (
     style={styles.modal}
     transparent
   >
+    <BlurView style={styles.blur} />
     <LinearGradient
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       colors={['#00c9ff', '#92fe9d']}
-      style={styles.container}
+      style={styles.modalContainer}
     >
       <Button
         buttonStyle={styles.closeButton}
@@ -70,8 +72,10 @@ SongModal.propTypes = {
 };
 
 const styles = {
-  container: {
-    marginTop: marginHeight,
+  blur: {
+    height: marginHeight
+  },
+  modalContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
