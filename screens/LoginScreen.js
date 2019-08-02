@@ -50,6 +50,7 @@ class LoginScreen extends PureComponent {
   }
 
   componentDidMount = async () => {
+    SplashScreen.hide();
     const isInitialized = await Spotify.isInitializedAsync();
     if (!isInitialized) {
       const {

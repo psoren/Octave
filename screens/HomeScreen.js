@@ -56,7 +56,6 @@ class HomeScreen extends Component {
     // Constantly listen for new rooms
     db.collection('rooms')
       .orderBy('name').limit(20)
-      .where('name', '>', '0')
       .onSnapshot((querySnapshot) => {
         const newRooms = [];
         querySnapshot.forEach((room) => {
