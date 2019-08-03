@@ -41,7 +41,6 @@ class ProgressBar extends Component {
         extrapolate: 'clamp'
       });
 
-
       const colorInterpolate = this.state.animation.interpolate({
         inputRange: [0, 1],
         outputRange: [this.props.startColor, this.props.endColor]

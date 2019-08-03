@@ -6,6 +6,8 @@ import firebase from 'firebase';
 import { connect } from 'react-redux';
 import * as actions from '../actions';
 
+import MinimizedRoom from '../components/MinimizedRoom';
+
 class SettingsScreen extends Component {
     static navigationOptions = () => ({
       title: 'Me',
@@ -37,6 +39,19 @@ class SettingsScreen extends Component {
     }
 
     render() {
+      let NowPlaying = null;
+      if (this.props.currentRoom.id !== '') {
+        const { songs, currentSongIndex, name: roomName } = this.props.currentRoom;
+        NowPlaying = (
+          <MinimizedRoom
+            songs={songs}
+            currentSongIndex={currentSongIndex}
+            roomName={roomName}
+            goToRoom={this.goToRoom}
+          />
+        );
+      }
+
       return (
         <View style={styles.container}>
           <Text>SettingsScreen</Text>
@@ -62,6 +77,10 @@ class SettingsScreen extends Component {
             title="get user info"
             onPress={this.getUserInfo}
           />
+
+          <View style={styles.nowPlaying}>
+            {NowPlaying}
+          </View>
         </View>
       );
     }
@@ -75,6 +94,14 @@ const styles = {
   button: {
     margin: 15
   },
+  nowPlaying: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0
+  }
 };
 
-export default connect(null, actions)(SettingsScreen);
+const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
+
+
+export default connect(mapStateToProps, actions)(SettingsScreen);

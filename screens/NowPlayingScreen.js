@@ -1,6 +1,15 @@
 import React, { Component } from 'react';
 import {
-  Text, View, TextInput, Image, ActivityIndicator, Dimensions, StyleSheet, Alert
+  Text,
+  View,
+  TextInput,
+  Image,
+  ActivityIndicator,
+  Dimensions,
+  StyleSheet,
+  Alert,
+  Animated,
+  PanResponder,
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import * as firebase from 'firebase';
@@ -19,27 +28,69 @@ import CurrentListenersModal from '../components/CurrentListenersModal';
 import ControlsContainer from '../components/ControlsContainer';
 import getSongData from '../functions/getSongData';
 
-const { width: screenWidth } = Dimensions.get('window');
+const {
+  width: screenWidth,
+  height: screenHeight
+} = Dimensions.get('window');
+
+const SWIPE_THRESHOLD = 0.2 * screenHeight;
+const VELOCITY_THRESHOLD = 3.5;
 
 class NowPlayingScreen extends Component {
-  state = {
-    changingName: false,
-    localName: '',
-    loading: true,
-    showQueue: false,
-    showCurrentListeners: false,
-    playing: true,
-    creator: {},
-    currentSongIndex: 0,
-    progress: 0,
-    listeners: [],
-    userID: ''
-  };
+  constructor(props) {
+    super(props);
+
+    const position = new Animated.ValueXY();
+    const panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderMove: (_e, gesture) => {
+        position.setValue({ x: 0, y: gesture.dy });
+      },
+      onPanResponderRelease: (event, gesture) => {
+        if (gesture.dy > SWIPE_THRESHOLD || gesture.vy > VELOCITY_THRESHOLD) {
+          this.forceSwipe();
+        } else {
+          this.resetPosition(event, gesture);
+        }
+      }
+    });
+
+    this.panResponder = panResponder;
+    this.position = position;
+
+    this.state = {
+      changingName: false,
+      localName: '',
+      loading: true,
+      showQueue: false,
+      showCurrentListeners: false,
+      playing: true,
+      creator: {},
+      currentSongIndex: 0,
+      progress: 0,
+      listeners: [],
+      userID: ''
+    };
+  }
 
   componentWillUnmount() {
     console.log('Now Playing Screen unmounting...');
     clearInterval(this.creatorUpdateInterval);
     this.changeSongSubscription.remove();
+  }
+
+  resetPosition = () => Animated.spring(this.position,
+    { toValue: { x: 0, y: 0 } }).start();
+
+  forceSwipe = () => {
+    Animated.timing(this.position, {
+      toValue: { x: 0, y: screenHeight }
+    }).start(() => this.minimizeRoom());
+  }
+
+  minimizeRoom = () => {
+    this.props.navigation.navigate('Home');
+    this.resetPosition();
   }
 
   componentDidMount = () => this.setupRoom();
@@ -392,10 +443,15 @@ class NowPlayingScreen extends Component {
     { text: 'Cancel', style: 'cancel' }], { cancelable: false },
   );
 
+  getCardStyle = () => {
+    const { position } = this;
+    return { ...position.getLayout() };
+  }
+
   render() {
     if (this.state.loading
-    || (!this.props.currentRoom.name)
-    || this.props.currentRoom.id === '') {
+      || (!this.props.currentRoom.name)
+      || this.props.currentRoom.id === '') {
       return (
         <View style={styles.container}>
           <ActivityIndicator size="large" color="#00c9ff" animating />
@@ -407,7 +463,10 @@ class NowPlayingScreen extends Component {
     const { url } = this.props.currentRoom.songs[this.state.currentSongIndex].images[0];
 
     return (
-      <View style={styles.container}>
+      <Animated.View
+        style={[styles.container, this.getCardStyle()]}
+        {...this.panResponder.panHandlers}
+      >
         <QueueModal
           visible={this.state.showQueue}
           closeModal={() => this.setState({ showQueue: false })}
@@ -499,7 +558,7 @@ class NowPlayingScreen extends Component {
             icon={(<Icon type="material" size={45} name="people" />)}
           />
         </View>
-      </View>
+      </Animated.View>
     );
   }
 }

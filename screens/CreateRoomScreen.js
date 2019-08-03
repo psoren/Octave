@@ -8,6 +8,7 @@ import Spotify from 'rn-spotify-sdk';
 import * as actions from '../actions';
 
 import Song from '../components/Song';
+import MinimizedRoom from '../components/MinimizedRoom';
 
 class CreateRoomScreen extends Component {
   static navigationOptions = () => ({
@@ -52,13 +53,21 @@ class CreateRoomScreen extends Component {
   }
 
   render() {
-    // If the user is in a room
     if (this.props.currentRoom.id !== '') {
+      const { songs, currentSongIndex, name: roomName } = this.props.currentRoom;
       return (
         <View style={styles.container}>
           <Text style={{ margin: 15, fontSize: 18 }}>
             Please leave your current room before creating a new one.
           </Text>
+          <View style={styles.nowPlaying}>
+            <MinimizedRoom
+              songs={songs}
+              currentSongIndex={currentSongIndex}
+              roomName={roomName}
+              goToRoom={this.goToRoom}
+            />
+          </View>
         </View>
       );
     }
@@ -128,6 +137,11 @@ const styles = {
   },
   addSongsBtn: {
     marginBottom: 25
+  },
+  nowPlaying: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0
   }
 };
 

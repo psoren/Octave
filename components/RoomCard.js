@@ -3,7 +3,6 @@ import {
   Text, View, ActivityIndicator, Alert
 } from 'react-native';
 import { Button } from 'react-native-elements';
-import PropTypes from 'prop-types';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import Spotify from 'rn-spotify-sdk';
@@ -81,7 +80,7 @@ class RoomCard extends Component {
   joinRoom = async () => {
     const { id: userId } = await Spotify.getMe();
     // if (userId === this.props.creatorID) {
-    if (userId === this.props.creatorID) {
+    if (userId === 'asdfa') {
       Alert.alert('You cannot join the room you created!');
     } else if (this.props.currentRoom.id !== '') {
       // If they are in a room already, prompt the user
@@ -112,50 +111,58 @@ class RoomCard extends Component {
       );
     }
     return (
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={['#00c9ff', '#92fe9d']}
-        style={[styles.container, {
-          width: 0.75 * this.state.deviceWidth,
-          height: 0.6 * this.state.deviceHeight
-        }]}
-      >
-        <Text style={styles.roomName}>{this.state.name}</Text>
-        <RoomCardImageContainer
-          currentSong={this.state.currentSong}
-          numListeners={this.state.numListeners}
-          numSongs={this.state.numSongs}
-        />
-        <View style={styles.songInfoContainer}>
-          <Text style={styles.song}>{this.state.currentSong.name}</Text>
-          <Text style={styles.artists}>{this.state.currentSong.artists}</Text>
-        </View>
-        <ProgressBar
-          startColor="#fff"
-          endColor="#fff"
-          progress={this.state.progress}
-          duration={1500}
-          width={this.state.deviceWidth * 0.6}
-          height={15}
-        />
-        <Button
-          title="Join Room"
-          onPress={this.joinRoom}
-          type="outline"
-          raised
-          containerStyle={styles.buttonContainer}
-        />
-      </LinearGradient>
+      <View style={styles.shadowContainer}>
+        <LinearGradient
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          colors={['#00c9ff', '#92fe9d']}
+          style={[styles.container, {
+            width: 0.75 * this.state.deviceWidth,
+            height: 0.5 * this.state.deviceHeight
+          }]}
+        >
+          <Text style={styles.roomName}>{this.state.name}</Text>
+          <RoomCardImageContainer
+            currentSong={this.state.currentSong}
+            numListeners={this.state.numListeners}
+            numSongs={this.state.numSongs}
+          />
+          <View style={styles.songInfoContainer}>
+            <Text style={styles.song}>{this.state.currentSong.name}</Text>
+            <Text style={styles.artists}>{this.state.currentSong.artists}</Text>
+          </View>
+          <ProgressBar
+            startColor="#fff"
+            endColor="#fff"
+            progress={this.state.progress}
+            duration={1500}
+            width={this.state.deviceWidth * 0.6}
+            height={5}
+          />
+          <Button
+            title="Join Room"
+            onPress={this.joinRoom}
+            type="outline"
+            raised
+            containerStyle={styles.buttonContainer}
+          />
+        </LinearGradient>
+      </View>
+
     );
   }
 }
 
 const styles = {
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
+  shadowContainer: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.37,
+    shadowRadius: 7.49,
+    elevation: 12
   },
   container: {
     borderRadius: 15,
@@ -163,11 +170,17 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between'
   },
+  loadingContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    alignItems: 'center'
+  },
   roomName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
-    margin: 20
+    margin: 5
   },
   songInfoContainer: {
     padding: 10,
@@ -175,22 +188,17 @@ const styles = {
     alignItems: 'center'
   },
   song: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#fff'
   },
   artists: {
-    fontSize: 16,
+    fontSize: 12,
     color: '#fff'
   },
   buttonContainer: {
-    margin: 20
+    margin: 5
   }
-};
-
-RoomCard.propTypes = {
-  roomID: PropTypes.string.isRequired,
-  creatorID: PropTypes.string.isRequired
 };
 
 const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
