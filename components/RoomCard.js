@@ -12,6 +12,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import ProgressBar from './ProgressBar';
 import * as actions from '../actions';
 
+import allColors from '../colors';
 import RoomCardImageContainer from './RoomCardImageContainer';
 
 class RoomCard extends Component {
@@ -20,6 +21,10 @@ class RoomCard extends Component {
   componentWillUnmount = () => this.unsubscribe();
 
   componentDidMount = async () => {
+    // Get colors
+    const colors = allColors[Math.floor(Math.random() * allColors.length)];
+    this.setState({ colors });
+
     // Check for initial playback
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.roomID);
@@ -115,7 +120,7 @@ class RoomCard extends Component {
         <LinearGradient
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          colors={['#00c9ff', '#92fe9d']}
+          colors={this.state.colors}
           style={[styles.container, {
             width: 0.75 * this.state.deviceWidth,
             height: 0.5 * this.state.deviceHeight

@@ -65,7 +65,7 @@ class CreateRoomScreen extends Component {
               songs={songs}
               currentSongIndex={currentSongIndex}
               roomName={roomName}
-              goToRoom={this.goToRoom}
+              goToRoom={() => this.props.navigation.navigate('NowPlaying')}
             />
           </View>
         </View>

@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
-import { Text, View } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { TextInput, View, FlatList } from 'react-native';
+import { Button, Icon } from 'react-native-elements';
 import { connect } from 'react-redux';
+import * as firebase from 'firebase';
+import 'firebase/firestore';
 
 import MinimizedRoom from '../components/MinimizedRoom';
+// import RoomSearchResult from '../components/RoomSearchResult';
 
 class RoomSearchScreen extends Component {
   static navigationOptions = () => ({
@@ -18,6 +21,13 @@ class RoomSearchScreen extends Component {
     ),
   });
 
+  // state={ search: '' };
+
+  // performSearch = async search => this.setState({ search }, async () => {
+  //   const db = firebase.firestore();
+  //   // Search for rooms
+  // });
+
   render() {
     let NowPlaying = null;
     if (this.props.currentRoom.id !== '') {
@@ -27,19 +37,44 @@ class RoomSearchScreen extends Component {
           songs={songs}
           currentSongIndex={currentSongIndex}
           roomName={roomName}
-          goToRoom={this.goToRoom}
+          goToRoom={() => this.props.navigation.navigate('NowPlaying')}
         />
       );
     }
 
+
+    //   <View style={styles.searchContainer}>
+    //   <TextInput
+    //     value={this.state.search}
+    //     style={styles.searchInput}
+    //     onChangeText={search => this.performSearch(search)}
+    //     placeholder="Search for a room..."
+    //     autoCapitalize="none"
+    //     autoCompleteType="off"
+    //     autoCorrect={false}
+    //   />
+    //   <Button
+    //     containerStyle={styles.closeButton}
+    //     onPress={this.setState({ search: '', rooms: [] })}
+    //     type="clear"
+    //     icon={(<Icon type="material" name="cancel" size={45} />)}
+    //   />
+    // </View>
+    // <FlatList
+    //   data={this.state.rooms}
+    //   renderItem={({ room }) => (
+    //     <RoomSearchResult
+    //       id={room.id}
+    //       roomName={room.artists}
+    //       currentSongName={room.currentSongName}
+    //       images={room.images}
+    //     />
+    //   )}
+    //   keyExtractor={room => room.id}
+    // />
+
     return (
       <View style={styles.container}>
-        <Text>RoomSearchScreen</Text>
-        <Text>RoomSearchScreen</Text>
-        <Text>RoomSearchScreen</Text>
-        <Text>RoomSearchScreen</Text>
-        <Text>RoomSearchScreen</Text>
-        <Text>RoomSearchScreen</Text>
 
         <View style={styles.nowPlaying}>
           {NowPlaying}
@@ -54,6 +89,15 @@ const styles = {
     flex: 1,
     backgroundColor: '#fff',
     marginTop: 50
+  },
+  searchContainer: {
+    flexDirection: 'row'
+  },
+  searchInput: {
+    flex: 5,
+    margin: 15,
+    fontSize: 30,
+    height: 40
   },
   nowPlaying: {
     position: 'absolute',

@@ -81,10 +81,6 @@ class HomeScreen extends Component {
     this.setState({ currentRoomIndex: Math.round((e.nativeEvent.contentOffset.x) / deviceWidth) });
   }
 
-  goToRoom = () => {
-    this.props.navigation.navigate('NowPlaying');
-  }
-
   render() {
     if (this.state.loading) {
       return (
@@ -114,7 +110,7 @@ class HomeScreen extends Component {
           songs={songs}
           currentSongIndex={currentSongIndex}
           roomName={roomName}
-          goToRoom={this.goToRoom}
+          goToRoom={() => this.props.navigation.navigate('NowPlaying')}
         />
       );
     }
