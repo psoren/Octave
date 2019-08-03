@@ -44,6 +44,21 @@ const QueueModal = (props) => {
             />
           )}
         />
+        {props.isCreator ? (
+          <Button
+            onPress={props.clearQueue}
+            type="clear"
+            icon={(
+              <Icon
+                type="material"
+                name="remove-from-queue"
+                color="#fff"
+                size={45}
+              />
+          )}
+          />
+        ) : null}
+
       </LinearGradient>
       <RoomSongsContainer
         songs={nextSongs}

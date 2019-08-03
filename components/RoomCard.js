@@ -88,14 +88,13 @@ class RoomCard extends Component {
       // to see if they want to leave their current room
       const { name: newRoom } = this.props.currentRoom;
       Alert.alert(`Do you want to leave the room ${newRoom} and join the room ${this.state.name}?`, '',
-        [
-          {
-            text: 'OK',
-            onPress: () => this.props.joinRoom(this.props.navigation,
-              this.state.id),
-            style: 'cancel'
-          },
-          { text: 'Cancel' }
+        [{
+          text: 'OK',
+          onPress: () => this.props.joinRoom(this.props.navigation,
+            this.state.id),
+          style: 'cancel'
+        },
+        { text: 'Cancel' }
         ],
         { cancelable: false });
     } else {

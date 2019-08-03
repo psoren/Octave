@@ -296,6 +296,34 @@ class NowPlayingScreen extends Component {
     }
   }
 
+  clearQueue = async () => {
+    Alert.alert('Clear upcoming songs?', '',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            const db = firebase.firestore();
+            const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+            try {
+              const room = await roomRef.get();
+              const { songs: roomSongs } = room.data();
+              const previousSongs = roomSongs.slice(0, room.data().currentSongIndex + 1);
+              if (room.exists) {
+                await roomRef.update({ songs: previousSongs });
+              } else {
+                console.error('Could not find room.');
+              }
+            } catch (err) {
+              Alert.alert(`Could not clear queue: ${err}`);
+            }
+          },
+          style: 'cancel'
+        },
+        { text: 'Cancel' }
+      ],
+      { cancelable: false });
+  }
+
   savePlaylist = () => Alert.alert(
     `Create the playlist ${this.props.currentRoom.name} from the songs in this room?`,
     '', [{
@@ -386,6 +414,8 @@ class NowPlayingScreen extends Component {
           savePlaylist={this.savePlaylist}
           songs={this.props.currentRoom.songs}
           currentSongIndex={this.state.currentSongIndex}
+          clearQueue={this.clearQueue}
+          isCreator={this.state.isCreator}
         />
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}
