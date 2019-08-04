@@ -3,6 +3,9 @@ export const SPOTIFY_LOGIN_SUCCESS = 'spotify_login_success';
 export const SPOTIFY_LOGIN_FAIL = 'spotify_login_fail';
 export const REFRESH_TOKENS = 'refresh_tokens';
 
+// Device Info Actions
+export const SET_USER_LOCATION = 'set_user_location';
+
 // Create Room Actions
 export const APPEND_SONGS_TO_CREATE_ROOM_QUEUE = 'append_songs_to_create_room_queue';
 export const PREPEND_SONGS_TO_CREATE_ROOM_QUEUE = 'prepend_songs_to_create_room_queue';

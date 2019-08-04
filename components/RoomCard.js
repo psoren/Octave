@@ -45,8 +45,6 @@ class RoomCard extends Component {
           name, currentPosition, currentSongIndex, listeners, songs, colors
         } = doc.data();
 
-        console.l;
-
         const currentSong = songs[currentSongIndex];
         const songLength = songs[currentSongIndex].duration_ms / 1000;
         const progress = currentPosition / songLength;
@@ -115,8 +113,6 @@ class RoomCard extends Component {
       );
     }
     return (
-
-
       <View style={styles.shadowContainer}>
         <LinearGradient
           start={{ x: 0, y: 0 }}
@@ -160,21 +156,22 @@ class RoomCard extends Component {
 }
 
 const styles = {
+  container: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 15
+  },
   shadowContainer: {
     shadowColor: '#000',
+    backgroundColor: '#fff',
     shadowOffset: {
       width: 0,
       height: 6,
     },
     shadowOpacity: 0.37,
     shadowRadius: 7.49,
-    elevation: 12
-  },
-  container: {
-    borderRadius: 15,
-    backgroundColor: '#00c9ff',
-    alignItems: 'center',
-    justifyContent: 'space-between'
+    elevation: 12,
+    borderRadius: 15
   },
   loadingContainer: {
     flex: 1,

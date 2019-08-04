@@ -3,7 +3,7 @@ import {
   Text, View, Dimensions, ActivityIndicator
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import Spotify from 'rn-spotify-sdk';
+// import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
@@ -39,11 +39,11 @@ class HomeScreen extends Component {
 
   componentDidMount = async () => {
     SplashScreen.hide();
-    this.tokenRefreshInterval = setInterval(async () => {
-      await Spotify.renewSession();
-      const sessionInfo = await Spotify.getSessionAsync();
-      this.props.refreshTokens(sessionInfo);
-    }, 1000 * 60 * 30);
+    // this.tokenRefreshInterval = setInterval(async () => {
+    //   await Spotify.renewSession();
+    //   const sessionInfo = await Spotify.getSessionAsync();
+    //   this.props.refreshTokens(sessionInfo);
+    // }, 1000 * 60 * 30);
 
     // Get all of the room IDs
     const db = firebase.firestore();
@@ -116,12 +116,7 @@ class HomeScreen extends Component {
     }
 
     return (
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={['#fff', '#fff']}
-        style={styles.container}
-      >
+      <View style={styles.container}>
         <View style={styles.shadowContainer}>
           <LinearGradient
             start={{ x: 0, y: 0 }}
@@ -147,7 +142,7 @@ class HomeScreen extends Component {
           ) : roomCards}
         </ScrollView>
         {NowPlaying}
-      </LinearGradient>
+      </View>
     );
   }
 }
@@ -173,14 +168,13 @@ const styles = {
     fontWeight: 'bold',
     color: '#fff'
   },
+
+
   nowPlayingContainer: {
     width: deviceWidth - 50,
     height: 75,
-    backgroundColor: '#00c9ff',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 25,
-    marginBottom: 25,
+    justifyContent: 'center',
     borderRadius: 35
   },
   shadowContainer: {
@@ -191,7 +185,10 @@ const styles = {
     },
     shadowOpacity: 0.37,
     shadowRadius: 7.49,
-    elevation: 12,
+    backgroundColor: '#fff',
+    marginTop: 25,
+    marginBottom: 25,
+    borderRadius: 35
   }
 };
 
