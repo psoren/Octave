@@ -2,16 +2,18 @@ import React, { Component } from 'react';
 import {
   Text, View, ActivityIndicator, Alert
 } from 'react-native';
-import { Button } from 'react-native-elements';
+import { Button, Icon } from 'react-native-elements';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import { withNavigation } from 'react-navigation';
 import LinearGradient from 'react-native-linear-gradient';
-import ProgressBar from './ProgressBar';
-import * as actions from '../actions';
+import { getDistance } from 'geolib';
+import Geocoder from 'react-native-geocoder';
 
+import * as actions from '../actions';
+import ProgressBar from './ProgressBar';
 import RoomCardImageContainer from './RoomCardImageContainer';
 
 class RoomCard extends Component {
@@ -40,14 +42,58 @@ class RoomCard extends Component {
     const db = firebase.firestore();
 
     this.unsubscribe = db.collection('rooms').doc(this.props.roomID)
-      .onSnapshot((doc) => {
+      .onSnapshot(async (doc) => {
         const {
-          name, currentPosition, currentSongIndex, listeners, songs, colors
+          name,
+          currentPosition,
+          currentSongIndex,
+          listeners,
+          songs,
+          colors,
         } = doc.data();
 
         const currentSong = songs[currentSongIndex];
         const songLength = songs[currentSongIndex].duration_ms / 1000;
         const progress = currentPosition / songLength;
+
+        // Get distance between these two lat, long pairs
+        const userLocation = this.props.location;
+        const roomLocation = doc.data().position;
+
+        const {
+          latitude: userLatitude,
+          longitude: userLongitude
+        } = userLocation.coords;
+
+        const {
+          latitude: roomLatitude,
+          longitude: roomLongitude
+        } = roomLocation.geopoint;
+
+        const distanceInMeters = getDistance(
+          { latitude: userLatitude, longitude: userLongitude },
+          { latitude: roomLatitude, longitude: roomLongitude }
+        );
+
+        const distanceInMiles = ((distanceInMeters / 1000) * 1.60934).toFixed(2);
+
+        // Position Geocoding
+        const config = {
+          lat: roomLatitude,
+          lng: roomLongitude
+        };
+
+        let location = '';
+
+        try {
+          const res = await Geocoder.geocodePosition(config);
+          const { locality, adminArea, countryCode } = res[0];
+          location = `${locality} ${adminArea} ${countryCode}`;
+          this.setState({ location });
+        } catch (err) {
+          this.setState({ location: 'Somewhere far away' });
+        }
+
 
         this.setState({
           id: this.props.roomID,
@@ -59,7 +105,8 @@ class RoomCard extends Component {
           progress,
           deviceHeight,
           deviceWidth,
-          colors
+          colors,
+          distanceInMiles
         });
       });
   }
@@ -141,6 +188,31 @@ class RoomCard extends Component {
             width={this.state.deviceWidth * 0.6}
             height={5}
           />
+
+          <View style={styles.locationOuterContainer}>
+
+            <Text style={styles.locationTown}>
+              {this.state.location}
+            </Text>
+
+            <View style={styles.locationInnerContainer}>
+
+              <Text style={styles.locationDistance}>
+                {this.state.distanceInMiles}
+                {' '}
+                miles away
+              </Text>
+              <Icon
+                type="material"
+                size={30}
+                color="#fff"
+                name="location-on"
+              />
+            </View>
+
+
+          </View>
+
           <Button
             title="Join Room"
             onPress={this.joinRoom}
@@ -201,9 +273,31 @@ const styles = {
   },
   buttonContainer: {
     margin: 5
+  },
+  locationOuterContainer: {
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    alignItems: 'center'
+  },
+  locationInnerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around'
+
+  },
+  locationTown: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff'
+  },
+  locationDistance: {
+    fontSize: 14,
+    color: '#fff'
   }
 };
 
-const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
+const mapStateToProps = ({ currentRoom, deviceInfo }) => ({
+  currentRoom,
+  location: deviceInfo.location
+});
 
 export default connect(mapStateToProps, actions)(withNavigation(RoomCard));
