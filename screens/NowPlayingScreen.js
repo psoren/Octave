@@ -509,7 +509,10 @@ class NowPlayingScreen extends Component {
           style={styles.image}
         />
         <ProgressBar
-
+          startColor={this.props.currentRoom.colors[0]}
+          endColor={this.props.currentRoom.colors[
+            this.props.currentRoom.colors.length - 1
+          ]}
           progress={this.state.progress}
           width={screenWidth}
           height={10}

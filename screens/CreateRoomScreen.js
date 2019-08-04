@@ -43,7 +43,8 @@ class CreateRoomScreen extends Component {
         roomName,
         creator,
         navigation: this.props.navigation,
-        colors
+        colors,
+        location: this.props.location
       });
     }
   }
@@ -148,9 +149,16 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ pendingRoom, currentRoom }) => {
+const mapStateToProps = ({
+  pendingRoom,
+  currentRoom,
+  deviceInfo
+}) => {
   const { name, songs } = pendingRoom;
-  return { name, songs, currentRoom };
+  const { location } = deviceInfo;
+  return {
+    name, songs, currentRoom, location
+  };
 };
 
 export default connect(mapStateToProps, actions)(CreateRoomScreen);

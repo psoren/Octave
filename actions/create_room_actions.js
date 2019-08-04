@@ -1,5 +1,6 @@
 import * as firebase from 'firebase';
 import 'firebase/firestore';
+import * as geofirex from 'geofirex';
 
 import {
   CHANGE_PENDING_ROOM_NAME,
@@ -33,10 +34,15 @@ export const createRoom = ({
   roomName,
   creator,
   navigation,
-  colors
+  colors,
+  location
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
+    const geo = geofirex.init(firebase);
+    const { latitude, longitude } = location.coords;
+    const point = geo.point(latitude, longitude);
+
     const { id: newRoomID } = await db.collection('rooms').add({
       songs,
       name: roomName,
@@ -45,7 +51,8 @@ export const createRoom = ({
       playing: true,
       listeners: [],
       currentPosition: 0,
-      colors
+      colors,
+      position: point.data
     });
     dispatch({
       type: CREATE_ROOM,

@@ -1,0 +1,34 @@
+# Uncomment the next line to define a global platform for your project
+# platform :ios, '9.0'
+
+target 'Octave' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  # Pods for Octave
+  pod 'react-native-geolocation', path: '../node_modules/@react-native-community/geolocation'
+
+  target 'Octave-tvOSTests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+  target 'OctaveTests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+end
+
+target 'Octave-tvOS' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  # Pods for Octave-tvOS
+
+  target 'Octave-tvOSTests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+end

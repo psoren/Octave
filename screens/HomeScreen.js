@@ -2,13 +2,15 @@ import React, { Component } from 'react';
 import {
   Text, View, Dimensions, ScrollView
 } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { Button, Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import SplashScreen from 'react-native-splash-screen';
 import LinearGradient from 'react-native-linear-gradient';
+import Geolocation from 'react-native-geolocation-service';
+import * as geofirex from 'geofirex';
 
 import * as actions from '../actions';
 import RoomCard from '../components/RoomCard';
@@ -37,14 +39,32 @@ class HomeScreen extends Component {
 
   componentDidMount = async () => {
     SplashScreen.hide();
+
+    // Set token refresh interval
     this.tokenRefreshInterval = setInterval(async () => {
       await Spotify.renewSession();
       const sessionInfo = await Spotify.getSessionAsync();
       this.props.refreshTokens(sessionInfo);
     }, 1000 * 60 * 30);
 
+
     // Get all of the room IDs
     const db = firebase.firestore();
+
+    // Get user's location
+    // eslint-disable-next-line no-unused-vars
+    const geo = geofirex.init(firebase);
+    // const cities = geo.collection('cities');
+    // const point = geo.point(40, -119);
+    // cities.add({ name: 'Phoenix', position: point.data });
+
+    Geolocation.getCurrentPosition(
+      position => this.props.setLocation(position),
+      error => console.log(`Location Error: ${error.code}`, error.message),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+
+
     const roomsSnapshot = await db.collection('rooms').get();
     const rooms = [];
     roomsSnapshot.forEach((room) => {
@@ -53,6 +73,8 @@ class HomeScreen extends Component {
         creatorID: room.data().creator.id
       });
     });
+
+
     this.setState({
       rooms, deviceWidth, deviceHeight, loading: false
     });
@@ -79,6 +101,22 @@ class HomeScreen extends Component {
 
   handleScroll = (e) => {
     this.setState({ currentRoomIndex: Math.round((e.nativeEvent.contentOffset.x) / deviceWidth) });
+  }
+
+  getLocalRooms = () => {
+    const { latitude, longitude } = this.props.deviceInfo.location.coords;
+
+    const geo = geofirex.init(firebase);
+
+    const center = geo.point(latitude, longitude);
+
+    // in KM
+    const radius = 20000;
+    const field = 'position';
+
+    const rooms = geo.collection('rooms');
+    const query = rooms.within(center, radius, field);
+    query.subscribe(console.log);
   }
 
   render() {
@@ -141,6 +179,10 @@ class HomeScreen extends Component {
             </View>
           ) : roomCards}
         </ScrollView>
+        <Button
+          title="Get Rooms Near Me"
+          onPress={this.getLocalRooms}
+        />
         {NowPlaying}
       </View>
     );
@@ -191,6 +233,9 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ currentRoom }) => ({ currentRoom });
+const mapStateToProps = ({ currentRoom, deviceInfo }) => ({
+  currentRoom,
+  deviceInfo
+});
 
 export default connect(mapStateToProps, actions)(HomeScreen);
