@@ -17,7 +17,7 @@ const QueueModal = (props) => {
       <LinearGradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        colors={['#00c9ff', '#92fe9d']}
+        colors={props.colors}
         style={styles.buttonsContainer}
       >
         <Button

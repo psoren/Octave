@@ -475,6 +475,7 @@ class NowPlayingScreen extends Component {
           currentSongIndex={this.state.currentSongIndex}
           clearQueue={this.clearQueue}
           isCreator={this.state.isCreator}
+          colors={this.props.currentRoom.colors}
         />
         <CurrentListenersModal
           visible={this.state.showCurrentListeners}

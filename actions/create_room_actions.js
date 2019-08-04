@@ -32,7 +32,8 @@ export const createRoom = ({
   songs,
   roomName,
   creator,
-  navigation
+  navigation,
+  colors
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
@@ -43,7 +44,8 @@ export const createRoom = ({
       currentSongIndex: 0,
       playing: true,
       listeners: [],
-      currentPosition: 0
+      currentPosition: 0,
+      colors
     });
     dispatch({
       type: CREATE_ROOM,

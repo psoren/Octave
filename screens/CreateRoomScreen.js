@@ -9,6 +9,7 @@ import * as actions from '../actions';
 
 import Song from '../components/Song';
 import MinimizedRoom from '../components/MinimizedRoom';
+import allColors from '../colors';
 
 class CreateRoomScreen extends Component {
   static navigationOptions = () => ({
@@ -36,11 +37,13 @@ class CreateRoomScreen extends Component {
     } else if (!id) {
       Alert.alert("You don't appear to be logged in.  There is an issue");
     } else {
+      const colors = allColors[Math.floor(Math.random() * allColors.length)];
       this.props.createRoom({
         songs,
         roomName,
         creator,
-        navigation: this.props.navigation
+        navigation: this.props.navigation,
+        colors
       });
     }
   }
