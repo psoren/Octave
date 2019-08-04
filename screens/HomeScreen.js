@@ -1,20 +1,18 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Dimensions, ActivityIndicator
+  Text, View, Dimensions, ScrollView
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-// import Spotify from 'rn-spotify-sdk';
+import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import SplashScreen from 'react-native-splash-screen';
 import LinearGradient from 'react-native-linear-gradient';
 
-import { ScrollView } from 'react-native-gesture-handler';
 import * as actions from '../actions';
 import RoomCard from '../components/RoomCard';
-// import MinimizedRoom from '../components/MinimizedRoom';
-
+import RoomCardLoading from '../components/RoomCardLoading';
 import MinimizedRoom from '../components/MinimizedRoom';
 
 const {
@@ -35,15 +33,15 @@ class HomeScreen extends Component {
     )
   });
 
-  state = { rooms: [], currentRoomIndex: 0 };
+  state = { rooms: [], currentRoomIndex: 0, loading: true };
 
   componentDidMount = async () => {
     SplashScreen.hide();
-    // this.tokenRefreshInterval = setInterval(async () => {
-    //   await Spotify.renewSession();
-    //   const sessionInfo = await Spotify.getSessionAsync();
-    //   this.props.refreshTokens(sessionInfo);
-    // }, 1000 * 60 * 30);
+    this.tokenRefreshInterval = setInterval(async () => {
+      await Spotify.renewSession();
+      const sessionInfo = await Spotify.getSessionAsync();
+      this.props.refreshTokens(sessionInfo);
+    }, 1000 * 60 * 30);
 
     // Get all of the room IDs
     const db = firebase.firestore();
@@ -55,7 +53,9 @@ class HomeScreen extends Component {
         creatorID: room.data().creator.id
       });
     });
-    this.setState({ rooms, deviceWidth, deviceHeight });
+    this.setState({
+      rooms, deviceWidth, deviceHeight, loading: false
+    });
 
     // Constantly listen for new rooms
     db.collection('rooms')
@@ -82,25 +82,25 @@ class HomeScreen extends Component {
   }
 
   render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.container}>
-          <ActivityIndicator size="large" color="#00c9ff" animating />
-        </View>
-      );
-    }
-
-    const roomCards = this.state.rooms.map((room, index) => (
-      <View key={room.id} style={styles.roomCardContainer}>
-        <RoomCard
-          roomID={room.id}
-          creatorID={room.creatorID}
-          deviceWidth={this.state.deviceWidth}
-          deviceHeight={this.state.deviceHeight}
-          isCurrent={index === this.state.currentRoomIndex}
-        />
+    let roomCards = (
+      <View style={styles.roomCardContainer}>
+        <RoomCardLoading />
       </View>
-    ));
+    );
+
+    if (!this.state.loading) {
+      roomCards = this.state.rooms.map((room, index) => (
+        <View key={room.id} style={styles.roomCardContainer}>
+          <RoomCard
+            roomID={room.id}
+            creatorID={room.creatorID}
+            deviceWidth={this.state.deviceWidth}
+            deviceHeight={this.state.deviceHeight}
+            isCurrent={index === this.state.currentRoomIndex}
+          />
+        </View>
+      ));
+    }
 
     let NowPlaying = null;
     if (this.props.currentRoom.id !== '') {
@@ -149,14 +149,16 @@ class HomeScreen extends Component {
 
 const styles = {
   container: {
+    flexDirection: 'column',
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'space-around'
   },
   roomCardContainer: {
     width: deviceWidth,
-    alignItems: 'center'
+    alignItems: 'center',
+    alignSelf: 'center'
   },
   noRooms: {
     fontSize: 24,
@@ -168,8 +170,6 @@ const styles = {
     fontWeight: 'bold',
     color: '#fff'
   },
-
-
   nowPlayingContainer: {
     width: deviceWidth - 50,
     height: 75,
@@ -187,7 +187,6 @@ const styles = {
     shadowRadius: 7.49,
     backgroundColor: '#fff',
     marginTop: 25,
-    marginBottom: 25,
     borderRadius: 35
   }
 };
