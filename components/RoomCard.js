@@ -114,9 +114,10 @@ class RoomCard extends Component {
 
   joinRoom = async () => {
     const { id: userId } = await Spotify.getMe();
-    // if (userId === this.props.creatorID) {
-    if (userId === 'asdfa') {
+    if (userId === this.props.creatorID) {
       Alert.alert('You cannot join the room you created!');
+    } else if (this.props.roomID === this.props.currentRoom.id) {
+      Alert.alert('You are already in this room!');
     } else if (this.props.currentRoom.id !== '') {
       // If they are in a room already, prompt the user
       // to see if they want to leave their current room
@@ -174,7 +175,6 @@ class RoomCard extends Component {
             width={this.state.deviceWidth * 0.6}
             height={5}
           />
-
           <View style={styles.locationOuterContainer}>
             <Text style={styles.locationTown}>
               {this.state.address}

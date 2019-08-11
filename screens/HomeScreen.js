@@ -122,7 +122,6 @@ class HomeScreen extends Component {
     const localRoomsRef = geo.collection('rooms', ref => ref.limit(NUM_HOME_SCREEN_ROOMS));
     query = localRoomsRef.within(center, radius, field);
     query.subscribe((data) => {
-      console.log(`There are ${data.length} rooms within ${radius} KM`);
       const newRooms = [];
       data.forEach((room) => {
         newRooms.push({
