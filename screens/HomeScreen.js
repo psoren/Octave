@@ -47,7 +47,6 @@ class HomeScreen extends Component {
       this.props.refreshTokens(sessionInfo);
     }, 1000 * 60 * 30);
 
-
     // Get all of the room IDs
     const db = firebase.firestore();
 
@@ -66,6 +65,15 @@ class HomeScreen extends Component {
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
+
+
+    // Then we can query based off of location
+    // if (this.props.deviceInfo.location) {
+
+    // } else {
+    //   // Otherwise
+
+    // }
 
     const roomsSnapshot = await db.collection('rooms').get();
     const rooms = [];

@@ -1,6 +1,7 @@
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import * as geofirex from 'geofirex';
+import Geocoder from 'react-native-geocoder';
 
 import {
   CHANGE_PENDING_ROOM_NAME,
@@ -43,6 +44,28 @@ export const createRoom = ({
     const { latitude, longitude } = location.coords;
     const point = geo.point(latitude, longitude);
 
+    // Do the reverse geocding and store the address here since
+    // that information will never change
+    let address = '';
+    if (location) {
+      const {
+        latitude: lat,
+        longitude: lng
+      } = location.coords;
+
+      // Position Geocoding
+      const config = { lat, lng };
+
+      try {
+        // Do reverse geocoding here
+        const res = await Geocoder.geocodePosition(config);
+        const { locality, adminArea, countryCode } = res[0];
+        address = `${locality} ${adminArea} ${countryCode}`;
+      } catch (err) {
+        address = 'Somewhere far away';
+      }
+    }
+
     const { id: newRoomID } = await db.collection('rooms').add({
       songs,
       name: roomName,
@@ -52,7 +75,8 @@ export const createRoom = ({
       listeners: [],
       currentPosition: 0,
       colors,
-      position: point.data
+      position: point.data,
+      address
     });
     dispatch({
       type: CREATE_ROOM,

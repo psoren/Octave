@@ -10,7 +10,6 @@ import { connect } from 'react-redux';
 import { withNavigation } from 'react-navigation';
 import LinearGradient from 'react-native-linear-gradient';
 import { getDistance } from 'geolib';
-import Geocoder from 'react-native-geocoder';
 
 import * as actions from '../actions';
 import ProgressBar from './ProgressBar';
@@ -50,6 +49,7 @@ class RoomCard extends Component {
           listeners,
           songs,
           colors,
+          address
         } = doc.data();
 
         const currentSong = songs[currentSongIndex];
@@ -76,25 +76,9 @@ class RoomCard extends Component {
           );
 
           const distanceInMiles = ((distanceInMeters / 1000) * 1.60934).toFixed(2);
-
-          // Position Geocoding
-          const config = {
-            lat: roomLatitude,
-            lng: roomLongitude
-          };
-
-          let location = '';
-
-          try {
-            const res = await Geocoder.geocodePosition(config);
-            const { locality, adminArea, countryCode } = res[0];
-            location = `${locality} ${adminArea} ${countryCode}`;
-            this.setState({ location });
-          } catch (err) {
-            this.setState({ location: 'Somewhere far away' });
-          }
           this.setState({ distanceInMiles, locationPermission: true });
         } else {
+          // No location permission
           this.setState({ locationPermission: false });
         }
         this.setState({
@@ -107,7 +91,8 @@ class RoomCard extends Component {
           progress,
           deviceHeight,
           deviceWidth,
-          colors
+          colors,
+          address
         });
       });
   }
@@ -189,26 +174,29 @@ class RoomCard extends Component {
             width={this.state.deviceWidth * 0.6}
             height={5}
           />
-          {this.state.locationPermission ? (
-            <View style={styles.locationOuterContainer}>
-              <Text style={styles.locationTown}>
-                {this.state.location}
-              </Text>
-              <View style={styles.locationInnerContainer}>
-                <Text style={styles.locationDistance}>
-                  {this.state.distanceInMiles}
-                  {' '}
-                miles away
-                </Text>
-                <Icon
-                  type="material"
-                  size={30}
-                  color="#fff"
-                  name="location-on"
-                />
-              </View>
+
+          <View style={styles.locationOuterContainer}>
+            <Text style={styles.locationTown}>
+              {this.state.address}
+            </Text>
+            <View style={styles.locationInnerContainer}>
+              {this.state.locationPermission
+                ? (
+                  <Text style={styles.locationDistance}>
+                    {this.state.distanceInMiles}
+                    {' '}
+                    miles away
+                  </Text>
+                ) : null
+            }
+              <Icon
+                type="material"
+                size={30}
+                color="#fff"
+                name="location-on"
+              />
             </View>
-          ) : null}
+          </View>
 
           <Button
             title="Join Room"
