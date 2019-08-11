@@ -247,7 +247,6 @@ export default [
   ['#dfe9f3'],
   ['#e14fad', '#f9d423'],
   ['#e6b980', '#eacda3'],
-  ['#e6e9f0', '#eef1f5'],
   ['#e8198b', '#c7eafd'],
   ['#ebbba7', '#cfc7f8'],
   ['#ebc0fd', '#d9ded8'],

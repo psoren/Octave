@@ -60,10 +60,12 @@ class HomeScreen extends Component {
 
     Geolocation.getCurrentPosition(
       position => this.props.setLocation(position),
-      error => console.log(`Location Error: ${error.code}`, error.message),
+      (error) => {
+        this.props.setLocation(false);
+        console.log(`Location Error: ${error.code}`, error.message);
+      },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
-
 
     const roomsSnapshot = await db.collection('rooms').get();
     const rooms = [];

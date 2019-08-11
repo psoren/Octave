@@ -58,43 +58,45 @@ class RoomCard extends Component {
 
         // Get distance between these two lat, long pairs
         const userLocation = this.props.location;
-        const roomLocation = doc.data().position;
+        if (userLocation) {
+          const roomLocation = doc.data().position;
+          const {
+            latitude: userLatitude,
+            longitude: userLongitude
+          } = userLocation.coords;
 
-        const {
-          latitude: userLatitude,
-          longitude: userLongitude
-        } = userLocation.coords;
+          const {
+            latitude: roomLatitude,
+            longitude: roomLongitude
+          } = roomLocation.geopoint;
 
-        const {
-          latitude: roomLatitude,
-          longitude: roomLongitude
-        } = roomLocation.geopoint;
+          const distanceInMeters = getDistance(
+            { latitude: userLatitude, longitude: userLongitude },
+            { latitude: roomLatitude, longitude: roomLongitude }
+          );
 
-        const distanceInMeters = getDistance(
-          { latitude: userLatitude, longitude: userLongitude },
-          { latitude: roomLatitude, longitude: roomLongitude }
-        );
+          const distanceInMiles = ((distanceInMeters / 1000) * 1.60934).toFixed(2);
 
-        const distanceInMiles = ((distanceInMeters / 1000) * 1.60934).toFixed(2);
+          // Position Geocoding
+          const config = {
+            lat: roomLatitude,
+            lng: roomLongitude
+          };
 
-        // Position Geocoding
-        const config = {
-          lat: roomLatitude,
-          lng: roomLongitude
-        };
+          let location = '';
 
-        let location = '';
-
-        try {
-          const res = await Geocoder.geocodePosition(config);
-          const { locality, adminArea, countryCode } = res[0];
-          location = `${locality} ${adminArea} ${countryCode}`;
-          this.setState({ location });
-        } catch (err) {
-          this.setState({ location: 'Somewhere far away' });
+          try {
+            const res = await Geocoder.geocodePosition(config);
+            const { locality, adminArea, countryCode } = res[0];
+            location = `${locality} ${adminArea} ${countryCode}`;
+            this.setState({ location });
+          } catch (err) {
+            this.setState({ location: 'Somewhere far away' });
+          }
+          this.setState({ distanceInMiles, locationPermission: true });
+        } else {
+          this.setState({ locationPermission: false });
         }
-
-
         this.setState({
           id: this.props.roomID,
           loading: false,
@@ -105,8 +107,7 @@ class RoomCard extends Component {
           progress,
           deviceHeight,
           deviceWidth,
-          colors,
-          distanceInMiles
+          colors
         });
       });
   }
@@ -188,30 +189,26 @@ class RoomCard extends Component {
             width={this.state.deviceWidth * 0.6}
             height={5}
           />
-
-          <View style={styles.locationOuterContainer}>
-
-            <Text style={styles.locationTown}>
-              {this.state.location}
-            </Text>
-
-            <View style={styles.locationInnerContainer}>
-
-              <Text style={styles.locationDistance}>
-                {this.state.distanceInMiles}
-                {' '}
-                miles away
+          {this.state.locationPermission ? (
+            <View style={styles.locationOuterContainer}>
+              <Text style={styles.locationTown}>
+                {this.state.location}
               </Text>
-              <Icon
-                type="material"
-                size={30}
-                color="#fff"
-                name="location-on"
-              />
+              <View style={styles.locationInnerContainer}>
+                <Text style={styles.locationDistance}>
+                  {this.state.distanceInMiles}
+                  {' '}
+                miles away
+                </Text>
+                <Icon
+                  type="material"
+                  size={30}
+                  color="#fff"
+                  name="location-on"
+                />
+              </View>
             </View>
-
-
-          </View>
+          ) : null}
 
           <Button
             title="Join Room"
