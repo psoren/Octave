@@ -22,6 +22,8 @@ const {
   height: deviceHeight
 } = Dimensions.get('window');
 
+const NUM_HOME_SCREEN_ROOMS = 25;
+
 class HomeScreen extends Component {
   static navigationOptions = () => ({
     title: 'Home',
@@ -47,51 +49,38 @@ class HomeScreen extends Component {
       this.props.refreshTokens(sessionInfo);
     }, 1000 * 60 * 30);
 
-    // Get all of the room IDs
-    const db = firebase.firestore();
-
-    // Get user's location
-    // eslint-disable-next-line no-unused-vars
-    const geo = geofirex.init(firebase);
-    // const cities = geo.collection('cities');
-    // const point = geo.point(40, -119);
-    // cities.add({ name: 'Phoenix', position: point.data });
-
     Geolocation.getCurrentPosition(
-      position => this.props.setLocation(position),
+      (position) => {
+        this.props.setLocation(position);
+        this.getLocalRooms(position);
+      },
       (error) => {
         this.props.setLocation(false);
+        this.getAlphabeticalRooms();
         console.log(`Location Error: ${error.code}`, error.message);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
 
-
-    // Then we can query based off of location
-    // if (this.props.deviceInfo.location) {
-
-    // } else {
-    //   // Otherwise
-
-    // }
-
-    const roomsSnapshot = await db.collection('rooms').get();
-    const rooms = [];
-    roomsSnapshot.forEach((room) => {
-      rooms.push({
-        id: room.id,
-        creatorID: room.data().creator.id
-      });
-    });
-
-
     this.setState({
-      rooms, deviceWidth, deviceHeight, loading: false
+      deviceWidth, deviceHeight, loading: false
     });
+  }
 
-    // Constantly listen for new rooms
+  componentWillUnmount() {
+    console.log('Home Screen unmounting...');
+    clearInterval(this.tokenRefreshInterval);
+  }
+
+  handleScroll = e => this.setState({
+    currentRoomIndex: Math.round((
+      e.nativeEvent.contentOffset.x) / deviceWidth)
+  });
+
+  getAlphabeticalRooms = async () => {
+    const db = firebase.firestore();
     db.collection('rooms')
-      .orderBy('name').limit(20)
+      .orderBy('name').limit(10)
       .onSnapshot((querySnapshot) => {
         const newRooms = [];
         querySnapshot.forEach((room) => {
@@ -104,29 +93,45 @@ class HomeScreen extends Component {
       });
   }
 
-  componentWillUnmount() {
-    console.log('Home Screen unmounting...');
-    clearInterval(this.tokenRefreshInterval);
-  }
-
-  handleScroll = (e) => {
-    this.setState({ currentRoomIndex: Math.round((e.nativeEvent.contentOffset.x) / deviceWidth) });
-  }
-
-  getLocalRooms = () => {
+  getLocalRooms = async () => {
+    // Get user's location
+    const geo = geofirex.init(firebase);
     const { latitude, longitude } = this.props.deviceInfo.location.coords;
 
-    const geo = geofirex.init(firebase);
-
-    const center = geo.point(latitude, longitude);
-
     // in KM
-    const radius = 20000;
+    const center = geo.point(latitude, longitude);
+    let radius = 1;
     const field = 'position';
-
     const rooms = geo.collection('rooms');
-    const query = rooms.within(center, radius, field);
-    query.subscribe(console.log);
+    let query = rooms.within(center, radius, field);
+    let localRooms = await geofirex.get(query);
+
+    // try again with 100 KM
+    while (localRooms.length < 10 && radius < 30000) {
+      radius *= 10;
+      query = rooms.within(center, radius, field);
+      // eslint-disable-next-line no-await-in-loop
+      localRooms = await geofirex.get(query);
+    }
+
+    // We now have a radius at which there are at least 10 rooms
+    // or if there are not 10 rooms total in the database,
+    // we have all of them
+
+    // Subscribe to the realtime stream at that radius
+    const localRoomsRef = geo.collection('rooms', ref => ref.limit(NUM_HOME_SCREEN_ROOMS));
+    query = localRoomsRef.within(center, radius, field);
+    query.subscribe((data) => {
+      console.log(`There are ${data.length} rooms within ${radius} KM`);
+      const newRooms = [];
+      data.forEach((room) => {
+        newRooms.push({
+          id: room.id,
+          creatorID: room.creator.id
+        });
+      });
+      this.setState({ rooms: newRooms });
+    });
   }
 
   render() {
