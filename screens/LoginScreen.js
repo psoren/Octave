@@ -9,8 +9,10 @@ import SplashScreen from 'react-native-splash-screen';
 
 import * as actions from '../actions';
 import spotifyCredentials from '../secrets';
+import setupRealtimeDatabase from '../functions/setupRealtimeDatabase';
 
 const ROOT_URL = 'https://us-central1-octave-c5cd1.cloudfunctions.net';
+
 
 class LoginScreen extends PureComponent {
   state = { spotifyInitialized: false };
@@ -26,7 +28,30 @@ class LoginScreen extends PureComponent {
 
       const { data: firebaseToken } = await axios.post(`${ROOT_URL}/createFirebaseToken`,
         { spotifyURI });
+
       await firebase.auth().signInWithCustomToken(firebaseToken);
+
+      setupRealtimeDatabase();
+
+      firebase.firestore().collection('status')
+        .where('state', '==', 'online')
+        .onSnapshot((snapshot) => {
+          snapshot.docChanges().forEach(async (change) => {
+            if (change.type === 'added') {
+              const msg = `User ${change.doc.id} is online.`;
+              console.log(msg);
+            }
+            if (change.type === 'removed') {
+              const msg = `User ${change.doc.id} is offline.`;
+              console.log(msg);
+
+              const { data } = await axios.post('https://us-central1-octave-c5cd1.cloudfunctions.net/removeUserOnDisconnect',
+                { userID: change.doc.id });
+
+              console.log(data);
+            }
+          });
+        });
 
       // Store tokens in redux and navigate
       const sessionInfo = await Spotify.getSessionAsync();

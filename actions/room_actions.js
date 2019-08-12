@@ -20,6 +20,8 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
       const { id: userID } = await Spotify.getMe();
       // Creator
       if (room.data().creator.id === userID) {
+        console.log('creator...');
+
         // Delete room
         if (room.data().listeners.length === 0) {
           try {
@@ -34,10 +36,19 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
           roomRef.update({ creator: newCreator, listeners });
         }
       } else {
+        console.log('not creator...');
+
         // Delete them from the room
         const { listeners } = room.data();
         const newListeners = listeners.filter(listener => userID !== listener.id);
         roomRef.update({ listeners: newListeners });
+
+        // Update status collection in firestore
+        const { uri } = await Spotify.getMe();
+        console.log('removing from status');
+        db.collection('status').doc(uri).update({
+          roomID: firebase.firestore.FieldValue.delete()
+        });
       }
     } else {
       console.error('Could not find room.');
@@ -65,6 +76,10 @@ export const joinRoom = (navigation, roomID) => async (dispatch) => {
   const db = firebase.firestore();
   const roomRef = db.collection('rooms').doc(roomID);
 
+  // 3. Update status collection in firestore
+  const { uri } = await Spotify.getMe();
+  db.collection('status').doc(uri).update({ roomID });
+
   try {
     const room = await roomRef.get();
     if (room.exists) {
@@ -72,10 +87,10 @@ export const joinRoom = (navigation, roomID) => async (dispatch) => {
         listeners: firebase.firestore.FieldValue.arrayUnion(newListener)
       });
 
-      // 3. Set redux state
+      // 4. Set redux state
       await dispatch({ type: JOIN_ROOM, payload: roomID });
 
-      // 4. Navigate to NowPlayingScreen
+      // 5. Navigate to NowPlayingScreen
       // We have to pass the test parameter so that
       // The now playing screen knows to check which database
       await navigation.navigate('NowPlaying');

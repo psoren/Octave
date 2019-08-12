@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {
   Text, View, Dimensions, ScrollView
 } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
@@ -11,6 +11,7 @@ import SplashScreen from 'react-native-splash-screen';
 import LinearGradient from 'react-native-linear-gradient';
 import Geolocation from 'react-native-geolocation-service';
 import * as geofirex from 'geofirex';
+import axios from 'axios';
 
 import * as actions from '../actions';
 import RoomCard from '../components/RoomCard';
@@ -193,10 +194,6 @@ class HomeScreen extends Component {
             </View>
           ) : roomCards}
         </ScrollView>
-        <Button
-          title="Get Rooms Near Me"
-          onPress={this.getLocalRooms}
-        />
         {NowPlaying}
       </View>
     );

@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
-import {
-  TextInput, View, ScrollView, Text
-} from 'react-native';
+import { TextInput, View, ScrollView } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
@@ -112,7 +110,7 @@ const styles = {
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    marginTop: 50
+    paddingTop: 50
   },
   scrollContainerStyle: {
     alignItems: 'center'
@@ -122,7 +120,10 @@ const styles = {
     flexDirection: 'column'
   },
   searchContainer: {
-    flexDirection: 'row'
+    flexDirection: 'row',
+    margin: 10,
+    borderBottomColor: '#444',
+    borderBottomWidth: 1
   },
   searchInput: {
     flex: 5,

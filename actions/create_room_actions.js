@@ -2,6 +2,7 @@ import * as firebase from 'firebase';
 import 'firebase/firestore';
 import * as geofirex from 'geofirex';
 import Geocoder from 'react-native-geocoder';
+import Spotify from 'rn-spotify-sdk';
 
 import {
   CHANGE_PENDING_ROOM_NAME,
@@ -66,6 +67,7 @@ export const createRoom = ({
       }
     }
 
+    // Create room
     const { id: newRoomID } = await db.collection('rooms').add({
       songs,
       name: roomName,
@@ -78,6 +80,13 @@ export const createRoom = ({
       position: point.data,
       address
     });
+
+    // Update status collection in firestore
+    const { uri } = await Spotify.getMe();
+    db.collection('status').doc(uri).update({
+      roomID: newRoomID
+    });
+
     dispatch({
       type: CREATE_ROOM,
       payload: { newRoomID }
