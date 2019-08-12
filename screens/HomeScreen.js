@@ -19,7 +19,7 @@ import MinimizedRoom from '../components/MinimizedRoom';
 
 const {
   width: deviceWidth,
-  // height: deviceHeight
+  height: deviceHeight
 } = Dimensions.get('window');
 
 const NUM_HOME_SCREEN_ROOMS = 25;
@@ -42,7 +42,7 @@ class HomeScreen extends Component {
   componentDidMount = async () => {
     SplashScreen.hide();
 
-    Spotify.playURI('spotify:playlist:71019EDcRamfMmOEEoTdEu', 0, 0);
+    // Spotify.playURI('spotify:playlist:71019EDcRamfMmOEEoTdEu', 0, 0);
 
     // Set token refresh interval
     this.tokenRefreshInterval = setInterval(async () => {
