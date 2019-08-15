@@ -3,6 +3,8 @@ import 'firebase/firestore';
 import * as geofirex from 'geofirex';
 import Geocoder from 'react-native-geocoder';
 import Spotify from 'rn-spotify-sdk';
+import axios from 'axios';
+import spotifyCredentials from '../secrets';
 
 import {
   CHANGE_PENDING_ROOM_NAME,
@@ -37,7 +39,8 @@ export const createRoom = ({
   creator,
   navigation,
   colors,
-  location
+  location,
+  // accessToken
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
@@ -67,31 +70,94 @@ export const createRoom = ({
       }
     }
 
-    // Create room
-    const { id: newRoomID } = await db.collection('rooms').add({
-      songs,
-      name: roomName,
-      creator,
-      currentSongIndex: 0,
-      playing: true,
-      listeners: [],
-      currentPosition: 0,
-      colors,
-      position: point.data,
-      address
-    });
+    // Create playlist
 
-    // Update status collection in firestore
-    const { uri } = await Spotify.getMe();
-    db.collection('status').doc(uri).update({
-      roomID: newRoomID
-    });
 
-    dispatch({
-      type: CREATE_ROOM,
-      payload: { newRoomID }
-    });
-    navigation.navigate('NowPlaying', { test: false });
+    // 1. Get a new access token from testing account
+    const { playlistRefreshURL } = spotifyCredentials;
+
+    try {
+      const res = await fetch(playlistRefreshURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+
+      const resJSON = await res.json();
+      const { access_token: accessToken } = resJSON;
+
+      // 2. Get user id
+      const { id } = await Spotify.getMe();
+
+
+      // 3. Create the specified playlist using that access token
+      const name = `Secret Octave playlist for user ${id}`;
+      const { data } = await axios({
+        method: 'POST',
+        url: `https://api.spotify.com/v1/users/${id}/playlists`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        data: { name }
+      });
+      const { id: playlistID } = data;
+
+      // // // 1. Create an array of promises where we
+      // // // add the songs in the song list to the
+      // // // user's library
+      const songURIs = songs.map(song => `spotify:track:${song.id}`);
+
+      // // Split them so we can every 50 in the correct order
+      const splitSongURIs = [];
+      for (let i = 0; i < songURIs.length; i += 50) {
+        splitSongURIs.push(songURIs.slice(i, i + 50));
+      }
+      const songsToAdd = splitSongURIs.map(uris => ({
+        method: 'POST',
+        url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        data: { uris }
+      }));
+
+      // // 2. Add them to the library
+      songsToAdd.reduce((promiseChain, currentTask) => promiseChain.then(async chainResults =>
+        // eslint-disable-next-line implicit-arrow-linebreak
+        axios(currentTask).then(currentResult =>
+          // eslint-disable-next-line implicit-arrow-linebreak
+          [...chainResults, currentResult])),
+      // eslint-disable-next-line no-unused-vars
+      Promise.resolve([])).then(async (arrayOfResults) => {
+        // Create room
+        const { id: newRoomID } = await db.collection('rooms').add({
+          songs,
+          name: roomName,
+          creator,
+          currentSongIndex: 0,
+          playing: true,
+          listeners: [],
+          currentPosition: 0,
+          colors,
+          position: point.data,
+          address,
+          playlistID
+        });
+
+        // Update status collection in firestore
+        const { uri } = await Spotify.getMe();
+        db.collection('status').doc(uri).update({ roomID: newRoomID });
+
+        dispatch({
+          type: CREATE_ROOM,
+          payload: { newRoomID }
+        });
+        navigation.navigate('NowPlaying', { test: false });
+      });
+    } catch (err) {
+      console.log(err);
+    }
   } catch (err) {
     console.error(err);
   }

@@ -13,7 +13,6 @@ import setupRealtimeDatabase from '../functions/setupRealtimeDatabase';
 
 const ROOT_URL = 'https://us-central1-octave-c5cd1.cloudfunctions.net';
 
-
 class LoginScreen extends PureComponent {
   state = { spotifyInitialized: false };
 
@@ -38,17 +37,15 @@ class LoginScreen extends PureComponent {
         .onSnapshot((snapshot) => {
           snapshot.docChanges().forEach(async (change) => {
             if (change.type === 'added') {
-              const msg = `User ${change.doc.id} is online.`;
-              console.log(msg);
+              // const msg = `User ${change.doc.id} is online.`;
+              // console.log(msg);
             }
             if (change.type === 'removed') {
-              const msg = `User ${change.doc.id} is offline.`;
-              console.log(msg);
-
-              const { data } = await axios.post('https://us-central1-octave-c5cd1.cloudfunctions.net/removeUserOnDisconnect',
+              // const msg = `User ${change.doc.id} is offline.`;
+              // console.log(msg);
+              await axios.post('https://us-central1-octave-c5cd1.cloudfunctions.net/removeUserOnDisconnect',
                 { userID: change.doc.id });
-
-              console.log(data);
+              // console.log(data);
             }
           });
         });

@@ -42,7 +42,8 @@ class HomeScreen extends Component {
   componentDidMount = async () => {
     SplashScreen.hide();
 
-    // Spotify.playURI('spotify:playlist:71019EDcRamfMmOEEoTdEu', 0, 0);
+    // Spotify.playURI('spotify:playlist:1LKFpbQ16xZeew6kCwnjbh', 0, 0);
+    // spotify:playlist:1LKFpbQ16xZeew6kCwnjbh
 
     // Set token refresh interval
     this.tokenRefreshInterval = setInterval(async () => {
@@ -136,6 +137,14 @@ class HomeScreen extends Component {
   }
 
   render() {
+    if (this.state.testing) {
+      return (
+        <View>
+          <Text>Testing</Text>
+        </View>
+      );
+    }
+
     let roomCards = (
       <View style={styles.roomCardContainer}>
         <RoomCardLoading />

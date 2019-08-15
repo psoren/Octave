@@ -30,8 +30,8 @@ class CreateRoomScreen extends Component {
     const { id, display_name: name, images } = await Spotify.getMe();
     const creator = { id, name, images };
     const { songs, name: roomName } = this.props;
-    if (songs.length === 0) {
-      Alert.alert('Please add at least one song');
+    if (songs.length < 2) {
+      Alert.alert('Please add at least two songs');
     } else if (roomName === '') {
       Alert.alert('Please add a room name');
     } else if (!id) {
@@ -44,7 +44,8 @@ class CreateRoomScreen extends Component {
         creator,
         navigation: this.props.navigation,
         colors,
-        location: this.props.location
+        location: this.props.location,
+        accessToken: this.props.accessToken
       });
     }
   }
@@ -152,12 +153,14 @@ const styles = {
 const mapStateToProps = ({
   pendingRoom,
   currentRoom,
-  deviceInfo
+  deviceInfo,
+  auth
 }) => {
+  const { accessToken } = auth;
   const { name, songs } = pendingRoom;
   const { location } = deviceInfo;
   return {
-    name, songs, currentRoom, location
+    name, songs, currentRoom, location, accessToken
   };
 };
 
