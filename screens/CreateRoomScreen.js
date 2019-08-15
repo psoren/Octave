@@ -59,7 +59,7 @@ class CreateRoomScreen extends Component {
 
   render() {
     if (this.props.currentRoom.id !== '') {
-      const { songs, currentSongIndex, name: roomName } = this.props.currentRoom;
+      const { playlistID, currentSongIndex, name: roomName } = this.props.currentRoom;
       return (
         <View style={styles.container}>
           <Text style={{ margin: 15, fontSize: 18 }}>
@@ -67,7 +67,7 @@ class CreateRoomScreen extends Component {
           </Text>
           <View style={styles.nowPlaying}>
             <MinimizedRoom
-              songs={songs}
+              playlistID={playlistID}
               currentSongIndex={currentSongIndex}
               roomName={roomName}
               goToRoom={() => this.props.navigation.navigate('NowPlaying')}

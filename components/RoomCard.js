@@ -10,6 +10,7 @@ import { connect } from 'react-redux';
 import { withNavigation } from 'react-navigation';
 import LinearGradient from 'react-native-linear-gradient';
 import { getDistance } from 'geolib';
+import axios from 'axios';
 
 import * as actions from '../actions';
 import ProgressBar from './ProgressBar';
@@ -29,9 +30,22 @@ class RoomCard extends Component {
       && this.props.isCurrent
       && this.props.currentRoom.id === ''
     ) {
-      const { songs, currentPosition } = roomInfo.data();
-      const currentSong = songs[roomInfo.data().currentSongIndex];
-      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, currentPosition);
+      const { accessToken } = this.props;
+      const {
+        currentPosition,
+        currentSongIndex,
+        playlistID,
+        listeners
+      } = roomInfo.data();
+
+      const { data: playlistData } = await axios({
+        url: `https://api.spotify.com/v1/playlists/${playlistID}`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      const numSongs = playlistData.tracks.total;
+      this.setState({ numSongs, numListeners: listeners.length + 1 });
+      await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
     }
     this.setupRoom();
   }
@@ -47,13 +61,25 @@ class RoomCard extends Component {
           currentPosition,
           currentSongIndex,
           listeners,
-          songs,
           colors,
-          address
+          address,
+          playlistID
         } = doc.data();
 
-        const currentSong = songs[currentSongIndex];
-        const songLength = songs[currentSongIndex].duration_ms / 1000;
+        const { accessToken } = this.props;
+
+        const { data: songData } = await axios({
+          url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { offset: currentSongIndex, limit: 1 }
+        });
+
+        const currentSong = songData.items[0].track;
+        const { name: songName, artists } = currentSong;
+        const artist = artists[0].name;
+        this.setState({ songName, artist, name });
+
+        const songLength = currentSong.duration_ms / 1000;
         const progress = currentPosition / songLength;
 
         // Get distance between these two lat, long pairs
@@ -84,9 +110,9 @@ class RoomCard extends Component {
         this.setState({
           id: this.props.roomID,
           loading: false,
-          name,
+          songName,
+          artist,
           numListeners: listeners.length + 1,
-          numSongs: songs.length,
           currentSong,
           progress,
           deviceHeight,
@@ -106,9 +132,8 @@ class RoomCard extends Component {
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.roomID);
       const roomInfo = await roomRef.get();
-      const { songs, currentPosition } = roomInfo.data();
-      const currentSong = songs[roomInfo.data().currentSongIndex];
-      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, currentPosition);
+      const { playlistID, currentSongIndex, currentPosition } = roomInfo.data();
+      await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
     }
   }
 
@@ -164,8 +189,8 @@ class RoomCard extends Component {
             numSongs={this.state.numSongs}
           />
           <View style={styles.songInfoContainer}>
-            <Text style={styles.song}>{this.state.currentSong.name}</Text>
-            <Text style={styles.artists}>{this.state.currentSong.artists}</Text>
+            <Text style={styles.song}>{this.state.songName}</Text>
+            <Text style={styles.artists}>{this.state.artist}</Text>
           </View>
           <ProgressBar
             startColor="#fff"
@@ -188,7 +213,7 @@ class RoomCard extends Component {
                     miles away
                   </Text>
                 ) : null
-            }
+              }
               <Icon
                 type="material"
                 size={30}
@@ -280,7 +305,8 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ currentRoom, deviceInfo }) => ({
+const mapStateToProps = ({ currentRoom, deviceInfo, auth }) => ({
+  accessToken: auth.accessToken,
   currentRoom,
   location: deviceInfo.location
 });

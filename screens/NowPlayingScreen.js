@@ -17,16 +17,15 @@ import 'firebase/firestore';
 import { connect } from 'react-redux';
 import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
-import qs from 'qs';
-import _ from 'lodash';
-import { showMessage } from 'react-native-flash-message';
+// import qs from 'qs';
+// import _ from 'lodash';
+// import { showMessage } from 'react-native-flash-message';
 
 import ProgressBar from '../components/ProgressBar';
 import * as actions from '../actions';
 import QueueModal from '../components/QueueModal';
 import CurrentListenersModal from '../components/CurrentListenersModal';
-import ControlsContainer from '../components/ControlsContainer';
-import getSongData from '../functions/getSongData';
+// import getSongData from '../functions/getSongData';
 
 const {
   width: screenWidth,
@@ -64,19 +63,22 @@ class NowPlayingScreen extends Component {
       loading: true,
       showQueue: false,
       showCurrentListeners: false,
-      playing: true,
       creator: {},
       currentSongIndex: 0,
       progress: 0,
       listeners: [],
-      userID: ''
+      userID: '',
+      name: '',
+      artists: '',
+      images: []
     };
   }
 
   componentWillUnmount() {
-    console.log('Now Playing Screen unmounting...');
+    // console.log('Now Playing Screen unmounting...');
     clearInterval(this.creatorUpdateInterval);
     this.changeSongSubscription.remove();
+    Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
   }
 
   resetPosition = () => Animated.spring(this.position,
@@ -104,18 +106,34 @@ class NowPlayingScreen extends Component {
   leaveRoom = () => {
     this.unsubscribe();
     clearInterval(this.creatorUpdateInterval);
-    Spotify.removeListener('audioDeliveryDone', this.changeSongOne);
+    Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
     this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id);
   }
 
-  changeSongOne = () => this.changeSong(1);
+  // Given a playlist id and a currentSongIndex, return the song info
+  // and update the progress
+  getCurrentSongInfo = async (playlistID, currentSongIndex) => {
+    const { accessToken } = this.props;
+    const { data } = await axios({
+      url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { offset: currentSongIndex, limit: 1 }
+    });
+    const { track } = data.items[0];
+    const {
+      artists: artistsArr, name, duration_ms: duration, album
+    } = track;
+    const artists = artistsArr[0].name;
+    const { images } = album;
+    this.setState({
+      artists, name, images, duration
+    });
+  }
 
   setupRoom = async () => {
     if (this.props.currentRoom.id !== '') {
       const { id: userID } = await Spotify.getMe();
       this.setState({ userID });
-
-      Spotify.addListener('audioDeliveryDone', this.changeSongOne);
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
 
@@ -125,7 +143,11 @@ class NowPlayingScreen extends Component {
           const roomData = room.data();
           const roomInfo = { ...roomData, id: room.id };
           const userInfo = await Spotify.getMe();
+          const { playlistID, currentSongIndex, currentPosition } = room.data();
 
+          this.getCurrentSongInfo(playlistID, currentSongIndex);
+          this.setState({ currentSongIndex });
+          await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
           if (roomInfo.creator.id === userInfo.id) {
             this.setupCreator(roomInfo);
           } else {
@@ -135,19 +157,19 @@ class NowPlayingScreen extends Component {
           console.error('Could not find room.');
         }
       } catch (err) {
-        console.error(`${err}. Could not get room data.`);
+        Alert.alert('Could not find the room', '',
+          [{ text: 'OK', onPress: () => this.leaveRoom }]);
       }
 
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
         .onSnapshot(async (room) => {
           const {
-            currentPosition, currentSongIndex, listeners, songs, creator
+            currentPosition,
+            currentSongIndex,
+            listeners,
+            creator,
+            playlistID
           } = room.data();
-
-          // Detect song changes
-          if (this.state.currentSongIndex !== currentSongIndex) {
-            await Spotify.playURI(`spotify:track:${room.data().songs[room.data().currentSongIndex].id}`, 0, 0);
-          }
 
           // We have become the creator
           if (creator.id === this.state.userID) {
@@ -158,115 +180,43 @@ class NowPlayingScreen extends Component {
             this.setState({ isCreator: false });
           }
 
-          const songLength = songs[currentSongIndex].duration_ms / 1000;
-          const progress = currentPosition / songLength;
-          this.setState({
-            currentSongIndex, listeners, progress, creator
-          });
-          if (room.data().playing !== this.state.playing) {
-            this.setState({ playing: room.data().playing });
-            try {
-              await Spotify.setPlaying(room.data().playing);
-            } catch (err) {
-              console.error('Could not toggle playback');
-            }
-            return;
+          // The song has changed, update the UI
+          if (currentSongIndex !== this.state.currentSongIndex) {
+            this.setState({ currentSongIndex }, () => {
+              this.getCurrentSongInfo(playlistID, currentSongIndex);
+            });
           }
 
+          this.setState(prevState => ({
+            currentSongIndex,
+            listeners,
+            creator,
+            progress: currentPosition / (prevState.duration)
+          }));
           this.props.updateRoom(room.data());
         });
     }
   }
 
-  // eslint-disable-next-line consistent-return
-  recommendSong = async (room) => {
-    // // Get recommendation from Spotify
-    const { accessToken } = this.props;
-    const seedTracks = _.map(room.data().songs.slice(
-      -Math.min(room.data().songs.length, 5)
-    ), song => song.id);
-    const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-    const query = qs.stringify({
-      limit: 1,
-      market: 'US',
-      min_popularity: '50',
-      seed_tracks: seedTracks.join()
+  setupCreator = (roomInfo) => {
+    Spotify.addListener('trackChange', this.updateCurrentSongIndex);
+    this.props.updateRoom(roomInfo);
+    this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
+      this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
+        this.state.updateInterval);
     });
+  };
 
-    try {
-      const { data } = await axios.get(`https://api.spotify.com/v1/recommendations?${query}`, config);
-      if (data.tracks.length > 0) {
-        return getSongData(data.tracks[0], null);
-      }
-      console.error('Could not get recommendations');
-      return {};
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  changeSong = async (distance) => {
+  updateCurrentSongIndex = async () => {
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-    const room = await roomRef.get();
-    if (room.exists) {
-      const roomData = await room.data();
-      const numSongs = roomData.songs.length;
-      const newIndex = roomData.currentSongIndex + distance;
-
-      if (newIndex < 0) {
-        try {
-          showMessage({
-            message: 'There were no previous songs',
-            type: 'danger'
-          });
-        } catch (err) {
-          console.error(`Could not play ${roomData.songs[0].name}: ${err}`);
-        }
-      } else if (newIndex + 1 > numSongs) {
-        showMessage({
-          message: 'There were no upcoming songs. Up next is a recommendation from Spotify',
-          type: 'info',
-          backgroundColor: '#00c9ff',
-          color: '#fff',
-          duration: 2500
-        });
-        const newSong = await this.recommendSong(room);
-        let { songs } = room.data();
-        songs.push(newSong);
-        songs = _.uniqBy(songs, 'id');
-        await roomRef.update({ songs });
-        await roomRef.update({
-          currentSongIndex: firebase.firestore.FieldValue.increment(distance)
-        });
-        const newRoom = await roomRef.get();
-        await Spotify.playURI(`spotify:track:${newRoom.data().songs[newRoom.data().currentSongIndex].id}`, 0, 0);
-      } else {
-        await roomRef.update({
-          currentSongIndex: firebase.firestore.FieldValue.increment(distance)
-        });
-        await Spotify.playURI(`spotify:track:${roomData.songs[roomData.currentSongIndex + distance].id}`, 0, 0);
-      }
-    } else {
-      console.error('Room does not exist');
-    }
+    roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(1) });
   }
 
-  togglePlay = async () => {
-    try {
-      const db = firebase.firestore();
-      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-      const room = await roomRef.get();
-      if (room.exists) {
-        const { playing: currentPlayState } = room.data();
-        roomRef.update({ playing: !currentPlayState });
-      } else {
-        console.error('Room does not exist');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  setupListener = async (roomInfo) => {
+    this.props.updateRoom(roomInfo);
+    this.setState({ loading: false, isCreator: false });
+  };
 
   updateRoomName = async () => {
     this.setState({ changingName: false });
@@ -281,30 +231,9 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  setupListener = async (roomInfo) => {
-    this.props.updateRoom(roomInfo);
-    this.setState({ loading: false, isCreator: false });
-
-    // Start playing the same song as the creator
-    const { currentSongIndex, songs, currentPosition } = roomInfo;
-    const currentSong = songs[currentSongIndex];
-    await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, currentPosition);
-  };
-
-  setupCreator = (roomInfo) => {
-    this.props.updateRoom(roomInfo);
-    this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, async () => {
-      const currentSong = roomInfo.songs[0];
-      await Spotify.playURI(`spotify:track:${currentSong.id}`, 0, 0);
-      this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
-        this.state.updateInterval);
-    });
-  };
-
   updateCreatorPosition = async () => {
     // 1. Get current position from playback
     const { position: currentPosition } = await Spotify.getPlaybackStateAsync();
-
     // 2. Get database reference
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
@@ -315,37 +244,37 @@ class NowPlayingScreen extends Component {
       if (room.exists) {
         await roomRef.update({ currentPosition });
       } else {
-        console.error(' (NowPlaying 235) Could not find room.');
+        console.error(' (NowPlaying 202) Could not find room.');
       }
     } catch (err) {
       console.error(`Could not get room data: ${err}`);
     }
   }
 
-  saveSong = async () => {
-    const { songs, currentSongIndex } = this.props.currentRoom;
-    const { accessToken } = this.props;
-    const { id: songId, name: songName } = songs[currentSongIndex];
-    try {
-      await axios({
-        method: 'PUT',
-        url: 'https://api.spotify.com/v1/me/tracks',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        data: { ids: [songId] }
-      });
-      showMessage({
-        message: `Saved ${songName} to your library`,
-        type: 'info',
-        backgroundColor: '#00c9ff',
-        color: '#fff'
-      });
-    } catch (err) {
-      Alert.alert(`Could not save ${songName} to your library`);
-    }
-  }
+  // saveSong = async () => {
+  //   const { songs, currentSongIndex } = this.props.currentRoom;
+  //   const { accessToken } = this.props;
+  //   const { id: songId, name: songName } = songs[currentSongIndex];
+  //   try {
+  //     await axios({
+  //       method: 'PUT',
+  //       url: 'https://api.spotify.com/v1/me/tracks',
+  //       headers: {
+  //         Authorization: `Bearer ${accessToken}`,
+  //         'Content-Type': 'application/json'
+  //       },
+  //       data: { ids: [songId] }
+  //     });
+  //     showMessage({
+  //       message: `Saved ${songName} to your library`,
+  //       type: 'info',
+  //       backgroundColor: '#00c9ff',
+  //       color: '#fff'
+  //     });
+  //   } catch (err) {
+  //     Alert.alert(`Could not save ${songName} to your library`);
+  //   }
+  // }
 
   clearQueue = async () => {
     Alert.alert('Clear upcoming songs?', '',
@@ -353,20 +282,20 @@ class NowPlayingScreen extends Component {
         {
           text: 'OK',
           onPress: async () => {
-            const db = firebase.firestore();
-            const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-            try {
-              const room = await roomRef.get();
-              const { songs: roomSongs } = room.data();
-              const previousSongs = roomSongs.slice(0, room.data().currentSongIndex + 1);
-              if (room.exists) {
-                await roomRef.update({ songs: previousSongs });
-              } else {
-                console.error('Could not find room.');
-              }
-            } catch (err) {
-              Alert.alert(`Could not clear queue: ${err}`);
-            }
+            // const db = firebase.firestore();
+            // const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+            // try {
+            //   const room = await roomRef.get();
+            //   const { songs: roomSongs } = room.data();
+            //   const previousSongs = roomSongs.slice(0, room.data().currentSongIndex + 1);
+            //   if (room.exists) {
+            //     await roomRef.update({ songs: previousSongs });
+            //   } else {
+            //     console.error('Could not find room.');
+            //   }
+            // } catch (err) {
+            //   Alert.alert(`Could not clear queue: ${err}`);
+            // }
           },
           style: 'cancel'
         },
@@ -380,64 +309,66 @@ class NowPlayingScreen extends Component {
     '', [{
       text: 'Ok',
       onPress: async () => {
-        const { accessToken } = this.props;
-        const { songs, name } = this.props.currentRoom;
-        const { id } = await Spotify.getMe();
-        const description = 'Created by Octave!';
+        // const { accessToken } = this.props;
+        // const { songs, name } = this.props.currentRoom;
+        // const { id } = await Spotify.getMe();
+        // const description = 'Created by Octave!';
 
-        try {
-          // Create Playlist
-          const { data } = await axios({
-            method: 'POST',
-            url: `https://api.spotify.com/v1/users/${id}/playlists`,
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            data: { name, description }
-          });
-          const { id: playlistID } = data;
+        // try {
+        //   // Create Playlist
+        //   const { data } = await axios({
+        //     method: 'POST',
+        //     url: `https://api.spotify.com/v1/users/${id}/playlists`,
+        //     headers: {
+        //       Authorization: `Bearer ${accessToken}`,
+        //       'Content-Type': 'application/json'
+        //     },
+        //     data: { name, description }
+        //   });
+        //   const { id: playlistID } = data;
 
-          // // 1. Create an array of promises where we
-          // // add the songs in the song list to the
-          // // user's library
-          const songURIs = songs.map(song => `spotify:track:${song.id}`);
+        //   // // 1. Create an array of promises where we
+        //   // // add the songs in the song list to the
+        //   // // user's library
+        //   const songURIs = songs.map(song => `spotify:track:${song.id}`);
 
-          // Split them so we can every 50 in the correct order
-          const splitSongURIs = [];
-          for (let i = 0; i < songURIs.length; i += 50) {
-            splitSongURIs.push(songURIs.slice(i, i + 50));
-          }
+        //   // Split them so we can every 50 in the correct order
+        //   const splitSongURIs = [];
+        //   for (let i = 0; i < songURIs.length; i += 50) {
+        //     splitSongURIs.push(songURIs.slice(i, i + 50));
+        //   }
 
-          const songsToAdd = splitSongURIs.map(uris => ({
-            method: 'POST',
-            url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            data: { uris }
-          }));
+        //   const songsToAdd = splitSongURIs.map(uris => ({
+        //     method: 'POST',
+        //     url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        //     headers: {
+        //       Authorization: `Bearer ${accessToken}`,
+        //       'Content-Type': 'application/json'
+        //     },
+        //     data: { uris }
+        //   }));
 
-          // // 2. Add them to the library
-          songsToAdd.reduce((promiseChain, currentTask) => promiseChain.then(async chainResults =>
-            // eslint-disable-next-line implicit-arrow-linebreak
-            axios(currentTask).then(currentResult =>
-              // eslint-disable-next-line implicit-arrow-linebreak
-              [...chainResults, currentResult])),
-          // eslint-disable-next-line no-unused-vars
-          Promise.resolve([])).then((arrayOfResults) => {
-            showMessage({
-              message: `Saved the playlist ${name} with ${songURIs.length} songs to your library`,
-              type: 'info',
-              backgroundColor: '#00c9ff',
-              color: '#fff',
-              duration: 8000
-            });
-          });
-        } catch (err) {
-          Alert.alert(`Could not create playlist: ${err}`);
-        }
+        //   // // 2. Add them to the library
+        //   songsToAdd.reduce((promiseChain, currentTask) => promiseChain
+        //  .then(async chainResults =>
+        //     // eslint-disable-next-line implicit-arrow-linebreak
+        //     axios(currentTask).then(currentResult =>
+        //       // eslint-disable-next-line implicit-arrow-linebreak
+        //       [...chainResults, currentResult])),
+        //   // eslint-disable-next-line no-unused-vars
+        //   Promise.resolve([])).then((arrayOfResults) => {
+        //     showMessage({
+        //       message: `Saved the playlist ${name} with
+        // ${songURIs.length} songs to your library`,
+        //       type: 'info',
+        //       backgroundColor: '#00c9ff',
+        //       color: '#fff',
+        //       duration: 8000
+        //     });
+        //   });
+        // } catch (err) {
+        //   Alert.alert(`Could not create playlist: ${err}`);
+        // }
       }
     },
     { text: 'Cancel', style: 'cancel' }], { cancelable: false },
@@ -459,8 +390,7 @@ class NowPlayingScreen extends Component {
       );
     }
 
-    const { name, artists } = this.props.currentRoom.songs[this.state.currentSongIndex];
-    const { url } = this.props.currentRoom.songs[this.state.currentSongIndex].images[0];
+    const { name, artists, images } = this.state;
 
     return (
       <Animated.View
@@ -504,7 +434,7 @@ class NowPlayingScreen extends Component {
           />
         </View>
         <Image
-          source={this.props.currentRoom.songs.length > 0 ? { url }
+          source={images.length > 0 ? { url: images[0].url }
             : require('../assets/default_album.png')}
           style={styles.image}
         />
@@ -530,14 +460,6 @@ class NowPlayingScreen extends Component {
             icon={(<Icon type="material" size={45} name="favorite-border" />)}
           />
         </View>
-
-        {this.state.isCreator ? (
-          <ControlsContainer
-            playing={this.state.playing}
-            togglePlay={this.togglePlay}
-            changeSong={this.changeSong}
-          />
-        ) : null}
         <View
           style={{
             borderBottomColor: 'black',

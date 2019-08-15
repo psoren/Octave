@@ -6,17 +6,43 @@ import {
   TouchableOpacity,
   Dimensions
 } from 'react-native';
+import axios from 'axios';
+import { connect } from 'react-redux';
 
 const { width } = Dimensions.get('window');
 
 class MinimizedRoom extends Component {
-  render() {
-    if (this.props.songs.length === 0) {
-      return (<Text>Current Room</Text>);
-    }
+  state = { loading: true };
 
-    const { songs, currentSongIndex } = this.props;
-    const { name, images } = songs[currentSongIndex];
+  getSong = async (playlistID, currentSongIndex) => {
+    const { accessToken } = this.props;
+    const { data } = await axios({
+      url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { offset: currentSongIndex, limit: 1 }
+    });
+    const { track } = data.items[0];
+    const { name, album } = track;
+    this.setState({ name, images: album.images, loading: false });
+  }
+
+  componentDidMount = async () => {
+    if (this.props.playlistID && this.props.currentSongIndex) {
+      this.getSong(this.props.playlistID, this.props.currentSongIndex);
+    }
+  }
+
+  componentDidUpdate = async () => {
+    if (this.props.playlistID && this.props.currentSongIndex
+      && this.state.loading) {
+      this.getSong(this.props.playlistID, this.props.currentSongIndex);
+    }
+  }
+
+  render() {
+    if (this.state.loading) {
+      return null;
+    }
 
     return (
       <TouchableOpacity
@@ -25,11 +51,11 @@ class MinimizedRoom extends Component {
       >
         <View style={styles.songContainer}>
           <Text style={styles.roomName}>{this.props.roomName}</Text>
-          <Text style={styles.song}>{name}</Text>
+          <Text style={styles.song}>{this.state.name}</Text>
         </View>
         <Image
-          source={images.length > 0
-            ? { uri: images[images.length - 1].url }
+          source={this.state.images.length > 0
+            ? { uri: this.state.images[this.state.images.length - 1].url }
             : require('../assets/default_album.png')}
           style={styles.image}
         />
@@ -70,4 +96,6 @@ const styles = {
   }
 };
 
-export default MinimizedRoom;
+const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+
+export default connect(mapStateToProps, null)(MinimizedRoom);

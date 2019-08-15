@@ -71,23 +71,18 @@ export const createRoom = ({
     }
 
     // Create playlist
-
-
     // 1. Get a new access token from testing account
-    const { playlistRefreshURL } = spotifyCredentials;
-
     try {
-      const res = await fetch(playlistRefreshURL, {
+      const { playlistRefreshURL } = spotifyCredentials;
+      const { data: refreshData } = await axios({
+        url: playlistRefreshURL,
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
-
-      const resJSON = await res.json();
-      const { access_token: accessToken } = resJSON;
+      const { access_token: playlistAccessToken } = refreshData;
 
       // 2. Get user id
       const { id } = await Spotify.getMe();
-
 
       // 3. Create the specified playlist using that access token
       const name = `Secret Octave playlist for user ${id}`;
@@ -95,16 +90,16 @@ export const createRoom = ({
         method: 'POST',
         url: `https://api.spotify.com/v1/users/${id}/playlists`,
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${playlistAccessToken}`,
           'Content-Type': 'application/json'
         },
         data: { name }
       });
       const { id: playlistID } = data;
 
-      // // // 1. Create an array of promises where we
-      // // // add the songs in the song list to the
-      // // // user's library
+      // 1. Create an array of promises where we
+      // add the songs in the song list to the
+      // user's library
       const songURIs = songs.map(song => `spotify:track:${song.id}`);
 
       // // Split them so we can every 50 in the correct order
@@ -132,7 +127,6 @@ export const createRoom = ({
       Promise.resolve([])).then(async (arrayOfResults) => {
         // Create room
         const { id: newRoomID } = await db.collection('rooms').add({
-          songs,
           name: roomName,
           creator,
           currentSongIndex: 0,
@@ -147,7 +141,12 @@ export const createRoom = ({
 
         // Update status collection in firestore
         const { uri } = await Spotify.getMe();
-        db.collection('status').doc(uri).update({ roomID: newRoomID });
+
+        db.collection('status').doc(uri).set({
+          roomID: newRoomID,
+          state: 'online',
+          last_changed: new Date()
+        });
 
         dispatch({
           type: CREATE_ROOM,

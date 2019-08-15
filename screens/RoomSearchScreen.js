@@ -54,10 +54,10 @@ class RoomSearchScreen extends Component {
   render() {
     let NowPlaying = null;
     if (this.props.currentRoom.id !== '') {
-      const { songs, currentSongIndex, name: roomName } = this.props.currentRoom;
+      const { playlistID, currentSongIndex, name: roomName } = this.props.currentRoom;
       NowPlaying = (
         <MinimizedRoom
-          songs={songs}
+          playlistID={playlistID}
           currentSongIndex={currentSongIndex}
           roomName={roomName}
           goToRoom={() => this.props.navigation.navigate('NowPlaying')}

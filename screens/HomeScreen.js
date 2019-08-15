@@ -42,9 +42,6 @@ class HomeScreen extends Component {
   componentDidMount = async () => {
     SplashScreen.hide();
 
-    // Spotify.playURI('spotify:playlist:1LKFpbQ16xZeew6kCwnjbh', 0, 0);
-    // spotify:playlist:1LKFpbQ16xZeew6kCwnjbh
-
     // Set token refresh interval
     this.tokenRefreshInterval = setInterval(async () => {
       await Spotify.renewSession();
@@ -137,14 +134,6 @@ class HomeScreen extends Component {
   }
 
   render() {
-    if (this.state.testing) {
-      return (
-        <View>
-          <Text>Testing</Text>
-        </View>
-      );
-    }
-
     let roomCards = (
       <View style={styles.roomCardContainer}>
         <RoomCardLoading />
@@ -167,10 +156,11 @@ class HomeScreen extends Component {
 
     let NowPlaying = null;
     if (this.props.currentRoom.id !== '') {
-      const { songs, currentSongIndex, name: roomName } = this.props.currentRoom;
+      const { playlistID, currentSongIndex, name: roomName } = this.props.currentRoom;
+
       NowPlaying = (
         <MinimizedRoom
-          songs={songs}
+          playlistID={playlistID}
           currentSongIndex={currentSongIndex}
           roomName={roomName}
           goToRoom={() => this.props.navigation.navigate('NowPlaying')}

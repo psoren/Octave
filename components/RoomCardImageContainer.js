@@ -19,7 +19,7 @@ const RoomCardImageContainer = props => (
       />
     </View>
     <Image
-      source={{ url: props.currentSong.images[0].url }}
+      source={{ url: props.currentSong.album.images[0].url }}
       style={styles.image}
     />
     <View style={styles.iconViewRight}>
