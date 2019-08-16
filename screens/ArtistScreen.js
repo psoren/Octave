@@ -60,10 +60,6 @@ class ArtistScreen extends Component {
 
   playTopSongs = async (shouldPrepend) => {
     if (this.props.currentRoom.id === '') {
-      if (this.props.pendingRoom.songs.length > 4000) {
-        Alert.alert('You cannot add more than 4000 songs to a room');
-        return;
-      }
       if (shouldPrepend) {
         this.props.prependSongsToPendingQueue(this.state.songs);
       } else {
@@ -79,10 +75,7 @@ class ArtistScreen extends Component {
           const uris = this.state.songs.map(song => `spotify:track:${song.id}`);
 
           const { playlistID, currentSongIndex } = room.data();
-          if (currentSongIndex > 4000) {
-            Alert.alert('You cannot add more than 4000 songs to a room');
-            return;
-          }
+
 
           const data = shouldPrepend ? {
             position: currentSongIndex + 2, uris

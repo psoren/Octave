@@ -8,7 +8,6 @@ import { connect } from 'react-redux';
 import qs from 'qs';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
-import _ from 'lodash';
 
 import * as actions from '../actions';
 import Song from '../components/Song';
@@ -102,27 +101,54 @@ class SongsCollectionScreen extends Component {
         this.props.appendSongsToPendingQueue(songs);
       }
     } else {
+      console.log('going to add songs');
+
       // Add to firebase
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       try {
         const room = await roomRef.get();
         if (room.exists) {
-          let { songs: roomSongs } = room.data();
+          const { playlistID, currentSongIndex } = room.data();
 
-          if (roomSongs.length > 4000) {
-            Alert.alert('You cannot add more than 4000 songs to a room');
-            return;
+          const songURIs = [];
+          let curIndex = 0;
+          const numSongsRequest = 50;
+
+          while (curIndex < songs.length) {
+            const songsSection = songs.slice(curIndex, curIndex + numSongsRequest);
+            const songURIsSection = songsSection.map(song => `spotify:track:${song.id}`);
+            songURIs.push(songURIsSection);
+            curIndex += numRequests;
           }
 
-          const { currentSongIndex } = room.data();
+
+          console.log(songURIs);
+
+          // we have a list of songs called songs
+          // we need to get a list of lists of songs, where each sublist
+          // has at most 100 songs, and then successively append them to the playlist,
+          // either by appending to the end or adding at the specified index and
+          // incrementing the current position in the playlist
+
           if (shouldPrepend) {
-            roomSongs.splice(currentSongIndex + 1, 0, ...songs);
-          } else {
-            roomSongs = [...roomSongs, ...songs];
+            const insertIndex = currentSongIndex + 2;
+            // for (let i = 0; i < songURIs.length; i += 1) {
+            //   // eslint-disable-next-line no-await-in-loop
+            //   await axios({
+            //     url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+            //     headers: {
+            //       Authorization: `Bearer ${accessToken}`,
+            //       'Content-Type': 'application/json'
+            //     },
+            //     params: {
+            //       uris: songURIs[i],
+            //       position: insertIndex
+            //     }
+            //   });
+            //   insertIndex += numSongsRequest;
+            // }
           }
-          roomSongs = _.uniqBy(roomSongs, 'id');
-          roomRef.update({ songs: roomSongs });
         } else {
           console.error('Could not find room');
         }

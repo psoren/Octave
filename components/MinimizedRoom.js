@@ -25,7 +25,6 @@ class MinimizedRoom extends Component {
     const { track } = data.items[0];
     const { name, album } = track;
     this.setState({ name, images: album.images, loading: false });
-    console.log('done loading');
   }
 
   componentDidMount = async () => {
