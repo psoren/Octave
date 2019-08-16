@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
-import _ from 'lodash';
+import axios from 'axios';
 
 import * as actions from '../actions';
 import SongModal from './SongModal';
@@ -33,13 +33,29 @@ class Song extends Component {
       try {
         const room = await roomRef.get();
         if (room.exists) {
-          const { currentSongIndex } = room.data();
-          let { songs } = room.data();
-          if (playNow) {
-            songs.splice(currentSongIndex + 1, 0, newSong);
-          } else { songs.push(newSong); }
-          songs = _.uniqBy(songs, 'id');
-          roomRef.update({ songs });
+          const { currentSongIndex, playlistID } = room.data();
+
+          // If we are at current song index, we need
+          // to add them at currentSongIndex+2, since
+          // currentSongIndex+1 is already queued by Spotify
+          const uris = [`spotify:track:${id}`];
+          const data = playNow ? {
+            position: currentSongIndex + 2,
+            uris
+          } : { uris };
+
+
+          console.log(playlistID);
+          console.log(this.props.accessToken);
+          console.log(data);
+
+          const res = await axios({
+            method: 'post',
+            url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+            headers: { Authorization: `Bearer ${this.props.accessToken}` },
+            data
+          });
+          console.log(res);
         } else {
           console.error('Could not find room');
         }
