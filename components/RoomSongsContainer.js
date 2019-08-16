@@ -18,8 +18,8 @@ const RoomSongsContainer = props => (
           <Song
             id={song.id}
             name={song.name}
-            artists={song.artists}
-            images={song.images}
+            artists={song.artists[0].name}
+            images={song.album.images}
             key={song.id}
           />
         ))}

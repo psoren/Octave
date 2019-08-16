@@ -19,7 +19,8 @@ import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
 // import qs from 'qs';
 // import _ from 'lodash';
-// import { showMessage } from 'react-native-flash-message';
+import { showMessage } from 'react-native-flash-message';
+import spotifyCredentials from '../secrets';
 
 import ProgressBar from '../components/ProgressBar';
 import * as actions from '../actions';
@@ -143,11 +144,10 @@ class NowPlayingScreen extends Component {
           const roomData = room.data();
           const roomInfo = { ...roomData, id: room.id };
           const userInfo = await Spotify.getMe();
-          const { playlistID, currentSongIndex, currentPosition } = room.data();
+          const { playlistID, currentSongIndex } = room.data();
 
           this.getCurrentSongInfo(playlistID, currentSongIndex);
           this.setState({ currentSongIndex });
-          await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
           if (roomInfo.creator.id === userInfo.id) {
             this.setupCreator(roomInfo);
           } else {
@@ -198,23 +198,42 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  setupCreator = (roomInfo) => {
-    Spotify.addListener('trackChange', this.updateCurrentSongIndex);
+  setupCreator = async (roomInfo) => {
     this.props.updateRoom(roomInfo);
+
+    const {
+      currentPosition,
+      currentSongIndex,
+      playlistID
+    } = roomInfo;
+
+
+    await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
+    Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
+
+
     this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
       this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
         this.state.updateInterval);
     });
   };
 
-  updateCurrentSongIndex = async () => {
-    const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-    roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(1) });
+  updateCurrentSongIndex = async (e) => {
+    if (e.metadata.currentTrack.indexInContext > 0) {
+      const db = firebase.firestore();
+      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+      roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(1) });
+    }
   }
 
   setupListener = async (roomInfo) => {
     this.props.updateRoom(roomInfo);
+    const {
+      currentPosition,
+      currentSongIndex,
+      playlistID
+    } = roomInfo;
+    await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
     this.setState({ loading: false, isCreator: false });
   };
 
@@ -244,37 +263,43 @@ class NowPlayingScreen extends Component {
       if (room.exists) {
         await roomRef.update({ currentPosition });
       } else {
-        console.error(' (NowPlaying 202) Could not find room.');
+        console.error(' (NowPlaying 247) Could not find room.');
       }
     } catch (err) {
       console.error(`Could not get room data: ${err}`);
     }
   }
 
-  // saveSong = async () => {
-  //   const { songs, currentSongIndex } = this.props.currentRoom;
-  //   const { accessToken } = this.props;
-  //   const { id: songId, name: songName } = songs[currentSongIndex];
-  //   try {
-  //     await axios({
-  //       method: 'PUT',
-  //       url: 'https://api.spotify.com/v1/me/tracks',
-  //       headers: {
-  //         Authorization: `Bearer ${accessToken}`,
-  //         'Content-Type': 'application/json'
-  //       },
-  //       data: { ids: [songId] }
-  //     });
-  //     showMessage({
-  //       message: `Saved ${songName} to your library`,
-  //       type: 'info',
-  //       backgroundColor: '#00c9ff',
-  //       color: '#fff'
-  //     });
-  //   } catch (err) {
-  //     Alert.alert(`Could not save ${songName} to your library`);
-  //   }
-  // }
+  saveSong = async () => {
+    const { playlistID, currentSongIndex } = this.props.currentRoom;
+    const { accessToken } = this.props;
+
+    const { data } = await axios({
+      url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { offset: currentSongIndex, limit: 1 }
+    });
+    const { id, name } = data.items[0].track;
+    try {
+      await axios({
+        method: 'PUT',
+        url: 'https://api.spotify.com/v1/me/tracks',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        data: { ids: [id] }
+      });
+      showMessage({
+        message: `Saved ${name} to your library`,
+        type: 'info',
+        backgroundColor: '#00c9ff',
+        color: '#fff'
+      });
+    } catch (err) {
+      Alert.alert(`Could not save ${name} to your library`);
+    }
+  }
 
   clearQueue = async () => {
     Alert.alert('Clear upcoming songs?', '',
@@ -309,66 +334,100 @@ class NowPlayingScreen extends Component {
     '', [{
       text: 'Ok',
       onPress: async () => {
-        // const { accessToken } = this.props;
-        // const { songs, name } = this.props.currentRoom;
-        // const { id } = await Spotify.getMe();
-        // const description = 'Created by Octave!';
+        const { accessToken } = this.props;
+        const { playlistID: secretPlaylistID, name } = this.props.currentRoom;
+        const { id } = await Spotify.getMe();
+        const description = 'Created by Octave!';
 
-        // try {
-        //   // Create Playlist
-        //   const { data } = await axios({
-        //     method: 'POST',
-        //     url: `https://api.spotify.com/v1/users/${id}/playlists`,
-        //     headers: {
-        //       Authorization: `Bearer ${accessToken}`,
-        //       'Content-Type': 'application/json'
-        //     },
-        //     data: { name, description }
-        //   });
-        //   const { id: playlistID } = data;
+        try {
+          // Create Playlist
+          const { data } = await axios({
+            method: 'POST',
+            url: `https://api.spotify.com/v1/users/${id}/playlists`,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            data: { name, description }
+          });
+          const { id: newPlaylistID } = data;
 
-        //   // // 1. Create an array of promises where we
-        //   // // add the songs in the song list to the
-        //   // // user's library
-        //   const songURIs = songs.map(song => `spotify:track:${song.id}`);
+          // 1. Create an array of promises where we
+          // add the songs in the song list to the
+          // user's library
 
-        //   // Split them so we can every 50 in the correct order
-        //   const splitSongURIs = [];
-        //   for (let i = 0; i < songURIs.length; i += 50) {
-        //     splitSongURIs.push(songURIs.slice(i, i + 50));
-        //   }
+          // Get total number of songs in the current secret playlist
+          const { playlistRefreshURL } = spotifyCredentials;
+          const { data: refreshData } = await axios({
+            url: playlistRefreshURL,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          });
+          const { access_token: playlistAccessToken } = refreshData;
 
-        //   const songsToAdd = splitSongURIs.map(uris => ({
-        //     method: 'POST',
-        //     url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
-        //     headers: {
-        //       Authorization: `Bearer ${accessToken}`,
-        //       'Content-Type': 'application/json'
-        //     },
-        //     data: { uris }
-        //   }));
+          const { data: secretPlaylistData } = await axios({
+            url: `https://api.spotify.com/v1/playlists/${secretPlaylistID}`,
+            headers: { Authorization: `Bearer ${playlistAccessToken}` }
+          });
 
-        //   // // 2. Add them to the library
-        //   songsToAdd.reduce((promiseChain, currentTask) => promiseChain
-        //  .then(async chainResults =>
-        //     // eslint-disable-next-line implicit-arrow-linebreak
-        //     axios(currentTask).then(currentResult =>
-        //       // eslint-disable-next-line implicit-arrow-linebreak
-        //       [...chainResults, currentResult])),
-        //   // eslint-disable-next-line no-unused-vars
-        //   Promise.resolve([])).then((arrayOfResults) => {
-        //     showMessage({
-        //       message: `Saved the playlist ${name} with
-        // ${songURIs.length} songs to your library`,
-        //       type: 'info',
-        //       backgroundColor: '#00c9ff',
-        //       color: '#fff',
-        //       duration: 8000
-        //     });
-        //   });
-        // } catch (err) {
-        //   Alert.alert(`Could not create playlist: ${err}`);
-        // }
+          const totalCurrentTracks = secretPlaylistData.tracks.total;
+
+          // Get all of the tracks and add them to the songs array
+          const songs = [];
+          let offset = 0;
+
+          while (offset < totalCurrentTracks) {
+            // eslint-disable-next-line no-await-in-loop
+            const { data: songsData } = await axios({
+              url: `https://api.spotify.com/v1/playlists/${secretPlaylistID}/tracks`,
+              headers: { Authorization: `Bearer ${playlistAccessToken}` },
+              params: { offset }
+            });
+            console.log(songsData);
+            songsData.items.forEach((song) => {
+              songs.push(song);
+            });
+            offset += 100;
+          }
+
+          const songURIs = songs.map(song => `spotify:track:${song.track.id}`);
+          // Split them so we can add every 50 in the correct order
+          const splitSongURIs = [];
+          for (let i = 0; i < songURIs.length; i += 50) {
+            splitSongURIs.push(songURIs.slice(i, i + 50));
+          }
+
+          const songsToAdd = splitSongURIs.map(uris => ({
+            method: 'POST',
+            url: `https://api.spotify.com/v1/playlists/${newPlaylistID}/tracks`,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            data: { uris }
+          }));
+
+          // 2. Add them to the library
+          songsToAdd.reduce((promiseChain, currentTask) => promiseChain
+            .then(async chainResults =>
+              // eslint-disable-next-line implicit-arrow-linebreak
+              axios(currentTask).then(currentResult =>
+                // eslint-disable-next-line implicit-arrow-linebreak
+                [...chainResults, currentResult])),
+          // eslint-disable-next-line no-unused-vars
+          Promise.resolve([])).then((arrayOfResults) => {
+            showMessage({
+              message: `Saved the playlist ${name} with
+          ${songURIs.length} songs to your library`,
+              type: 'info',
+              backgroundColor: '#00c9ff',
+              color: '#fff',
+              duration: 8000
+            });
+          });
+        } catch (err) {
+          Alert.alert(`Could not create playlist: ${err}`);
+        }
       }
     },
     { text: 'Cancel', style: 'cancel' }], { cancelable: false },
@@ -398,10 +457,11 @@ class NowPlayingScreen extends Component {
         {...this.panResponder.panHandlers}
       >
         <QueueModal
+          accessToken={this.props.accessToken}
           visible={this.state.showQueue}
           closeModal={() => this.setState({ showQueue: false })}
           savePlaylist={this.savePlaylist}
-          songs={this.props.currentRoom.songs}
+          playlistID={this.props.currentRoom.playlistID}
           currentSongIndex={this.state.currentSongIndex}
           clearQueue={this.clearQueue}
           isCreator={this.state.isCreator}

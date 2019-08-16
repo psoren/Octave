@@ -40,7 +40,7 @@ export const createRoom = ({
   navigation,
   colors,
   location,
-  // accessToken
+  accessToken
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
@@ -97,9 +97,8 @@ export const createRoom = ({
       });
       const { id: playlistID } = data;
 
-      // 1. Create an array of promises where we
-      // add the songs in the song list to the
-      // user's library
+      // 1. Create an array of promises where we add
+      // the songs in the song list to the user's library
       const songURIs = songs.map(song => `spotify:track:${song.id}`);
 
       // // Split them so we can every 50 in the correct order

@@ -1,77 +1,116 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { Modal } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import LinearGradient from 'react-native-linear-gradient';
+import axios from 'axios';
 
 import RoomSongsContainer from './RoomSongsContainer';
 
-const QueueModal = (props) => {
-  const previousSongs = props.songs.slice(0, props.currentSongIndex);
-  const nextSongs = props.songs.slice(props.currentSongIndex + 1);
+class QueueModal extends Component {
+  state = { loading: true };
 
-  return (
-    <Modal
-      animationType="slide"
-      visible={props.visible}
-    >
-      <LinearGradient
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        colors={props.colors}
-        style={styles.buttonsContainer}
+  componentDidMount = async () => {
+    const { currentSongIndex, playlistID, accessToken } = this.props;
+    const prevSongsStartIndex = Math.max(0, currentSongIndex - 50);
+    const nextSongsStartIndex = currentSongIndex + 1;
+    const NUM_SONGS = 50;
+    const previousSongs = [];
+    const nextSongs = [];
+
+    const numPreviousSongs = currentSongIndex - prevSongsStartIndex;
+
+    if (numPreviousSongs > 0) {
+      const { data: prevData } = await axios({
+        url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { limit: numPreviousSongs, offset: prevSongsStartIndex }
+      });
+      prevData.items.forEach((item) => {
+        previousSongs.push(item.track);
+      });
+    }
+
+    const { data: nextData } = await axios({
+      url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { limit: NUM_SONGS, offset: nextSongsStartIndex }
+    });
+
+    nextData.items.forEach((item) => {
+      nextSongs.push(item.track);
+    });
+    this.setState({ loading: false, nextSongs, previousSongs });
+  }
+
+  render() {
+    if (this.state.loading) {
+      return null;
+    }
+
+    return (
+      <Modal
+        animationType="slide"
+        visible={this.props.visible}
       >
-        <Button
-          onPress={props.closeModal}
-          type="clear"
-          icon={(
-            <Icon
-              type="material"
-              name="cancel"
-              color="#fff"
-              size={45}
-            />
-          )}
-        />
-        <Button
-          onPress={props.savePlaylist}
-          type="clear"
-          icon={(
-            <Icon
-              type="material"
-              name="playlist-add-check"
-              color="#fff"
-              size={45}
-            />
-          )}
-        />
-        {props.isCreator ? (
+        <LinearGradient
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          colors={this.props.colors}
+          style={styles.buttonsContainer}
+        >
           <Button
-            onPress={props.clearQueue}
+            onPress={this.props.closeModal}
             type="clear"
             icon={(
               <Icon
                 type="material"
-                name="remove-from-queue"
+                name="cancel"
                 color="#fff"
                 size={45}
               />
-          )}
+            )}
           />
-        ) : null}
+          <Button
+            onPress={this.props.savePlaylist}
+            type="clear"
+            icon={(
+              <Icon
+                type="material"
+                name="playlist-add-check"
+                color="#fff"
+                size={45}
+              />
+            )}
+          />
+          {this.props.isCreator ? (
+            <Button
+              onPress={this.props.clearQueue}
+              type="clear"
+              icon={(
+                <Icon
+                  type="material"
+                  name="remove-from-queue"
+                  color="#fff"
+                  size={45}
+                />
+              )}
+            />
+          ) : null}
 
-      </LinearGradient>
-      <RoomSongsContainer
-        songs={nextSongs}
-        title="Up Next"
-        next
-      />
-      <RoomSongsContainer
-        songs={previousSongs}
-        title="Already Played"
-      />
-    </Modal>
-  );
-};
+        </LinearGradient>
+        <RoomSongsContainer
+          songs={this.state.nextSongs}
+          title="Up Next"
+          next
+        />
+        <RoomSongsContainer
+          songs={this.state.previousSongs}
+          title="Already Played"
+        />
+      </Modal>
+    );
+  }
+}
 
 const styles = {
   buttonsContainer: {
