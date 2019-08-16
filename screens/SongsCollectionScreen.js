@@ -71,7 +71,6 @@ class SongsCollectionScreen extends Component {
       const params = qs.stringify({ limit, offset: i * limit });
       requests.push(
         axios({
-          method: 'GET',
           url: `https://api.spotify.com/v1/${this.state.type}s/${this.state.id}/tracks?${params}`,
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -89,6 +88,8 @@ class SongsCollectionScreen extends Component {
       songs = [...songs, ...newSongs];
     });
 
+    const songURIs = songs.map(song => `spotify:track:${song.id}`);
+
     if (this.props.currentRoom.id === '') {
       if (this.props.pendingRoom.songs.length > 4000) {
         Alert.alert('You cannot add more than 4000 songs to a room');
@@ -101,8 +102,6 @@ class SongsCollectionScreen extends Component {
         this.props.appendSongsToPendingQueue(songs);
       }
     } else {
-      console.log('going to add songs');
-
       // Add to firebase
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
@@ -111,49 +110,39 @@ class SongsCollectionScreen extends Component {
         if (room.exists) {
           const { playlistID, currentSongIndex } = room.data();
 
-          const songURIs = [];
+          const songURIsSections = [];
           let curIndex = 0;
-          const numSongsRequest = 50;
+          const numSongsPerRequest = 50;
 
-          while (curIndex < songs.length) {
-            const songsSection = songs.slice(curIndex, curIndex + numSongsRequest);
-            const songURIsSection = songsSection.map(song => `spotify:track:${song.id}`);
-            songURIs.push(songURIsSection);
-            curIndex += numRequests;
+          while (curIndex < songURIs.length) {
+            const songsSection = songURIs.slice(curIndex, curIndex + numSongsPerRequest);
+            songURIsSections.push(songsSection);
+            curIndex += numSongsPerRequest;
           }
-
-
-          console.log(songURIs);
 
           // we have a list of songs called songs
           // we need to get a list of lists of songs, where each sublist
           // has at most 100 songs, and then successively append them to the playlist,
           // either by appending to the end or adding at the specified index and
           // incrementing the current position in the playlist
-
-          if (shouldPrepend) {
-            const insertIndex = currentSongIndex + 2;
-            // for (let i = 0; i < songURIs.length; i += 1) {
-            //   // eslint-disable-next-line no-await-in-loop
-            //   await axios({
-            //     url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
-            //     headers: {
-            //       Authorization: `Bearer ${accessToken}`,
-            //       'Content-Type': 'application/json'
-            //     },
-            //     params: {
-            //       uris: songURIs[i],
-            //       position: insertIndex
-            //     }
-            //   });
-            //   insertIndex += numSongsRequest;
-            // }
+          let insertIndex = currentSongIndex + 2;
+          for (let i = 0; i < songURIsSections.length; i += 1) {
+            const position = shouldPrepend ? insertIndex : null;
+            // eslint-disable-next-line no-await-in-loop
+            await axios({
+              method: 'post',
+              url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              data: { uris: songURIsSections[i], position }
+            });
+            insertIndex += numSongsPerRequest;
           }
-        } else {
-          console.error('Could not find room');
         }
       } catch (err) {
-        console.error(`(Song.js) We could not update the room.${err}`);
+        console.error(err);
       }
     }
   }

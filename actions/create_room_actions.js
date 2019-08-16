@@ -93,7 +93,11 @@ export const createRoom = ({
           Authorization: `Bearer ${playlistAccessToken}`,
           'Content-Type': 'application/json'
         },
-        data: { name }
+        data: {
+          name,
+          collaborative: true,
+          public: false
+        }
       });
       const { id: playlistID } = data;
 
