@@ -9,7 +9,15 @@ import RoomSongsContainer from './RoomSongsContainer';
 class QueueModal extends Component {
   state = { loading: true };
 
-  componentDidMount = async () => {
+  componentDidMount = () => this.getSongData();
+
+  componentDidUpdate(prevProps) {
+    if (!prevProps.visible && this.props.visible) {
+      this.getSongData();
+    }
+  }
+
+  getSongData = async () => {
     const { currentSongIndex, playlistID, accessToken } = this.props;
     const prevSongsStartIndex = Math.max(0, currentSongIndex - 50);
     const nextSongsStartIndex = currentSongIndex + 1;

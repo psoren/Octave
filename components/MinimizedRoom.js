@@ -21,20 +21,21 @@ class MinimizedRoom extends Component {
       headers: { Authorization: `Bearer ${accessToken}` },
       params: { offset: currentSongIndex, limit: 1 }
     });
+
     const { track } = data.items[0];
     const { name, album } = track;
     this.setState({ name, images: album.images, loading: false });
+    console.log('done loading');
   }
 
   componentDidMount = async () => {
-    if (this.props.playlistID && this.props.currentSongIndex) {
+    if (this.props.playlistID) {
       this.getSong(this.props.playlistID, this.props.currentSongIndex);
     }
   }
 
   componentDidUpdate = async () => {
-    if (this.props.playlistID && this.props.currentSongIndex
-      && this.state.loading) {
+    if (this.props.playlistID && this.state.loading) {
       this.getSong(this.props.playlistID, this.props.currentSongIndex);
     }
   }

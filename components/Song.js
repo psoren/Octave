@@ -44,18 +44,12 @@ class Song extends Component {
             uris
           } : { uris };
 
-
-          console.log(playlistID);
-          console.log(this.props.accessToken);
-          console.log(data);
-
-          const res = await axios({
+          await axios({
             method: 'post',
             url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
             headers: { Authorization: `Bearer ${this.props.accessToken}` },
             data
           });
-          console.log(res);
         } else {
           console.error('Could not find room');
         }

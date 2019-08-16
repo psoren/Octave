@@ -76,19 +76,24 @@ class ArtistScreen extends Component {
       try {
         const room = await roomRef.get();
         if (room.exists) {
-          let { songs: roomSongs } = room.data();
-          if (roomSongs.length > 4000) {
+          const uris = this.state.songs.map(song => `spotify:track:${song.id}`);
+
+          const { playlistID, currentSongIndex } = room.data();
+          if (currentSongIndex > 4000) {
             Alert.alert('You cannot add more than 4000 songs to a room');
             return;
           }
-          const { currentSongIndex } = room.data();
-          if (shouldPrepend) {
-            roomSongs.splice(currentSongIndex + 1, 0, ...this.state.songs);
-          } else {
-            roomSongs = [...roomSongs, ...this.state.songs];
-          }
-          roomSongs = _.uniqBy(roomSongs, 'id');
-          roomRef.update({ songs: roomSongs });
+
+          const data = shouldPrepend ? {
+            position: currentSongIndex + 2, uris
+          } : { uris };
+
+          await axios({
+            method: 'post',
+            url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+            headers: { Authorization: `Bearer ${this.props.accessToken}` },
+            data
+          });
         } else {
           console.error('Could not find room');
         }

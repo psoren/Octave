@@ -76,7 +76,6 @@ class NowPlayingScreen extends Component {
   }
 
   componentWillUnmount() {
-    // console.log('Now Playing Screen unmounting...');
     clearInterval(this.creatorUpdateInterval);
     this.changeSongSubscription.remove();
     Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
@@ -126,6 +125,7 @@ class NowPlayingScreen extends Component {
     } = track;
     const artists = artistsArr[0].name;
     const { images } = album;
+
     this.setState({
       artists, name, images, duration
     });
@@ -144,17 +144,25 @@ class NowPlayingScreen extends Component {
           const roomData = room.data();
           const roomInfo = { ...roomData, id: room.id };
           const userInfo = await Spotify.getMe();
-          const { playlistID, currentSongIndex } = room.data();
+          const { playlistID, currentSongIndex, currentPosition } = room.data();
 
           this.getCurrentSongInfo(playlistID, currentSongIndex);
           this.setState({ currentSongIndex });
+          this.props.updateRoom(roomInfo);
+
+          await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
           if (roomInfo.creator.id === userInfo.id) {
-            this.setupCreator(roomInfo);
+            Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
+            this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
+              this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
+                this.state.updateInterval);
+            });
           } else {
-            this.setupListener(roomInfo);
+            this.setState({ loading: false, isCreator: false });
           }
         } else {
-          console.error('Could not find room.');
+          Alert.alert('Could not find the room', '',
+            [{ text: 'OK', onPress: () => this.leaveRoom }]);
         }
       } catch (err) {
         Alert.alert('Could not find the room', '',
@@ -170,6 +178,12 @@ class NowPlayingScreen extends Component {
             creator,
             playlistID
           } = room.data();
+
+          if (this.state.duration && currentPosition) {
+            const durationSeconds = this.state.duration / 1000;
+            const progress = currentPosition / durationSeconds;
+            this.setState({ progress });
+          }
 
           // We have become the creator
           if (creator.id === this.state.userID) {
@@ -187,36 +201,15 @@ class NowPlayingScreen extends Component {
             });
           }
 
-          this.setState(prevState => ({
+          this.setState({
             currentSongIndex,
             listeners,
-            creator,
-            progress: currentPosition / (prevState.duration)
-          }));
+            creator
+          });
           this.props.updateRoom(room.data());
         });
     }
   }
-
-  setupCreator = async (roomInfo) => {
-    this.props.updateRoom(roomInfo);
-
-    const {
-      currentPosition,
-      currentSongIndex,
-      playlistID
-    } = roomInfo;
-
-
-    await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
-    Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
-
-
-    this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
-      this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
-        this.state.updateInterval);
-    });
-  };
 
   updateCurrentSongIndex = async (e) => {
     if (e.metadata.currentTrack.indexInContext > 0) {
@@ -225,17 +218,6 @@ class NowPlayingScreen extends Component {
       roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(1) });
     }
   }
-
-  setupListener = async (roomInfo) => {
-    this.props.updateRoom(roomInfo);
-    const {
-      currentPosition,
-      currentSongIndex,
-      playlistID
-    } = roomInfo;
-    await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
-    this.setState({ loading: false, isCreator: false });
-  };
 
   updateRoomName = async () => {
     this.setState({ changingName: false });
@@ -263,7 +245,8 @@ class NowPlayingScreen extends Component {
       if (room.exists) {
         await roomRef.update({ currentPosition });
       } else {
-        console.error(' (NowPlaying 247) Could not find room.');
+        Alert.alert('Could not find the room', '',
+          [{ text: 'OK', onPress: () => this.leaveRoom }]);
       }
     } catch (err) {
       console.error(`Could not get room data: ${err}`);
@@ -355,7 +338,6 @@ class NowPlayingScreen extends Component {
           // 1. Create an array of promises where we
           // add the songs in the song list to the
           // user's library
-
           // Get total number of songs in the current secret playlist
           const { playlistRefreshURL } = spotifyCredentials;
           const { data: refreshData } = await axios({
