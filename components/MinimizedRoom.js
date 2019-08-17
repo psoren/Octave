@@ -96,6 +96,9 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth }) => ({ accessToken: auth.accessToken });
+const mapStateToProps = ({ auth, currentRoom }) => ({
+  accessToken: auth.accessToken,
+  currentRoom
+});
 
 export default connect(mapStateToProps, null)(MinimizedRoom);
