@@ -151,10 +151,16 @@ export const createRoom = ({
           last_changed: new Date()
         });
 
+        // Create currentSongIndex in currentSong collection
+        await db.collection('currentSong').doc(playlistID).set({
+          playlistID, currentSongIndex: 0
+        });
+
         dispatch({
           type: CREATE_ROOM,
           payload: { newRoomID }
         });
+
         navigation.navigate('NowPlaying', { test: false });
       });
     } catch (err) {

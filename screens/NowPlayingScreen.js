@@ -17,8 +17,6 @@ import 'firebase/firestore';
 import { connect } from 'react-redux';
 import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
-// import qs from 'qs';
-// import _ from 'lodash';
 import { showMessage } from 'react-native-flash-message';
 import spotifyCredentials from '../secrets';
 
@@ -26,7 +24,6 @@ import ProgressBar from '../components/ProgressBar';
 import * as actions from '../actions';
 import QueueModal from '../components/QueueModal';
 import CurrentListenersModal from '../components/CurrentListenersModal';
-// import getSongData from '../functions/getSongData';
 
 const {
   width: screenWidth,
@@ -150,7 +147,11 @@ class NowPlayingScreen extends Component {
           this.setState({ currentSongIndex });
           this.props.updateRoom(roomInfo);
 
-          await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
+          if (playlistID && currentSongIndex !== null && currentPosition !== null) {
+            await Spotify.playURI(`spotify:playlist:${playlistID}`,
+              currentSongIndex, currentPosition);
+          }
+
           if (roomInfo.creator.id === userInfo.id) {
             Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
             this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
@@ -180,7 +181,7 @@ class NowPlayingScreen extends Component {
           } = room.data();
 
           if (this.state.duration && currentPosition) {
-            const durationSeconds = this.state.duration / 1000;
+            const durationSeconds = Math.max(1, this.state.duration / 1000);
             const progress = currentPosition / durationSeconds;
             this.setState({ progress });
           }
@@ -216,6 +217,18 @@ class NowPlayingScreen extends Component {
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(1) });
+
+      const { playlistID } = this.props.currentRoom;
+
+      if (playlistID) {
+        const currentSongRef = db.collection('currentSong').doc(playlistID);
+        const currentSong = await currentSongRef.get();
+        if (currentSong.exists) {
+          await currentSongRef.update({
+            currentSongIndex: firebase.firestore.FieldValue.increment(1)
+          });
+        }
+      }
     }
   }
 

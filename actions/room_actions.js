@@ -26,6 +26,7 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
         if (room.data().listeners.length === 0) {
           try {
             await db.collection('rooms').doc(room.id).delete();
+            await db.collection('currentSong').doc(room.data().playlistID).delete();
           } catch (err) {
             console.error(`Could not delete room: ${err}`);
           }

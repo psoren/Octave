@@ -30,8 +30,8 @@ class CreateRoomScreen extends Component {
     const { id, display_name: name, images } = await Spotify.getMe();
     const creator = { id, name, images };
     const { songs, name: roomName } = this.props;
-    if (songs.length < 2) {
-      Alert.alert('Please add at least two songs');
+    if (songs.length < 3) {
+      Alert.alert('Please add at least three songs');
     } else if (roomName === '') {
       Alert.alert('Please add a room name');
     } else if (!id) {
