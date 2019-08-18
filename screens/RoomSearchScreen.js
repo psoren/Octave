@@ -28,27 +28,24 @@ class RoomSearchScreen extends Component {
     const { search: name } = this.state;
     const snapshot = await db.collection('rooms').where('name', '==', name).get();
 
-
     const searchResults = [];
     snapshot.forEach((doc) => {
       const {
-        name: roomName, colors, currentSongIndex, creator
+        name: roomName, colors, currentSongIndex, creator, playlistID
       } = doc.data();
-      const currentSongName = doc.data().songs[currentSongIndex].name;
-      const { images } = doc.data().songs[currentSongIndex];
       const searchResult = {
         id: doc.id,
         roomName,
-        currentSongName,
-        images,
+        currentSongName: '',
+        images: '',
         colors,
-        creatorID: creator.id
+        creatorID: creator.id,
+        playlistID,
+        currentSongIndex
       };
       searchResults.push(searchResult);
     });
-
     this.setState({ rooms: searchResults });
-    // See if search matches any of the room names
   });
 
   render() {
@@ -92,11 +89,11 @@ class RoomSearchScreen extends Component {
             <RoomSearchResult
               id={room.id}
               roomName={room.roomName}
-              currentSongName={room.currentSongName}
-              images={room.images}
               colors={room.colors}
               creatorID={room.creatorID}
               key={room.id}
+              currentSongIndex={room.currentSongIndex}
+              playlistID={room.playlistID}
             />
           ))}
         </ScrollView>
