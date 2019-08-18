@@ -20,8 +20,6 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
       const { id: userID } = await Spotify.getMe();
       // Creator
       if (room.data().creator.id === userID) {
-        console.log('creator...');
-
         // Delete room
         if (room.data().listeners.length === 0) {
           try {
@@ -37,8 +35,6 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
           roomRef.update({ creator: newCreator, listeners });
         }
       } else {
-        console.log('not creator...');
-
         // Delete them from the room
         const { listeners } = room.data();
         const newListeners = listeners.filter(listener => userID !== listener.id);

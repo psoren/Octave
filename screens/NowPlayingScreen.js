@@ -19,7 +19,6 @@ import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
 import { showMessage } from 'react-native-flash-message';
 import LinearGradient from 'react-native-linear-gradient';
-import { BlurView } from '@react-native-community/blur';
 
 import spotifyCredentials from '../secrets';
 import ProgressBar from '../components/ProgressBar';
@@ -303,21 +302,65 @@ class NowPlayingScreen extends Component {
   }
 
   clearQueue = async () => {
-    Alert.alert('Clear upcoming songs?', '',
+    Alert.alert('Clear next 25 songs?', '',
       [{
         text: 'OK',
         onPress: async () => {
-          console.log('clear songs');
           const db = firebase.firestore();
           const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
           try {
             const room = await roomRef.get();
-            const { songs: roomSongs } = room.data();
-            const previousSongs = roomSongs.slice(0, room.data().currentSongIndex + 1);
             if (room.exists) {
-              await roomRef.update({ songs: previousSongs });
+              const { playlistID, currentSongIndex } = room.data();
+
+              // const { data: playlistData } = await axios({
+              //   url: `https://api.spotify.com/v1/playlists/${playlistID}`,
+              //   headers: { Authorization: `Bearer ${this.props.accessToken}` },
+              // });
+
+              // const { snapshot_id } = playlistData;
+
+              const NUM_SONGS_TO_REMOVE = 25;
+
+              const { data: songData } = await axios({
+                url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+                headers: { Authorization: `Bearer ${this.props.accessToken}` },
+                params: { offset: currentSongIndex + 3, limit: NUM_SONGS_TO_REMOVE }
+              });
+
+              // If there are songs(s) we can delete without stopping playback
+              // Remove all the songs starting from currentSongIndex+3
+              if (songData.items.length > 0) {
+                const tracks = [];
+                songData.items.forEach((item, index) => {
+                  tracks.push({
+                    uri: item.track.uri,
+                    positions: [currentSongIndex + index + 3]
+                  });
+                });
+
+                const res = await axios({
+                  method: 'delete',
+                  url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+                  headers: {
+                    Authorization: `Bearer ${this.props.accessToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  data: {
+                    tracks
+                  }
+                });
+                if (res.status === 200) {
+                  showMessage({
+                    message: `Removed the next ${NUM_SONGS_TO_REMOVE} songs from the queue`,
+                    type: 'info',
+                    backgroundColor: '#00c9ff',
+                    color: '#fff'
+                  });
+                }
+              }
             } else {
-              console.error('Could not find room.');
+              Alert.alert('We could not find your room.');
             }
           } catch (err) {
             Alert.alert(`Could not clear queue: ${err}`);
@@ -381,7 +424,6 @@ class NowPlayingScreen extends Component {
               headers: { Authorization: `Bearer ${playlistAccessToken}` },
               params: { offset }
             });
-            console.log(songsData);
             songsData.items.forEach((song) => {
               songs.push(song);
             });
@@ -522,15 +564,16 @@ class NowPlayingScreen extends Component {
               : require('../assets/default_album.png')}
             style={styles.image}
           />
-          <ProgressBar
-            startColor="#fff"
-            endColor="#fff"
-            progress={this.state.progress}
-            width={screenWidth - 40}
-            height={10}
-            duration={this.state.updateInterval}
-          />
-
+          <View style={{ marginTop: 15 }}>
+            <ProgressBar
+              startColor="#fff"
+              endColor="#fff"
+              progress={this.state.progress}
+              width={screenWidth - 40}
+              height={10}
+              duration={this.state.updateInterval}
+            />
+          </View>
           <View style={styles.likeButtonContainer}>
             <View style={styles.songInfoContainer}>
               <Text style={styles.song}>{name}</Text>

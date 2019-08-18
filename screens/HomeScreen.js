@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Dimensions, ScrollView
+  Text, View, Dimensions, ScrollView, Alert
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
@@ -57,7 +57,7 @@ class HomeScreen extends Component {
       (error) => {
         this.props.setLocation(false);
         this.getAlphabeticalRooms();
-        console.log(`Location Error: ${error.code}`, error.message);
+        Alert.alert(`Location Error: ${error.code}`, error.message);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
@@ -68,7 +68,7 @@ class HomeScreen extends Component {
   }
 
   componentWillUnmount() {
-    console.log('Home Screen unmounting...');
+    // console.log('Home Screen unmounting...');
     clearInterval(this.tokenRefreshInterval);
   }
 

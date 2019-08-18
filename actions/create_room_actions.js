@@ -164,9 +164,9 @@ export const createRoom = ({
         navigation.navigate('NowPlaying', { test: false });
       });
     } catch (err) {
-      console.log(err);
+      // console.log(err);
     }
   } catch (err) {
-    console.error(err);
+    // console.error(err);
   }
 };
