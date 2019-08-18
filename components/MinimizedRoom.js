@@ -14,28 +14,31 @@ const { width } = Dimensions.get('window');
 class MinimizedRoom extends Component {
   state = { loading: true };
 
-  getSong = async (playlistID, currentSongIndex) => {
-    const { accessToken } = this.props;
-    const { data } = await axios({
-      url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
-      headers: { Authorization: `Bearer ${accessToken}` },
-      params: { offset: currentSongIndex, limit: 1 }
-    });
+  componentDidMount = () => this.getSong();
 
-    const { track } = data.items[0];
-    const { name, album } = track;
-    this.setState({ name, images: album.images, loading: false });
-  }
-
-  componentDidMount = async () => {
-    if (this.props.playlistID) {
-      this.getSong(this.props.playlistID, this.props.currentSongIndex);
+  componentDidUpdate = (prevProps) => {
+    if (prevProps.currentRoom.currentSongIndex
+      !== this.props.currentRoom.currentSongIndex
+      || this.state.loading) {
+      this.getSong();
     }
   }
 
-  componentDidUpdate = async () => {
-    if (this.props.playlistID && this.state.loading) {
-      this.getSong(this.props.playlistID, this.props.currentSongIndex);
+  getSong = async () => {
+    const { accessToken } = this.props;
+    const { playlistID, currentSongIndex } = this.props.currentRoom;
+    if (playlistID && currentSongIndex !== null) {
+      const { data } = await axios({
+        url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { offset: currentSongIndex, limit: 1 }
+      });
+
+      const { track } = data.items[0];
+      const { name, album } = track;
+      this.setState({
+        name, images: album.images, loading: false
+      });
     }
   }
 
@@ -50,7 +53,7 @@ class MinimizedRoom extends Component {
         style={[styles.container, { width }]}
       >
         <View style={styles.songContainer}>
-          <Text style={styles.roomName}>{this.props.roomName}</Text>
+          <Text style={styles.roomName}>{this.props.currentRoom.name}</Text>
           <Text style={styles.song}>{this.state.name}</Text>
         </View>
         <Image

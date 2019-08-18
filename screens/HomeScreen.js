@@ -156,15 +156,8 @@ class HomeScreen extends Component {
 
     let NowPlaying = null;
     if (this.props.currentRoom.id !== '') {
-      const { playlistID, currentSongIndex, name: roomName } = this.props.currentRoom;
-
       NowPlaying = (
-        <MinimizedRoom
-          playlistID={playlistID}
-          currentSongIndex={currentSongIndex}
-          roomName={roomName}
-          goToRoom={() => this.props.navigation.navigate('NowPlaying')}
-        />
+        <MinimizedRoom goToRoom={() => this.props.navigation.navigate('NowPlaying')} />
       );
     }
 
