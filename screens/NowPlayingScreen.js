@@ -18,8 +18,10 @@ import { connect } from 'react-redux';
 import Spotify from 'rn-spotify-sdk';
 import axios from 'axios';
 import { showMessage } from 'react-native-flash-message';
-import spotifyCredentials from '../secrets';
+import LinearGradient from 'react-native-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
 
+import spotifyCredentials from '../secrets';
 import ProgressBar from '../components/ProgressBar';
 import * as actions from '../actions';
 import QueueModal from '../components/QueueModal';
@@ -68,7 +70,8 @@ class NowPlayingScreen extends Component {
       userID: '',
       name: '',
       artists: '',
-      images: []
+      images: [],
+      colors: []
     };
   }
 
@@ -177,7 +180,8 @@ class NowPlayingScreen extends Component {
             currentSongIndex,
             listeners,
             creator,
-            playlistID
+            playlistID,
+            colors
           } = room.data();
 
           if (this.state.duration && currentPosition) {
@@ -205,7 +209,8 @@ class NowPlayingScreen extends Component {
           this.setState({
             currentSongIndex,
             listeners,
-            creator
+            creator,
+            colors
           });
           this.props.updateRoom(room.data());
         });
@@ -299,30 +304,28 @@ class NowPlayingScreen extends Component {
 
   clearQueue = async () => {
     Alert.alert('Clear upcoming songs?', '',
-      [
-        {
-          text: 'OK',
-          onPress: async () => {
-            // const db = firebase.firestore();
-            // const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-            // try {
-            //   const room = await roomRef.get();
-            //   const { songs: roomSongs } = room.data();
-            //   const previousSongs = roomSongs.slice(0, room.data().currentSongIndex + 1);
-            //   if (room.exists) {
-            //     await roomRef.update({ songs: previousSongs });
-            //   } else {
-            //     console.error('Could not find room.');
-            //   }
-            // } catch (err) {
-            //   Alert.alert(`Could not clear queue: ${err}`);
-            // }
-          },
-          style: 'cancel'
-        },
-        { text: 'Cancel' }
-      ],
-      { cancelable: false });
+      [{
+        text: 'OK',
+        onPress: async () => {
+          console.log('clear songs');
+          const db = firebase.firestore();
+          const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+          try {
+            const room = await roomRef.get();
+            const { songs: roomSongs } = room.data();
+            const previousSongs = roomSongs.slice(0, room.data().currentSongIndex + 1);
+            if (room.exists) {
+              await roomRef.update({ songs: previousSongs });
+            } else {
+              console.error('Could not find room.');
+            }
+          } catch (err) {
+            Alert.alert(`Could not clear queue: ${err}`);
+          }
+        }
+      },
+      { text: 'Cancel', style: 'cancel' }
+      ]);
   }
 
   savePlaylist = () => Alert.alert(
@@ -451,94 +454,148 @@ class NowPlayingScreen extends Component {
         style={[styles.container, this.getCardStyle()]}
         {...this.panResponder.panHandlers}
       >
-        <QueueModal
-          accessToken={this.props.accessToken}
-          visible={this.state.showQueue}
-          closeModal={() => this.setState({ showQueue: false })}
-          savePlaylist={this.savePlaylist}
-          playlistID={this.props.currentRoom.playlistID}
-          currentSongIndex={this.state.currentSongIndex}
-          clearQueue={this.clearQueue}
-          isCreator={this.state.isCreator}
-          colors={this.props.currentRoom.colors}
-        />
-        <CurrentListenersModal
-          visible={this.state.showCurrentListeners}
-          creator={this.state.creator}
-          closeModal={() => this.setState({ showCurrentListeners: false })}
-          listeners={this.state.listeners}
-        />
-        <View style={styles.header}>
-          <Button
-            containerStyle={styles.minimizeButton}
-            onPress={() => this.props.navigation.navigate('Home')}
-            title="Minimize"
+        <LinearGradient
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          colors={this.state.colors}
+          style={styles.container}
+        >
+          <QueueModal
+            accessToken={this.props.accessToken}
+            visible={this.state.showQueue}
+            closeModal={() => this.setState({ showQueue: false })}
+            savePlaylist={this.savePlaylist}
+            playlistID={this.props.currentRoom.playlistID}
+            currentSongIndex={this.state.currentSongIndex}
+            clearQueue={this.clearQueue}
+            isCreator={this.state.isCreator}
+            colors={this.props.currentRoom.colors}
           />
-          <Button
-            containerStyle={styles.leaveButton}
-            onPress={this.leaveRoom}
-            title="Leave"
+          <CurrentListenersModal
+            visible={this.state.showCurrentListeners}
+            creator={this.state.creator}
+            closeModal={() => this.setState({ showCurrentListeners: false })}
+            listeners={this.state.listeners}
           />
-          <TextInput
-            onChangeText={localName => this.setState({ changingName: true, localName })}
-            value={this.state.changingName
-              ? this.state.localName
-              : this.props.currentRoom.name}
-            onEndEditing={this.updateRoomName}
-            style={styles.roomName}
-          />
-        </View>
-        <Image
-          source={images.length > 0 ? { url: images[0].url }
-            : require('../assets/default_album.png')}
-          style={styles.image}
-        />
-        <ProgressBar
-          startColor={this.props.currentRoom.colors[0]}
-          endColor={this.props.currentRoom.colors[
-            this.props.currentRoom.colors.length - 1
-          ]}
-          progress={this.state.progress}
-          width={screenWidth}
-          height={10}
-          duration={this.state.updateInterval}
-        />
-
-        <View style={styles.likeButtonContainer}>
-          <View style={styles.songInfoContainer}>
-            <Text style={styles.song}>{name}</Text>
-            <Text style={styles.artists}>{artists}</Text>
+          <View style={styles.header}>
+            <Button
+              containerStyle={styles.minimizeButton}
+              onPress={() => this.props.navigation.navigate('Home')}
+              type="clear"
+              icon={(
+                <Icon
+                  type="material"
+                  size={45}
+                  color="#fff"
+                  name="expand-more"
+                />
+              )}
+            />
+            <Button
+              containerStyle={styles.leaveButton}
+              onPress={() => Alert.alert('Leave this room?', '',
+                [{ text: 'Cancel', style: 'cancel' },
+                  { text: 'OK', onPress: this.leaveRoom }
+                ])}
+              type="clear"
+              icon={(
+                <Icon
+                  type="material"
+                  size={45}
+                  name="close"
+                  color="#fff"
+                />
+              )}
+            />
+            <TextInput
+              onChangeText={localName => (localName.length < 15
+                ? this.setState({ changingName: true, localName }) : null)}
+              value={this.state.changingName
+                ? this.state.localName
+                : this.props.currentRoom.name}
+              onEndEditing={this.updateRoomName}
+              style={styles.roomName}
+            />
           </View>
-          <Button
-            onPress={this.saveSong}
-            type="clear"
-            icon={(<Icon type="material" size={45} name="favorite-border" />)}
+          <Image
+            source={images.length > 0 ? { url: images[0].url }
+              : require('../assets/default_album.png')}
+            style={styles.image}
           />
-        </View>
-        <View
-          style={{
-            borderBottomColor: 'black',
-            borderBottomWidth: 1,
-            width: screenWidth - 50
-          }}
-        />
-        <View style={styles.bottomButtons}>
-          <Button
-            onPress={() => this.props.navigation.navigate('AddSongsRoom')}
-            type="clear"
-            icon={(<Icon type="material" size={45} name="playlist-add" />)}
+          <ProgressBar
+            startColor="#fff"
+            endColor="#fff"
+            progress={this.state.progress}
+            width={screenWidth - 40}
+            height={10}
+            duration={this.state.updateInterval}
           />
-          <Button
-            onPress={() => this.setState({ showQueue: true })}
-            type="clear"
-            icon={(<Icon type="material" size={45} name="queue-music" />)}
+
+          <View style={styles.likeButtonContainer}>
+            <View style={styles.songInfoContainer}>
+              <Text style={styles.song}>{name}</Text>
+              <Text style={styles.artists}>{artists}</Text>
+            </View>
+            <Button
+              onPress={this.saveSong}
+              type="clear"
+              icon={(
+                <Icon
+                  type="material"
+                  size={45}
+                  color="#fff"
+                  name="favorite-border"
+                />
+              )}
+            />
+          </View>
+          <View
+            style={{
+              marginTop: 50,
+              borderBottomColor: '#fff',
+              borderBottomWidth: 2,
+              width: screenWidth - 50
+            }}
           />
-          <Button
-            onPress={() => this.setState({ showCurrentListeners: true })}
-            type="clear"
-            icon={(<Icon type="material" size={45} name="people" />)}
-          />
-        </View>
+          <View style={styles.bottomButtons}>
+            <Button
+              onPress={() => this.props.navigation.navigate('AddSongsRoom')}
+              type="clear"
+              icon={(
+                <Icon
+                  type="material"
+                  color="#fff"
+                  size={45}
+                  name="playlist-add"
+                />
+              )}
+            />
+            <Button
+              onPress={() => this.setState({ showQueue: true })}
+              type="clear"
+              icon={(
+                <Icon
+                  type="material"
+                  color="#fff"
+                  size={45}
+                  name="queue-music"
+                />
+              )}
+            />
+            <Button
+              onPress={() => this.setState({ showCurrentListeners: true })}
+              type="clear"
+              icon={(
+                <Icon
+                  type="material"
+                  color="#fff"
+                  size={45}
+                  name="people"
+                />
+              )}
+            />
+          </View>
+        </LinearGradient>
       </Animated.View>
     );
   }
@@ -553,34 +610,36 @@ const styles = StyleSheet.create({
   },
   minimizeButton: {
     position: 'absolute',
-    left: 25,
-    top: 25,
+    left: 15,
+    top: 15,
     zIndex: 10
   },
   leaveButton: {
     position: 'absolute',
-    right: 25,
-    top: 25,
+    right: 15,
+    top: 15,
     zIndex: 10
   },
   roomName: {
-    margin: 10,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
+    color: '#fff'
   },
   songInfoContainer: {
     alignItems: 'center',
     margin: 5
   },
   image: {
-    width: screenWidth,
-    height: screenWidth
+    width: screenWidth - 40,
+    height: screenWidth - 40
   },
   song: {
+    color: '#fff',
     fontSize: 24,
     fontWeight: 'bold'
   },
   artists: {
+    color: '#fff',
     fontSize: 20
   },
   bottomButtons: {

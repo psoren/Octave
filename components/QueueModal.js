@@ -90,20 +90,18 @@ class QueueModal extends Component {
               />
             )}
           />
-          {this.props.isCreator ? (
-            <Button
-              onPress={this.props.clearQueue}
-              type="clear"
-              icon={(
-                <Icon
-                  type="material"
-                  name="remove-from-queue"
-                  color="#fff"
-                  size={45}
-                />
+          <Button
+            onPress={this.props.clearQueue}
+            type="clear"
+            icon={(
+              <Icon
+                type="material"
+                name="remove-from-queue"
+                color="#fff"
+                size={45}
+              />
               )}
-            />
-          ) : null}
+          />
 
         </LinearGradient>
         <RoomSongsContainer
