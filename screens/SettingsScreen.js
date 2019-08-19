@@ -46,11 +46,6 @@ class SettingsScreen extends Component {
     this.setState({ display_name, images });
   }
 
-  getInfo = async () => {
-    const res = await Spotify.getMe();
-    console.log(res);
-  }
-
   render() {
     let NowPlaying = null;
     if (this.props.currentRoom.id !== '') {
@@ -86,10 +81,6 @@ class SettingsScreen extends Component {
           titleStyle={{ fontWeight: 'bold', fontSize: 24 }}
           title="LOG OUT"
           onPress={this.logout}
-        />
-        <Button
-          title="info"
-          onPress={this.getInfo}
         />
         <View style={styles.nowPlaying}>
           {NowPlaying}
