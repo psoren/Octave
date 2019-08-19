@@ -7,6 +7,7 @@ import * as firebase from 'firebase';
 import 'firebase/firestore';
 import axios from 'axios';
 
+import spotifyCredentials from '../secrets';
 import * as actions from '../actions';
 import SongModal from './SongModal';
 
@@ -44,10 +45,18 @@ class Song extends Component {
             uris
           } : { uris };
 
+          const { playlistRefreshURL } = spotifyCredentials;
+          const { data: refreshData } = await axios({
+            url: playlistRefreshURL,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          });
+          const { access_token: playlistAccessToken } = refreshData;
+
           await axios({
             method: 'post',
             url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
-            headers: { Authorization: `Bearer ${this.props.accessToken}` },
+            headers: { Authorization: `Bearer ${playlistAccessToken}` },
             data
           });
         } else {

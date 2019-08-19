@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import React, { Component } from 'react';
 import {
   Text, View, Image, FlatList, Alert
@@ -12,6 +13,7 @@ import 'firebase/firestore';
 import * as actions from '../actions';
 import Song from '../components/Song';
 import getSongData from '../functions/getSongData';
+import spotifyCredentials from '../secrets';
 
 class SongsCollectionScreen extends Component {
   state = { songs: [], images: [] };
@@ -102,7 +104,7 @@ class SongsCollectionScreen extends Component {
         this.props.appendSongsToPendingQueue(songs);
       }
     } else {
-      // Add to firebase
+      // Add to playlist
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       try {
@@ -126,14 +128,22 @@ class SongsCollectionScreen extends Component {
           // either by appending to the end or adding at the specified index and
           // incrementing the current position in the playlist
           let insertIndex = currentSongIndex + 2;
+
+          const { playlistRefreshURL } = spotifyCredentials;
+          const { data: refreshData } = await axios({
+            url: playlistRefreshURL,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          });
+          const { access_token: playlistAccessToken } = refreshData;
+
           for (let i = 0; i < songURIsSections.length; i += 1) {
             const position = shouldPrepend ? insertIndex : null;
-            // eslint-disable-next-line no-await-in-loop
             await axios({
               method: 'post',
               url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
               headers: {
-                Authorization: `Bearer ${accessToken}`,
+                Authorization: `Bearer ${playlistAccessToken}`,
                 'Content-Type': 'application/json'
               },
               data: { uris: songURIsSections[i], position }

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {
-  Text, View, Image, ScrollView, Alert
+  Text, View, Image, ScrollView
 } from 'react-native';
 import { Button } from 'react-native-elements';
 import axios from 'axios';
@@ -8,12 +8,12 @@ import qs from 'qs';
 import { connect } from 'react-redux';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
-import _ from 'lodash';
 
 import * as actions from '../actions';
 import Song from '../components/Song';
 import Thumbnail from '../components/Thumbnail';
 import getSongData from '../functions/getSongData';
+import spotifyCredentials from '../secrets';
 
 class ArtistScreen extends Component {
   state = { songs: [], albums: [] };
@@ -76,15 +76,21 @@ class ArtistScreen extends Component {
 
           const { playlistID, currentSongIndex } = room.data();
 
-
           const data = shouldPrepend ? {
             position: currentSongIndex + 2, uris
           } : { uris };
 
+          const { playlistRefreshURL } = spotifyCredentials;
+          const { data: refreshData } = await axios({
+            url: playlistRefreshURL,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          });
+          const { access_token: playlistAccessToken } = refreshData;
           await axios({
             method: 'post',
             url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
-            headers: { Authorization: `Bearer ${this.props.accessToken}` },
+            headers: { Authorization: `Bearer ${playlistAccessToken}` },
             data
           });
         } else {

@@ -45,7 +45,6 @@ class CreateRoomScreen extends Component {
         navigation: this.props.navigation,
         colors,
         location: this.props.location,
-        accessToken: this.props.accessToken
       });
     }
   }
@@ -54,7 +53,7 @@ class CreateRoomScreen extends Component {
     Alert.alert('Clear the queue?', '',
       [{ text: 'Cancel', style: 'cancel' },
         { text: 'OK', onPress: () => this.props.clearPendingQueue() }],
-      { cancelable: false },);
+      { cancelable: false });
   }
 
   render() {
@@ -154,13 +153,11 @@ const mapStateToProps = ({
   pendingRoom,
   currentRoom,
   deviceInfo,
-  auth
 }) => {
-  const { accessToken } = auth;
   const { name, songs } = pendingRoom;
   const { location } = deviceInfo;
   return {
-    name, songs, currentRoom, location, accessToken
+    name, songs, currentRoom, location
   };
 };
 

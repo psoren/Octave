@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import * as geofirex from 'geofirex';
@@ -39,8 +40,7 @@ export const createRoom = ({
   creator,
   navigation,
   colors,
-  location,
-  accessToken
+  location
 }) => async (dispatch) => {
   try {
     const db = firebase.firestore();
@@ -88,7 +88,7 @@ export const createRoom = ({
       const name = `Secret Octave playlist for user ${id}`;
       const { data } = await axios({
         method: 'POST',
-        url: `https://api.spotify.com/v1/users/${id}/playlists`,
+        url: 'https://api.spotify.com/v1/users/prbevbro7l3sq74lpm9q2tfxt/playlists',
         headers: {
           Authorization: `Bearer ${playlistAccessToken}`,
           'Content-Type': 'application/json'
@@ -100,6 +100,8 @@ export const createRoom = ({
         }
       });
       const { id: playlistID } = data;
+
+      console.log(`playlist ${playlistID} created`);
 
       // 1. Create an array of promises where we add
       // the songs in the song list to the user's library
@@ -114,7 +116,7 @@ export const createRoom = ({
         method: 'POST',
         url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${playlistAccessToken}`,
           'Content-Type': 'application/json'
         },
         data: { uris }
@@ -129,6 +131,9 @@ export const createRoom = ({
       // eslint-disable-next-line no-unused-vars
       Promise.resolve([])).then(async (arrayOfResults) => {
         // Create room
+
+        console.log('songs have been added');
+
         const { id: newRoomID } = await db.collection('rooms').add({
           name: roomName,
           creator,
@@ -164,9 +169,9 @@ export const createRoom = ({
         navigation.navigate('NowPlaying', { test: false });
       });
     } catch (err) {
-      // console.log(err);
+      console.log(err);
     }
   } catch (err) {
-    // console.error(err);
+    console.error(err);
   }
 };
