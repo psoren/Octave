@@ -8,6 +8,7 @@ import {
 } from 'react-navigation';
 import firebase from 'firebase';
 import FlashMessage from 'react-native-flash-message';
+import Spotify from 'rn-spotify-sdk';
 
 import store from './store';
 import CreateRoomScreen from './screens/CreateRoomScreen';

@@ -53,6 +53,15 @@ class LoginScreen extends PureComponent {
       // Store tokens in redux and navigate
       const sessionInfo = await Spotify.getSessionAsync();
       this.props.storeTokens(sessionInfo);
+
+      const {
+        id, display_name, email, images
+      } = await Spotify.getMe();
+
+      console.log(email);
+      this.props.setUserInfo({
+        id, display_name, email, images
+      });
     } catch (err) {
       console.error(err);
     }

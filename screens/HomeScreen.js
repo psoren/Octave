@@ -40,11 +40,19 @@ class HomeScreen extends Component {
   state = { rooms: [], currentRoomIndex: 0, loading: true };
 
   componentDidMount = async () => {
+    const {
+      id, display_name, email, images
+    } = await Spotify.getMe();
+    this.props.setUserInfo({
+      id, display_name, email, images
+    });
+
     SplashScreen.hide();
 
     // Set token refresh interval
     this.tokenRefreshInterval = setInterval(async () => {
       await Spotify.renewSession();
+
       const sessionInfo = await Spotify.getSessionAsync();
       this.props.refreshTokens(sessionInfo);
     }, 1000 * 60 * 30);
@@ -237,9 +245,10 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ currentRoom, deviceInfo }) => ({
+const mapStateToProps = ({ currentRoom, deviceInfo, userInfo }) => ({
   currentRoom,
-  deviceInfo
+  deviceInfo,
+  userInfo
 });
 
 export default connect(mapStateToProps, actions)(HomeScreen);

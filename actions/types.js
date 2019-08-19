@@ -17,3 +17,7 @@ export const CREATE_ROOM = 'create_room';
 export const UPDATE_ROOM = 'update_room';
 export const JOIN_ROOM = 'join_room';
 export const LEAVE_ROOM = 'leave_room';
+
+// User Info Actions
+export const SET_USER_INFO = 'set_user_info';
+export const CLEAR_USER_INFO = 'clear_user_info';
