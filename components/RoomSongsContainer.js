@@ -14,9 +14,9 @@ const RoomSongsContainer = props => (
       {(props.next && props.songs.length === 0)
         ? <Text style={styles.title}>Add songs to the queue!</Text> : null}
       <View>
-        {props.songs.map(song => (
+        {props.songs.map((song, index) => (
           <Song
-            id={song.id}
+            id={song.id + index}
             name={song.name}
             artists={song.artists[0].name}
             images={song.album.images}

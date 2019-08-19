@@ -313,18 +313,19 @@ class NowPlayingScreen extends Component {
             if (room.exists) {
               const { playlistID, currentSongIndex } = room.data();
 
-              // const { data: playlistData } = await axios({
-              //   url: `https://api.spotify.com/v1/playlists/${playlistID}`,
-              //   headers: { Authorization: `Bearer ${this.props.accessToken}` },
-              // });
-
-              // const { snapshot_id } = playlistData;
-
               const NUM_SONGS_TO_REMOVE = 25;
+
+              const { playlistRefreshURL } = spotifyCredentials;
+              const { data: refreshData } = await axios({
+                url: playlistRefreshURL,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              });
+              const { access_token: playlistAccessToken } = refreshData;
 
               const { data: songData } = await axios({
                 url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
-                headers: { Authorization: `Bearer ${this.props.accessToken}` },
+                headers: { Authorization: `Bearer ${playlistAccessToken}` },
                 params: { offset: currentSongIndex + 3, limit: NUM_SONGS_TO_REMOVE }
               });
 
@@ -343,12 +344,10 @@ class NowPlayingScreen extends Component {
                   method: 'delete',
                   url: `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
                   headers: {
-                    Authorization: `Bearer ${this.props.accessToken}`,
+                    Authorization: `Bearer ${playlistAccessToken}`,
                     'Content-Type': 'application/json'
                   },
-                  data: {
-                    tracks
-                  }
+                  data: { tracks }
                 });
                 if (res.status === 200) {
                   showMessage({
