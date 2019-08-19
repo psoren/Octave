@@ -22,6 +22,9 @@ class RoomCard extends Component {
   componentWillUnmount = () => this.unsubscribe();
 
   componentDidMount = async () => {
+    // The error is somewhere in here
+
+
     // Check for initial playback
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.roomID);
@@ -38,14 +41,17 @@ class RoomCard extends Component {
         listeners
       } = roomInfo.data();
 
-      const { data: playlistData } = await axios({
-        url: `https://api.spotify.com/v1/playlists/${playlistID}`,
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-
-      const numSongs = playlistData.tracks.total;
-      this.setState({ numSongs, numListeners: listeners.length + 1 });
-      await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
+      try {
+        const { data: playlistData } = await axios({
+          url: `https://api.spotify.com/v1/playlists/${playlistID}`,
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const numSongs = playlistData.tracks.total;
+        this.setState({ numSongs, numListeners: listeners.length + 1 });
+        await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
+      } catch (err) {
+        console.log(err);
+      }
     }
     this.setupRoom();
   }

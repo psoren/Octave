@@ -1,18 +1,21 @@
-/* eslint-disable no-underscore-dangle */
-import { compose, createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
+import reduxCatch from 'redux-catch';
 
 import reducers from '../reducers';
 
-// add to createStore for debugging
-// window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+function errorHandler(error, getState, lastAction) {
+  console.error(error);
+  console.debug('current state', getState());
+  console.debug('last action was', lastAction);
+  // optionally dispatch an action due to the error using the dispatch parameter
+}
 
-const middleware = [thunk];
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const middlewares = [reduxCatch(errorHandler), thunk];
 
 const store = createStore(
   reducers,
-  composeEnhancers(applyMiddleware(...middleware))
+  applyMiddleware(...middlewares)
 );
 
 export default store;

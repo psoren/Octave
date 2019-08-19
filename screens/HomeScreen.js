@@ -47,14 +47,18 @@ class HomeScreen extends Component {
       id, display_name, email, images
     });
 
+    const sessionInfo = await Spotify.getSessionAsync();
+    console.log(sessionInfo);
+
+    this.props.storeTokens(sessionInfo);
+
     SplashScreen.hide();
 
     // Set token refresh interval
     this.tokenRefreshInterval = setInterval(async () => {
       await Spotify.renewSession();
-
-      const sessionInfo = await Spotify.getSessionAsync();
-      this.props.refreshTokens(sessionInfo);
+      const info = await Spotify.getSessionAsync();
+      this.props.refreshTokens(info);
     }, 1000 * 60 * 30);
 
     Geolocation.getCurrentPosition(
@@ -70,15 +74,11 @@ class HomeScreen extends Component {
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
 
-    this.setState({
-      deviceWidth, deviceHeight, loading: false
-    });
+    this.setState({ deviceWidth, deviceHeight });
   }
 
-  componentWillUnmount() {
-    // console.log('Home Screen unmounting...');
-    clearInterval(this.tokenRefreshInterval);
-  }
+  componentWillUnmount = () => clearInterval(this.tokenRefreshInterval);
+
 
   handleScroll = e => this.setState({
     currentRoomIndex: Math.round((
@@ -97,7 +97,7 @@ class HomeScreen extends Component {
             creatorID: room.data().creator.id
           });
         });
-        this.setState({ rooms: newRooms });
+        this.setState({ rooms: newRooms, loading: false });
       });
   }
 
@@ -121,12 +121,15 @@ class HomeScreen extends Component {
       // eslint-disable-next-line no-await-in-loop
       localRooms = await geofirex.get(query);
     }
+    this.setState({ rooms: localRooms });
 
     // We now have a radius at which there are at least 10 rooms
     // or if there are not 10 rooms total in the database,
-    // we have all of them
-
+    // we have all of them.
     // Subscribe to the realtime stream at that radius
+
+    this.setState({ loading: false });
+
     const localRoomsRef = geo.collection('rooms', ref => ref.limit(NUM_HOME_SCREEN_ROOMS));
     query = localRoomsRef.within(center, radius, field);
     query.subscribe((data) => {
@@ -137,7 +140,7 @@ class HomeScreen extends Component {
           creatorID: room.creator.id
         });
       });
-      this.setState({ rooms: newRooms });
+      this.setState({ rooms: newRooms, loading: false });
     });
   }
 
@@ -148,7 +151,12 @@ class HomeScreen extends Component {
       </View>
     );
 
-    if (!this.state.loading) {
+    if (!this.state.loading && this.state.rooms.length > 0) {
+      console.log(this.state.rooms);
+
+      // need to make sure that the rooms have id, creatorid, etc
+
+
       roomCards = this.state.rooms.map((room, index) => (
         <View key={room.id} style={styles.roomCardContainer}>
           <RoomCard
@@ -187,7 +195,7 @@ class HomeScreen extends Component {
           pagingEnabled
           onMomentumScrollEnd={this.handleScroll}
         >
-          {roomCards.length === 0 ? (
+          {!this.state.loading && roomCards.length === 0 ? (
             <View style={styles.roomCardContainer}>
               <Text style={styles.noRooms}>
                 Create a room to get started!
