@@ -24,7 +24,6 @@ class RoomCard extends Component {
   componentWillUnmount = () => this.unsubscribe();
 
   componentDidMount = async () => {
-    console.log('card mounted...');
     // Check for initial playback
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.roomID);

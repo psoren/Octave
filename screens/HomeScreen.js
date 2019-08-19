@@ -23,6 +23,7 @@ const {
 } = Dimensions.get('window');
 
 const NUM_HOME_SCREEN_ROOMS = 25;
+const REFRESH_TOKEN_INTERVAL = 1000 * 60 * 30;
 
 class HomeScreen extends Component {
   static navigationOptions = () => ({
@@ -56,7 +57,7 @@ class HomeScreen extends Component {
       await Spotify.renewSession();
       const info = await Spotify.getSessionAsync();
       this.props.refreshTokens(info);
-    }, 1000 * 60 * 30);
+    }, REFRESH_TOKEN_INTERVAL);
 
     Geolocation.getCurrentPosition(
       (position) => {
@@ -124,7 +125,6 @@ class HomeScreen extends Component {
     // or if there are not 10 rooms total in the database,
     // we have all of them.
     // Subscribe to the realtime stream at that radius
-
     this.setState({ loading: false });
 
     const localRoomsRef = geo.collection('rooms', ref => ref.limit(NUM_HOME_SCREEN_ROOMS));
@@ -245,10 +245,13 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ currentRoom, deviceInfo, userInfo }) => ({
+const mapStateToProps = ({
+  auth, currentRoom, deviceInfo, userInfo
+}) => ({
   currentRoom,
   deviceInfo,
-  userInfo
+  userInfo,
+  auth
 });
 
 export default connect(mapStateToProps, actions)(HomeScreen);
