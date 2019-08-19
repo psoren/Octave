@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
-import { View, ActivityIndicator, Alert } from 'react-native';
+import {
+  Text, View, ActivityIndicator, Alert, Image, Dimensions
+} from 'react-native';
 import Spotify from 'rn-spotify-sdk';
 import { Button } from 'react-native-elements';
 import { connect } from 'react-redux';
@@ -12,6 +14,16 @@ import spotifyCredentials from '../secrets';
 import setupRealtimeDatabase from '../functions/setupRealtimeDatabase';
 
 const ROOT_URL = 'https://us-central1-octave-c5cd1.cloudfunctions.net';
+const { width: screenWidth } = Dimensions.get('window');
+
+const logo1Width = 0.9 * screenWidth;
+const logo1Height = 0.1779 * logo1Width;
+
+const logo2Width = 0.9 * screenWidth;
+const logo2Height = logo2Width * 0.0618;
+
+const spotifyWidth = 0.6 * screenWidth;
+const spotifyHeight = 0.3001 * spotifyWidth;
 
 class LoginScreen extends PureComponent {
   state = { spotifyInitialized: false };
@@ -122,9 +134,32 @@ class LoginScreen extends PureComponent {
     }
     return (
       <View style={styles.container}>
+        <View>
+          <Image
+            source={require('../assets/logo1.png')}
+            style={[{ width: logo1Width, height: logo1Height }, styles.image]}
+          />
+          <Image
+            source={require('../assets/logo2.png')}
+            style={[{ width: logo2Width, height: logo2Height }, styles.image]}
+          />
+        </View>
+
+        <View style={styles.spotifyContainer}>
+          <Text style={styles.spotifyText}>
+            Powered by
+          </Text>
+          <Image
+            source={require('../assets/spotify_logo.png')}
+            style={[{ width: spotifyWidth, height: spotifyHeight }, styles.image]}
+          />
+
+        </View>
         <Button
           onPress={this.handleLogin}
-          title="Login"
+          title="LOGIN"
+          buttonStyle={styles.button}
+          titleStyle={styles.buttonText}
         />
       </View>
     );
@@ -134,9 +169,31 @@ class LoginScreen extends PureComponent {
 const styles = {
   container: {
     flex: 1,
-    justifyContent: 'center',
+    flexDirection: 'column',
+    justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+  },
+  image: {
+    margin: 5
+  },
+  button: {
+    backgroundColor: '#1DB954',
+    borderRadius: 100,
+    width: 180,
+    height: 60,
+  },
+  buttonText: {
+    fontSize: 24,
+    fontWeight: 'bold'
+  },
+  spotifyContainer: {
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+  spotifyText: {
+    color: '#1DB954',
+    fontSize: 20
   }
 };
 
