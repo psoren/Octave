@@ -179,7 +179,7 @@ class RoomCard extends Component {
           colors={this.state.colors}
           style={[styles.container, {
             width: 0.75 * this.state.deviceWidth,
-            height: 0.5 * this.state.deviceHeight
+            height: 0.6 * this.state.deviceHeight
           }]}
         >
           <Text style={styles.roomName}>{this.state.name}</Text>
