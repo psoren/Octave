@@ -57,8 +57,6 @@ class LoginScreen extends PureComponent {
       const {
         id, display_name, email, images
       } = await Spotify.getMe();
-
-      console.log(email);
       this.props.setUserInfo({
         id, display_name, email, images
       });

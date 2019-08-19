@@ -48,10 +48,7 @@ class HomeScreen extends Component {
     });
 
     const sessionInfo = await Spotify.getSessionAsync();
-    console.log(sessionInfo);
-
     this.props.storeTokens(sessionInfo);
-
     SplashScreen.hide();
 
     // Set token refresh interval
@@ -152,11 +149,6 @@ class HomeScreen extends Component {
     );
 
     if (!this.state.loading && this.state.rooms.length > 0) {
-      console.log(this.state.rooms);
-
-      // need to make sure that the rooms have id, creatorid, etc
-
-
       roomCards = this.state.rooms.map((room, index) => (
         <View key={room.id} style={styles.roomCardContainer}>
           <RoomCard

@@ -24,28 +24,51 @@ class SearchContent extends Component {
   performSearch = async (search) => {
     const { accessToken } = this.props;
 
+    if (search === '') {
+      this.setState({ search });
+      return;
+    }
+
     this.setState({ search }, async () => {
       // Search songs
       const ROOT_URL = 'https://api.spotify.com/v1/search?';
-      const query = { q: this.state.search, type: 'track', limit: 3 };
+      const query = { q: this.state.search, type: 'track', limit: 5 };
       const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-      const { data: songsData } = await axios.get(`${ROOT_URL}${qs.stringify({ ...query })}`, config);
-      const songs = songsData.tracks.items.map(item => getSongData(item, null));
-      this.setState({ songs });
+      try {
+        const { data: songsData } = await axios.get(`${ROOT_URL}${qs.stringify({ ...query })}`, config);
+        const songs = songsData.tracks.items.map(item => getSongData(item, null));
+        this.setState({ songs });
+      } catch (err) {
+        console.log('39');
+        console.log(err);
+      }
+
 
       // Search Artists
-      const { data: artistData } = await axios.get(`${ROOT_URL}${qs.stringify({
-        ...query, type: 'artist'
-      })}`, config);
-      const artists = artistData.artists.items.map(item => getSearchResultData(item));
-      this.setState({ artists });
+
+      try {
+        const { data: artistData } = await axios.get(`${ROOT_URL}${qs.stringify({
+          ...query, type: 'artist'
+        })}`, config);
+        const artists = artistData.artists.items.map(item => getSearchResultData(item));
+        this.setState({ artists });
+      } catch (err) {
+        console.log('52');
+        console.log(err);
+      }
+
 
       // Search Playlists
-      const { data: playlistData } = await axios.get(`${ROOT_URL}${qs.stringify({
-        ...query, type: 'playlist'
-      })}`, config);
-      const playlists = playlistData.playlists.items.map(item => getSearchResultData(item));
-      this.setState({ playlists });
+      try {
+        const { data: playlistData } = await axios.get(`${ROOT_URL}${qs.stringify({
+          ...query, type: 'playlist'
+        })}`, config);
+        const playlists = playlistData.playlists.items.map(item => getSearchResultData(item));
+        this.setState({ playlists });
+      } catch (err) {
+        console.log('66');
+        console.log(err);
+      }
     });
   }
 
@@ -71,6 +94,9 @@ class SearchContent extends Component {
             placeholder="Search..."
             onChangeText={search => this.performSearch(search)}
             value={this.state.search}
+            autoCapitalize="none"
+            autoCompleteType="off"
+            autoCorrect={false}
           />
           <Button
             type="clear"
@@ -141,7 +167,6 @@ class SearchContent extends Component {
                 ]}
               />
             ) : <Text style={styles.search}>Search for songs, artists, and playlists</Text>}
-
         </View>
       </View>
     );
