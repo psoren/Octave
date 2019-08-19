@@ -24,13 +24,12 @@ class RoomCard extends Component {
   componentWillUnmount = () => this.unsubscribe();
 
   componentDidMount = async () => {
-    // The error is somewhere in here
-
-
+    console.log('card mounted...');
     // Check for initial playback
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.roomID);
     const roomInfo = await roomRef.get();
+
     if (roomInfo.exists
       && this.props.isCurrent
       && this.props.currentRoom.id === ''
@@ -141,6 +140,14 @@ class RoomCard extends Component {
       const roomRef = db.collection('rooms').doc(this.props.roomID);
       const roomInfo = await roomRef.get();
       const { playlistID, currentSongIndex, currentPosition } = roomInfo.data();
+      const { accessToken } = this.props;
+      const { data: playlistData } = await axios({
+        url: `https://api.spotify.com/v1/playlists/${playlistID}`,
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const numSongs = playlistData.tracks.total;
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({ numSongs });
       await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
     }
   }
