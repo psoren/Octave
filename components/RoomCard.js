@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import {
-  Text, View, ActivityIndicator, Alert
+  Text, View, ActivityIndicator, Alert, TouchableOpacity
 } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 import Spotify from 'rn-spotify-sdk';
@@ -11,6 +11,8 @@ import { withNavigation } from 'react-navigation';
 import LinearGradient from 'react-native-linear-gradient';
 import { getDistance } from 'geolib';
 import axios from 'axios';
+import { BlurView } from '@react-native-community/blur';
+
 
 import * as actions from '../actions';
 import ProgressBar from './ProgressBar';
@@ -228,14 +230,11 @@ class RoomCard extends Component {
               />
             </View>
           </View>
-
-          <Button
-            title="Join Room"
-            onPress={this.joinRoom}
-            type="outline"
-            raised
-            containerStyle={styles.buttonContainer}
-          />
+          <TouchableOpacity onPress={this.joinRoom}>
+            <BlurView blurType="light" style={styles.joinButton}>
+              <Text style={styles.joinRoomText}>Join Room</Text>
+            </BlurView>
+          </TouchableOpacity>
         </LinearGradient>
       </View>
 
@@ -307,6 +306,20 @@ const styles = {
   },
   locationDistance: {
     fontSize: 14,
+    color: '#fff'
+  },
+  joinButton: {
+    width: 100,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    padding: 5
+  },
+  joinRoomText: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#fff'
   }
 };

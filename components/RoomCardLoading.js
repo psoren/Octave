@@ -6,7 +6,7 @@ const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 const RoomCardLoading = () => (
   <View style={[styles.container, {
     width: 0.75 * deviceWidth,
-    height: 0.5 * deviceHeight
+    height: 0.6 * deviceHeight
   }]}
   />
 );

@@ -32,43 +32,25 @@ class SearchContent extends Component {
     this.setState({ search }, async () => {
       // Search songs
       const ROOT_URL = 'https://api.spotify.com/v1/search?';
-      const query = { q: this.state.search, type: 'track', limit: 5 };
+      const query = { q: this.state.search, type: 'track', limit: 4 };
       const config = { headers: { Authorization: `Bearer ${accessToken}` } };
-      try {
-        const { data: songsData } = await axios.get(`${ROOT_URL}${qs.stringify({ ...query })}`, config);
-        const songs = songsData.tracks.items.map(item => getSongData(item, null));
-        this.setState({ songs });
-      } catch (err) {
-        console.log('39');
-        console.log(err);
-      }
-
+      const { data: songsData } = await axios.get(`${ROOT_URL}${qs.stringify({ ...query })}`, config);
+      const songs = songsData.tracks.items.map(item => getSongData(item, null));
+      this.setState({ songs });
 
       // Search Artists
-
-      try {
-        const { data: artistData } = await axios.get(`${ROOT_URL}${qs.stringify({
-          ...query, type: 'artist'
-        })}`, config);
-        const artists = artistData.artists.items.map(item => getSearchResultData(item));
-        this.setState({ artists });
-      } catch (err) {
-        console.log('52');
-        console.log(err);
-      }
-
+      const { data: artistData } = await axios.get(`${ROOT_URL}${qs.stringify({
+        ...query, type: 'artist'
+      })}`, config);
+      const artists = artistData.artists.items.map(item => getSearchResultData(item));
+      this.setState({ artists });
 
       // Search Playlists
-      try {
-        const { data: playlistData } = await axios.get(`${ROOT_URL}${qs.stringify({
-          ...query, type: 'playlist'
-        })}`, config);
-        const playlists = playlistData.playlists.items.map(item => getSearchResultData(item));
-        this.setState({ playlists });
-      } catch (err) {
-        console.log('66');
-        console.log(err);
-      }
+      const { data: playlistData } = await axios.get(`${ROOT_URL}${qs.stringify({
+        ...query, type: 'playlist'
+      })}`, config);
+      const playlists = playlistData.playlists.items.map(item => getSearchResultData(item));
+      this.setState({ playlists });
     });
   }
 
