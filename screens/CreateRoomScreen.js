@@ -1,15 +1,28 @@
 import React, { Component } from 'react';
 import {
-  Text, View, FlatList, TextInput, Alert
+  Text,
+  View,
+  FlatList,
+  TextInput,
+  Alert,
+  TouchableOpacity,
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { connect } from 'react-redux';
 import Spotify from 'rn-spotify-sdk';
+import LinearGradient from 'react-native-linear-gradient';
 import * as actions from '../actions';
 
 import Song from '../components/Song';
 import MinimizedRoom from '../components/MinimizedRoom';
 import allColors from '../colors';
+
+const {
+  width: deviceWidth,
+  height: deviceHeight
+} = Dimensions.get('window');
 
 class CreateRoomScreen extends Component {
   static navigationOptions = () => ({
@@ -24,6 +37,8 @@ class CreateRoomScreen extends Component {
     ),
   });
 
+  state = { creatingRoom: false };
+
   addSongs = () => this.props.navigation.navigate('AddSongs');
 
   createRoom = async () => {
@@ -37,6 +52,7 @@ class CreateRoomScreen extends Component {
     } else if (!id) {
       Alert.alert("You don't appear to be logged in.  There is an issue");
     } else {
+      this.setState({ creatingRoom: true });
       const colors = allColors[Math.floor(Math.random() * allColors.length)];
       this.props.createRoom({
         songs,
@@ -49,6 +65,13 @@ class CreateRoomScreen extends Component {
     }
   }
 
+  componentDidUpdate = () => {
+    if (this.state.creatingRoom && this.props.currentRoom.id) {
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({ creatingRoom: false });
+    }
+  }
+
   clearQueue = () => {
     Alert.alert('Clear the queue?', '',
       [{ text: 'Cancel', style: 'cancel' },
@@ -57,6 +80,14 @@ class CreateRoomScreen extends Component {
   }
 
   render() {
+    if (this.state.creatingRoom) {
+      return (
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color="#00c9ff" animating />
+        </View>
+      );
+    }
+
     if (this.props.currentRoom.id !== '') {
       const { playlistID, currentSongIndex, name: roomName } = this.props.currentRoom;
       return (
@@ -87,7 +118,12 @@ class CreateRoomScreen extends Component {
           autoCompleteType="off"
           autoCorrect={false}
         />
-        <View style={styles.songList}>
+        <View style={{
+          backgroundColor: '#fff',
+          width: deviceWidth,
+          height: 0.5 * deviceHeight
+        }}
+        >
           <FlatList
             data={this.props.songs}
             renderItem={({ item }) => (
@@ -101,22 +137,35 @@ class CreateRoomScreen extends Component {
             keyExtractor={item => item.id}
           />
         </View>
-        <Button
-          onPress={this.clearQueue}
-          type="clear"
-          icon={(<Icon type="material" size={60} name="close" />)}
-        />
-        <Button
-          style={styles.addSongsBtn}
-          title="Add Songs"
-          type="outline"
-          onPress={this.addSongs}
-        />
-        <Button
-          title="Create Room"
-          type="outline"
+        <View style={[styles.buttons, { width: deviceWidth }]}>
+          <Button
+            onPress={this.addSongs}
+            type="clear"
+            icon={(
+              <Icon type="material" size={35} color="#000" name="playlist-add" />
+            )}
+          />
+          <Button
+            onPress={this.clearQueue}
+            type="clear"
+            icon={(
+              <Icon type="material" size={35} color="#000" name="cancel" />
+            )}
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.shadowContainer}
           onPress={this.createRoom}
-        />
+        >
+          <LinearGradient
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            colors={['#00c9ff', '#92fe9d']}
+            style={styles.createRoomContainer}
+          >
+            <Text style={styles.createRoomText}>Create Room</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -129,23 +178,46 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center'
   },
-  songList: {
-    backgroundColor: '#fff',
-    height: 400,
-    width: 400
+  buttons: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 50,
+    justifyContent: 'space-around',
+    alignItems: 'space-around'
   },
   name: {
     margin: 15,
     fontSize: 30,
     height: 40
   },
-  addSongsBtn: {
-    marginBottom: 25
-  },
   nowPlaying: {
     position: 'absolute',
     bottom: 0,
     left: 0
+  },
+  shadowContainer: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.37,
+    shadowRadius: 7.49,
+    backgroundColor: '#fff',
+    margin: 10,
+    borderRadius: 35
+  },
+  createRoomContainer: {
+    width: 200,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 35
+  },
+  createRoomText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold'
   }
 };
 
