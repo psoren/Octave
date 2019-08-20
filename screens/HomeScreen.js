@@ -41,8 +41,6 @@ class HomeScreen extends Component {
   state = { rooms: [], currentRoomIndex: 0, loading: true };
 
   componentDidMount = async () => {
-    console.log('Home Screen mounted...');
-
     const {
       id, display_name, email, images
     } = await Spotify.getMe();

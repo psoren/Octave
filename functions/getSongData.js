@@ -7,7 +7,11 @@ export default (item, data) => {
   if (data) {
     track = data.type === 'playlist' ? item.track : item;
     key = data.type === 'playlist' ? item.added_at + track.id : '';
-    images = data.type === 'album' ? data.images : track.album.images;
+    if (data.collectionData) {
+      images = data.type === 'album' ? data.collectionData.images : track.album.images;
+    } else {
+      images = data.type === 'album' ? data.images : track.album.images;
+    }
   } else {
     track = item;
     const { images: albumImages } = track.album;

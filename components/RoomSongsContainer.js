@@ -16,7 +16,7 @@ const RoomSongsContainer = props => (
       <View>
         {props.songs.map((song, index) => (
           <Song
-            id={song.id + index}
+            id={song.id + index + Math.random()}
             name={song.name}
             artists={song.artists[0].name}
             images={song.album.images}

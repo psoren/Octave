@@ -86,7 +86,10 @@ class SongsCollectionScreen extends Component {
     let songs = [];
     // eslint-disable-next-line array-callback-return
     results.map((result) => {
-      const newSongs = result.data.items.map(item => getSongData(item, { type: this.state.type }));
+      const newSongs = result.data.items.map(item => getSongData(item, {
+        type: this.state.type,
+        collectionData: this.state.collectionData
+      }));
       songs = [...songs, ...newSongs];
     });
 
@@ -97,7 +100,6 @@ class SongsCollectionScreen extends Component {
         Alert.alert('You cannot add more than 4000 songs to a room');
         return;
       }
-
       if (shouldPrepend) {
         this.props.prependSongsToPendingQueue(songs);
       } else {
