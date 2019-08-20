@@ -162,14 +162,15 @@ class NowPlayingScreen extends Component {
             });
           } else {
             this.setState({ loading: false, isCreator: false });
+            Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
+            clearInterval(this.creatorUpdateInterval);
           }
         } else {
-          Alert.alert('Could not find the room', '',
-            [{ text: 'OK', onPress: () => this.leaveRoom }]);
+          console.log('could not find the room. (NowPlaying 167)');
         }
       } catch (err) {
-        Alert.alert('Could not find the room', '',
-          [{ text: 'OK', onPress: () => this.leaveRoom }]);
+        console.log('There was an error. (NowPlaying 171)');
+        console.log(err);
       }
 
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
@@ -190,8 +191,13 @@ class NowPlayingScreen extends Component {
           }
 
           // We have become the creator
-          if (creator.id === this.state.userID) {
+          if (creator.id === this.state.userID && !this.state.isCreator) {
             this.setState({ isCreator: true });
+            Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
+            this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
+              this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
+                this.state.updateInterval);
+            });
           } else if (this.state.isCreator
             && this.state.creator.id !== userID) {
             // We have given creator status to someone else
@@ -262,8 +268,7 @@ class NowPlayingScreen extends Component {
       if (room.exists) {
         await roomRef.update({ currentPosition });
       } else {
-        Alert.alert('Could not find the room', '',
-          [{ text: 'OK', onPress: () => this.leaveRoom }]);
+        console.log('could not find the room. (NowPlaying 264)');
       }
     } catch (err) {
       console.error(`Could not get room data: ${err}`);

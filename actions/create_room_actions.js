@@ -101,8 +101,6 @@ export const createRoom = ({
       });
       const { id: playlistID } = data;
 
-      console.log(`playlist ${playlistID} created`);
-
       // 1. Create an array of promises where we add
       // the songs in the song list to the user's library
       const songURIs = songs.map(song => `spotify:track:${song.id}`);
@@ -131,9 +129,6 @@ export const createRoom = ({
       // eslint-disable-next-line no-unused-vars
       Promise.resolve([])).then(async (arrayOfResults) => {
         // Create room
-
-        console.log('songs have been added');
-
         const { id: newRoomID } = await db.collection('rooms').add({
           name: roomName,
           creator,
@@ -158,7 +153,9 @@ export const createRoom = ({
 
         // Create currentSongIndex in currentSong collection
         await db.collection('currentSong').doc(playlistID).set({
-          playlistID, currentSongIndex: 0
+          playlistID,
+          creatorID: creator.id,
+          currentSongIndex: 0
         });
 
         dispatch({

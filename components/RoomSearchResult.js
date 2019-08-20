@@ -18,7 +18,7 @@ import * as actions from '../actions';
 const { width: screenWidth } = Dimensions.get('window');
 
 class RoomSearchResult extends Component {
-  state ={ loading: true };
+  state = { loading: true };
 
   componentDidMount = async () => {
     const { playlistID, currentSongIndex } = this.props;
@@ -38,7 +38,10 @@ class RoomSearchResult extends Component {
 
   joinRoom = async () => {
     const { id: userId } = await Spotify.getMe();
-    if (userId === this.props.creatorID) {
+    if (!this.props.location) {
+      Alert.alert(`Please enable location permissions in
+          Settings > Privacy > Location Services > Octave to join a room`);
+    } else if (userId === this.props.creatorID) {
       Alert.alert('You cannot join the room you created!');
     } else if (this.props.id === this.props.currentRoom.id) {
       Alert.alert('You are already in this room!');
@@ -116,9 +119,10 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ auth, currentRoom }) => ({
+const mapStateToProps = ({ deviceInfo, auth, currentRoom }) => ({
   accessToken: auth.accessToken,
-  currentRoom
+  currentRoom,
+  location: deviceInfo.location
 });
 
 export default connect(mapStateToProps, actions)(withNavigation(RoomSearchResult));

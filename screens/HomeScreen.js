@@ -41,13 +41,14 @@ class HomeScreen extends Component {
   state = { rooms: [], currentRoomIndex: 0, loading: true };
 
   componentDidMount = async () => {
+    console.log('Home Screen mounted...');
+
     const {
       id, display_name, email, images
     } = await Spotify.getMe();
     this.props.setUserInfo({
       id, display_name, email, images
     });
-
     const sessionInfo = await Spotify.getSessionAsync();
     this.props.storeTokens(sessionInfo);
     SplashScreen.hide();
@@ -67,7 +68,10 @@ class HomeScreen extends Component {
       (error) => {
         this.props.setLocation(false);
         this.getAlphabeticalRooms();
-        Alert.alert(`Location Error: ${error.code}`, error.message);
+        console.log(error);
+        // Alert.alert(`Location Error: ${error.code}`, error.message);
+        Alert.alert(`Please enable location permissions in 
+        Settings > Privacy > Location Services > Octave to join a room`);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
@@ -148,7 +152,7 @@ class HomeScreen extends Component {
       </View>
     );
 
-    if (!this.state.loading && this.state.rooms.length > 0) {
+    if (!this.state.loading) {
       roomCards = this.state.rooms.map((room, index) => (
         <View key={room.id} style={styles.roomCardContainer}>
           <RoomCard

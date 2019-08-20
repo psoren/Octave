@@ -45,7 +45,10 @@ class CreateRoomScreen extends Component {
     const { id, display_name: name, images } = await Spotify.getMe();
     const creator = { id, name, images };
     const { songs, name: roomName } = this.props;
-    if (songs.length < 3) {
+    if (!this.props.location) {
+      Alert.alert(`Please enable location permissions in
+          Settings > Privacy > Location Services > Octave to create a room`);
+    } else if (songs.length < 3) {
       Alert.alert('Please add at least three songs');
     } else if (roomName === '') {
       Alert.alert('Please add a room name');
@@ -188,7 +191,8 @@ const styles = {
   name: {
     margin: 15,
     fontSize: 30,
-    height: 40
+    height: 40,
+    padding: 5
   },
   nowPlaying: {
     position: 'absolute',

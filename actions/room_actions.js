@@ -29,9 +29,13 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
             console.error(`Could not delete room: ${err}`);
           }
         } else {
-          // Promote oldest listener
+          // Promote oldest listener and update the
+          // currentSong document with the new creator id
           const { listeners } = room.data();
           const newCreator = listeners.shift();
+          await db.collection('currentSong').doc(room.data().playlistID).update({
+            creatorID: newCreator.id
+          });
           roomRef.update({ creator: newCreator, listeners });
         }
       } else {
