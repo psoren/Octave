@@ -70,15 +70,18 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
 
 export const joinRoom = (navigation, roomID) => async (dispatch) => {
   // 1. Get data from Spotify
-  const { id, display_name: name, images } = await Spotify.getMe();
-  const newListener = { id, name, images };
+  const {
+    id, uri, display_name: name, images
+  } = await Spotify.getMe();
+  const newListener = {
+    id, uri, name, images
+  };
 
   // 2. Join the room in firebase
   const db = firebase.firestore();
   const roomRef = db.collection('rooms').doc(roomID);
 
   // 3. Update status collection in firestore
-  const { uri } = await Spotify.getMe();
   db.collection('status').doc(uri).update({ roomID });
 
   try {

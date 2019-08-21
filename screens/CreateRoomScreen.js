@@ -42,8 +42,12 @@ class CreateRoomScreen extends Component {
   addSongs = () => this.props.navigation.navigate('AddSongs');
 
   createRoom = async () => {
-    const { id, display_name: name, images } = await Spotify.getMe();
-    const creator = { id, name, images };
+    const {
+      uri, id, display_name: name, images
+    } = await Spotify.getMe();
+    const creator = {
+      id, uri, name, images
+    };
     const { songs, name: roomName } = this.props;
     if (!this.props.location) {
       Alert.alert(`Please enable location permissions in
