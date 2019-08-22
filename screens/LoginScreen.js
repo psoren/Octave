@@ -32,11 +32,18 @@ class LoginScreen extends PureComponent {
   };
 
   componentDidUpdate() {
+    console.log(this.state);
     if (!this.state.firebaseInitialized && this.state.loggedInToSpotify) {
       this.setupFirebase();
       this.firebaseInterval2 = setInterval(this.initFirebase, 100);
     }
     if (this.state.loggedInToSpotify && this.state.firebaseInitialized) {
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({
+        loggedInToSpotify: false,
+        firebaseInitialized: false,
+        loading: false
+      });
       clearInterval(this.firebaseInterval);
       clearInterval(this.firebaseInterval2);
       this.props.navigation.navigate('Home');
