@@ -23,8 +23,8 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
         // Delete room
         if (room.data().listeners.length === 0) {
           try {
-            await db.collection('rooms').doc(room.id).delete();
             await db.collection('currentSong').doc(room.data().playlistID).delete();
+            await db.collection('rooms').doc(room.id).delete();
           } catch (err) {
             console.error(`Could not delete room: ${err}`);
           }
@@ -46,7 +46,7 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
 
         // Update status collection in firestore
         const { uri } = await Spotify.getMe();
-        console.log('removing from status');
+        console.log('removing from status...');
         db.collection('status').doc(uri).update({
           roomID: firebase.firestore.FieldValue.delete()
         });

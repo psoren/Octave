@@ -76,6 +76,7 @@ class NowPlayingScreen extends Component {
 
   componentWillUnmount() {
     clearInterval(this.creatorUpdateInterval);
+    clearInterval(this.creatorUpdateInterval2);
     this.changeSongSubscription.remove();
     Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
   }
@@ -105,6 +106,7 @@ class NowPlayingScreen extends Component {
   leaveRoom = () => {
     this.unsubscribe();
     clearInterval(this.creatorUpdateInterval);
+    clearInterval(this.creatorUpdateInterval2);
     Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
     this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id);
   }
@@ -162,7 +164,6 @@ class NowPlayingScreen extends Component {
             });
           } else {
             this.setState({ loading: false, isCreator: false });
-            clearInterval(this.creatorUpdateInterval);
           }
         } else {
           console.log('could not find the room. (NowPlaying 167)');
@@ -171,7 +172,6 @@ class NowPlayingScreen extends Component {
         console.log('There was an error. (NowPlaying 171)');
         console.log(err);
       }
-
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
         .onSnapshot(async (room) => {
           const {
@@ -194,7 +194,7 @@ class NowPlayingScreen extends Component {
             this.setState({ isCreator: true });
             Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
             this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
-              this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
+              this.creatorUpdateInterval2 = setInterval(this.updateCreatorPosition,
                 this.state.updateInterval);
             });
           } else if (this.state.isCreator
@@ -221,7 +221,7 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  updateCurrentSongIndex = async (e) => {
+  updateCurrentSongIndex = async () => {
     const res = await Spotify.getPlaybackMetadataAsync();
     const songIndex = res.currentTrack.indexInContext;
     const db = firebase.firestore();

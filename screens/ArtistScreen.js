@@ -68,6 +68,12 @@ class ArtistScreen extends Component {
     } else {
       // Add to firebase
       const db = firebase.firestore();
+
+
+      if (this.props.currentRoom.id == '') {
+        console.log('empty artist screen 74');
+      }
+
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       try {
         const room = await roomRef.get();

@@ -144,7 +144,6 @@ export const createRoom = ({
 
         // Update status collection in firestore
         const { uri } = await Spotify.getMe();
-
         db.collection('status').doc(uri).set({
           roomID: newRoomID,
           state: 'online',

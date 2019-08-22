@@ -108,6 +108,10 @@ class SongsCollectionScreen extends Component {
     } else {
       // Add to playlist
       const db = firebase.firestore();
+
+      if (this.props.currentRoom.id === '') {
+        console.log('now playing songs collection 113');
+      }
       const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
       try {
         const room = await roomRef.get();

@@ -59,7 +59,6 @@ class RoomCard extends Component {
   setupRoom = async () => {
     const { deviceHeight, deviceWidth } = this.props;
     const db = firebase.firestore();
-
     this.unsubscribe = db.collection('rooms').doc(this.props.roomID)
       .onSnapshot(async (doc) => {
         const {

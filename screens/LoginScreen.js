@@ -67,7 +67,6 @@ class LoginScreen extends PureComponent {
     if (firebase.auth().currentUser) {
       this.setState({ firebaseInitialized: true });
       clearInterval(this.firebaseInterval);
-      console.log(`current user is: ${firebase.auth().currentUser.uid}`);
     }
   }
 
