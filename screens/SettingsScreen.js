@@ -5,8 +5,9 @@ import {
 import { Button, Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
-import * as actions from '../actions';
+import firebase from 'firebase';
 
+import * as actions from '../actions';
 import MinimizedRoom from '../components/MinimizedRoom';
 
 class SettingsScreen extends Component {
@@ -29,9 +30,13 @@ class SettingsScreen extends Component {
       [{ text: 'Cancel', style: 'cancel' }, {
         text: 'OK',
         onPress: async () => {
-          this.props.clearUserInfo();
-          await Spotify.logout();
-          this.props.navigation.navigate('Login');
+          firebase.auth().signOut().then(async () => {
+            this.props.clearUserInfo();
+            await Spotify.logout();
+            this.props.navigation.navigate('Login');
+          }).catch(() => {
+            Alert.alert('Could not log out.');
+          });
         },
       }]);
   }

@@ -11,6 +11,7 @@ import SplashScreen from 'react-native-splash-screen';
 import LinearGradient from 'react-native-linear-gradient';
 import Geolocation from 'react-native-geolocation-service';
 import * as geofirex from 'geofirex';
+import setupRealtimeDatabase from '../functions/setupRealtimeDatabase';
 
 import * as actions from '../actions';
 import RoomCard from '../components/RoomCard';
@@ -41,9 +42,7 @@ class HomeScreen extends Component {
   state = { rooms: [], currentRoomIndex: 0, loading: true };
 
   componentDidMount = async () => {
-    const user = firebase.auth().currentUser;
-
-    console.log(user);
+    setupRealtimeDatabase();
 
     const {
       id, display_name, email, images
