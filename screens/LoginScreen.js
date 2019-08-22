@@ -32,7 +32,6 @@ class LoginScreen extends PureComponent {
   };
 
   componentDidUpdate() {
-    console.log(this.state);
     if (!this.state.firebaseInitialized && this.state.loggedInToSpotify) {
       this.setupFirebase();
       this.firebaseInterval2 = setInterval(this.initFirebase, 100);

@@ -162,7 +162,6 @@ class NowPlayingScreen extends Component {
             });
           } else {
             this.setState({ loading: false, isCreator: false });
-            Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
             clearInterval(this.creatorUpdateInterval);
           }
         } else {
@@ -223,23 +222,11 @@ class NowPlayingScreen extends Component {
   }
 
   updateCurrentSongIndex = async (e) => {
-    if (e.metadata.currentTrack.indexInContext > 0) {
-      const db = firebase.firestore();
-      const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-      roomRef.update({ currentSongIndex: firebase.firestore.FieldValue.increment(1) });
-
-      const { playlistID } = this.props.currentRoom;
-
-      if (playlistID) {
-        const currentSongRef = db.collection('currentSong').doc(playlistID);
-        const currentSong = await currentSongRef.get();
-        if (currentSong.exists) {
-          await currentSongRef.update({
-            currentSongIndex: firebase.firestore.FieldValue.increment(1)
-          });
-        }
-      }
-    }
+    const res = await Spotify.getPlaybackMetadataAsync();
+    const songIndex = res.currentTrack.indexInContext;
+    const db = firebase.firestore();
+    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+    await roomRef.update({ currentSongIndex: songIndex });
   }
 
   updateRoomName = async () => {
