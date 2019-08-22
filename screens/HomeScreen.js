@@ -41,6 +41,10 @@ class HomeScreen extends Component {
   state = { rooms: [], currentRoomIndex: 0, loading: true };
 
   componentDidMount = async () => {
+    const user = firebase.auth().currentUser;
+
+    console.log(user);
+
     const {
       id, display_name, email, images
     } = await Spotify.getMe();
