@@ -13,6 +13,8 @@ target 'Octave' do
     # Pods for testing
     pod 'react-native-config', :path => '../node_modules/react-native-config'
 
+    pod 'CodePush', :path => '../node_modules/react-native-code-push'
+
   end
 
   target 'OctaveTests' do
