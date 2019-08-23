@@ -121,14 +121,12 @@ class NowPlayingScreen extends Component {
     });
     const { track } = data.items[0];
     const {
-      artists: artistsArr, name, duration_ms: duration, album
+      artists: artistsArr, name, album
     } = track;
     const artists = artistsArr[0].name;
     const { images } = album;
 
-    this.setState({
-      artists, name, images, duration
-    });
+    this.setState({ artists, name, images });
   }
 
   setupRoom = async () => {
@@ -178,19 +176,12 @@ class NowPlayingScreen extends Component {
       this.unsubscribe = db.collection('rooms').doc(this.props.currentRoom.id)
         .onSnapshot(async (room) => {
           const {
-            currentPosition,
             currentSongIndex,
             listeners,
             creator,
             playlistID,
             colors
           } = room.data();
-
-          if (this.state.duration && currentPosition) {
-            const durationSeconds = Math.max(1, this.state.duration / 1000);
-            const progress = currentPosition / durationSeconds;
-            this.setState({ progress });
-          }
 
           // We have become the creator
           if (creator.id === this.state.userID && !this.state.isCreator) {
