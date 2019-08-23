@@ -251,26 +251,6 @@ class NowPlayingScreen extends Component {
     }
   }
 
-  updateCreatorPosition = async () => {
-    // 1. Get current position from playback
-    // const { position: currentPosition } = await Spotify.getPlaybackStateAsync();
-    // // 2. Get database reference
-    // const db = firebase.firestore();
-    // const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-
-    // // 3. Update room in database
-    // try {
-    //   const room = await roomRef.get();
-    //   if (room.exists) {
-    //     await roomRef.update({ currentPosition });
-    //   } else {
-    //     console.log('could not find the room. (NowPlaying 264)');
-    //   }
-    // } catch (err) {
-    //   console.error(`Could not get room data: ${err}`);
-    // }
-  }
-
   saveSong = async () => {
     const { playlistID, currentSongIndex } = this.props.currentRoom;
     const { accessToken } = this.props;
@@ -594,7 +574,7 @@ class NowPlayingScreen extends Component {
           </View>
           <View
             style={{
-              marginTop: 50,
+              marginTop: 25,
               borderBottomColor: '#fff',
               borderBottomWidth: 2,
               width: screenWidth - 50
@@ -690,7 +670,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     flex: 1,
-    width: screenWidth
+    width: screenWidth,
+    minHeight: 50
   },
   header: {
     width: screenWidth,

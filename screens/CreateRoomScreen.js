@@ -189,6 +189,7 @@ const styles = {
     flex: 1,
     flexDirection: 'row',
     height: 50,
+    minHeight: 50,
     justifyContent: 'space-around',
     alignItems: 'space-around'
   },
