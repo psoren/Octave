@@ -33,6 +33,7 @@ const {
 
 const SWIPE_THRESHOLD = 0.2 * screenHeight;
 const VELOCITY_THRESHOLD = 3.5;
+const UPDATE_INTERVAL = 5000;
 
 class NowPlayingScreen extends Component {
   constructor(props) {
@@ -75,8 +76,7 @@ class NowPlayingScreen extends Component {
   }
 
   componentWillUnmount() {
-    clearInterval(this.creatorUpdateInterval);
-    clearInterval(this.creatorUpdateInterval2);
+    clearInterval(this.updateProgressInterval);
     this.changeSongSubscription.remove();
     Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
   }
@@ -105,8 +105,7 @@ class NowPlayingScreen extends Component {
 
   leaveRoom = () => {
     this.unsubscribe();
-    clearInterval(this.creatorUpdateInterval);
-    clearInterval(this.creatorUpdateInterval2);
+    clearInterval(this.updateProgressInterval);
     Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
     this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id);
   }
@@ -145,23 +144,27 @@ class NowPlayingScreen extends Component {
           const roomData = room.data();
           const roomInfo = { ...roomData, id: room.id };
           const userInfo = await Spotify.getMe();
-          const { playlistID, currentSongIndex, currentPosition } = room.data();
+          const { playlistID, currentSongIndex, timeStarted } = room.data();
 
           this.getCurrentSongInfo(playlistID, currentSongIndex);
           this.setState({ currentSongIndex });
           this.props.updateRoom(roomInfo);
 
-          if (playlistID && currentSongIndex !== null && currentPosition !== null) {
+          this.updateProgressInterval = setInterval(this.getSongProgress, UPDATE_INTERVAL);
+
+          if (playlistID && currentSongIndex !== null && timeStarted !== null) {
+            const currentTime = new Date().getTime();
+            const timeStartedMillis = parseFloat(`${timeStarted.seconds}.${timeStarted.nanoseconds}`);
+            const currentPosition = roomInfo.creator.id === userInfo.id ? 0
+              : (currentTime / 1000) - timeStartedMillis;
+
             await Spotify.playURI(`spotify:playlist:${playlistID}`,
               currentSongIndex, currentPosition);
           }
 
           if (roomInfo.creator.id === userInfo.id) {
             Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
-            this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
-              this.creatorUpdateInterval = setInterval(this.updateCreatorPosition,
-                this.state.updateInterval);
-            });
+            this.setState({ loading: false, isCreator: true });
           } else {
             this.setState({ loading: false, isCreator: false });
           }
@@ -193,10 +196,7 @@ class NowPlayingScreen extends Component {
           if (creator.id === this.state.userID && !this.state.isCreator) {
             this.setState({ isCreator: true });
             Spotify.addListener('trackChange', e => this.updateCurrentSongIndex(e));
-            this.setState({ loading: false, isCreator: true, updateInterval: 1500 }, () => {
-              this.creatorUpdateInterval2 = setInterval(this.updateCreatorPosition,
-                this.state.updateInterval);
-            });
+            this.setState({ loading: false, isCreator: true });
           } else if (this.state.isCreator
             && this.state.creator.id !== userID) {
             // We have given creator status to someone else
@@ -209,7 +209,6 @@ class NowPlayingScreen extends Component {
               this.getCurrentSongInfo(playlistID, currentSongIndex);
             });
           }
-
           this.setState({
             currentSongIndex,
             listeners,
@@ -221,12 +220,22 @@ class NowPlayingScreen extends Component {
     }
   }
 
+  getSongProgress = async () => {
+    const { currentTrack } = await Spotify.getPlaybackMetadataAsync();
+    const { duration } = currentTrack;
+    const { position } = await Spotify.getPlaybackStateAsync();
+    this.setState({ progress: (position / duration) });
+  }
+
   updateCurrentSongIndex = async () => {
     const res = await Spotify.getPlaybackMetadataAsync();
     const songIndex = res.currentTrack.indexInContext;
     const db = firebase.firestore();
     const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
-    await roomRef.update({ currentSongIndex: songIndex });
+    await roomRef.update({
+      currentSongIndex: songIndex,
+      timeStarted: new Date()
+    });
   }
 
   updateRoomName = async () => {
@@ -244,22 +253,22 @@ class NowPlayingScreen extends Component {
 
   updateCreatorPosition = async () => {
     // 1. Get current position from playback
-    const { position: currentPosition } = await Spotify.getPlaybackStateAsync();
-    // 2. Get database reference
-    const db = firebase.firestore();
-    const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
+    // const { position: currentPosition } = await Spotify.getPlaybackStateAsync();
+    // // 2. Get database reference
+    // const db = firebase.firestore();
+    // const roomRef = db.collection('rooms').doc(this.props.currentRoom.id);
 
-    // 3. Update room in database
-    try {
-      const room = await roomRef.get();
-      if (room.exists) {
-        await roomRef.update({ currentPosition });
-      } else {
-        console.log('could not find the room. (NowPlaying 264)');
-      }
-    } catch (err) {
-      console.error(`Could not get room data: ${err}`);
-    }
+    // // 3. Update room in database
+    // try {
+    //   const room = await roomRef.get();
+    //   if (room.exists) {
+    //     await roomRef.update({ currentPosition });
+    //   } else {
+    //     console.log('could not find the room. (NowPlaying 264)');
+    //   }
+    // } catch (err) {
+    //   console.error(`Could not get room data: ${err}`);
+    // }
   }
 
   saveSong = async () => {
@@ -562,7 +571,7 @@ class NowPlayingScreen extends Component {
               progress={this.state.progress}
               width={screenWidth - 40}
               height={10}
-              duration={this.state.updateInterval}
+              duration={UPDATE_INTERVAL}
             />
           </View>
           <View style={styles.likeButtonContainer}>

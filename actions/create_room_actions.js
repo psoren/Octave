@@ -135,11 +135,11 @@ export const createRoom = ({
           currentSongIndex: 0,
           playing: true,
           listeners: [],
-          currentPosition: 0,
           colors,
           position: point.data,
           address,
-          playlistID
+          playlistID,
+          timeStarted: new Date()
         });
 
         // Update status collection in firestore

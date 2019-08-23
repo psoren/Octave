@@ -24,6 +24,16 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
         if (room.data().listeners.length === 0) {
           try {
             await db.collection('currentSong').doc(room.data().playlistID).delete();
+            const {
+              playlistID, creator, name, position, currentSongIndex
+            } = room.data();
+            db.collection('pastRooms').doc(playlistID).set({
+              playlistID,
+              name,
+              creator,
+              position,
+              currentSongIndex
+            }, { merge: true });
             await db.collection('rooms').doc(room.id).delete();
           } catch (err) {
             console.error(`Could not delete room: ${err}`);
@@ -31,8 +41,12 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
         } else {
           // Promote oldest listener and update the
           // currentSong document with the new creator id
-          const { listeners } = room.data();
+          const { listeners, creator } = room.data();
           const newCreator = listeners.shift();
+          const pastRoomRef = db.collection('pastRooms').doc(room.data().playlistID);
+          pastRoomRef.set({
+            listeners: firebase.firestore.FieldValue.arrayUnion(creator)
+          }, { merge: true });
           await db.collection('currentSong').doc(room.data().playlistID).update({
             creatorID: newCreator.id
           });
@@ -41,6 +55,12 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
       } else {
         // Delete them from the room
         const { listeners } = room.data();
+        const oldListenersArr = listeners.filter(listener => userID === listener.id);
+        const oldListener = oldListenersArr[0];
+        const pastRoomRef = db.collection('pastRooms').doc(room.data().playlistID);
+        pastRoomRef.set({
+          listeners: firebase.firestore.FieldValue.arrayUnion(oldListener)
+        }, { merge: true });
         const newListeners = listeners.filter(listener => userID !== listener.id);
         roomRef.update({ listeners: newListeners });
 

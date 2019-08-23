@@ -13,9 +13,7 @@ import { getDistance } from 'geolib';
 import axios from 'axios';
 import { BlurView } from '@react-native-community/blur';
 
-
 import * as actions from '../actions';
-import ProgressBar from './ProgressBar';
 import RoomCardImageContainer from './RoomCardImageContainer';
 
 class RoomCard extends Component {
@@ -35,10 +33,10 @@ class RoomCard extends Component {
     ) {
       const { accessToken } = this.props;
       const {
-        currentPosition,
         currentSongIndex,
         playlistID,
-        listeners
+        listeners,
+        timeStarted
       } = roomInfo.data();
 
       try {
@@ -46,6 +44,10 @@ class RoomCard extends Component {
           url: `https://api.spotify.com/v1/playlists/${playlistID}`,
           headers: { Authorization: `Bearer ${accessToken}` }
         });
+
+        const currentTime = new Date().getTime();
+        const timeStartedMillis = parseFloat(`${timeStarted.seconds}.${timeStarted.nanoseconds}`);
+        const currentPosition = Math.max((currentTime / 1000) - timeStartedMillis, 0);
         const numSongs = playlistData.tracks.total;
         this.setState({ numSongs, numListeners: listeners.length + 1 });
         await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
@@ -63,7 +65,6 @@ class RoomCard extends Component {
       .onSnapshot(async (doc) => {
         const {
           name,
-          currentPosition,
           currentSongIndex,
           listeners,
           colors,
@@ -83,9 +84,6 @@ class RoomCard extends Component {
         const { name: songName, artists } = currentSong;
         const artist = artists[0].name;
         this.setState({ songName, artist, name });
-
-        const songLength = currentSong.duration_ms / 1000;
-        const progress = currentPosition / songLength;
 
         // Get distance between these two lat, long pairs
         const userLocation = this.props.location;
@@ -119,7 +117,6 @@ class RoomCard extends Component {
           artist,
           numListeners: listeners.length + 1,
           currentSong,
-          progress,
           deviceHeight,
           deviceWidth,
           colors,
@@ -137,7 +134,13 @@ class RoomCard extends Component {
       const db = firebase.firestore();
       const roomRef = db.collection('rooms').doc(this.props.roomID);
       const roomInfo = await roomRef.get();
-      const { playlistID, currentSongIndex, currentPosition } = roomInfo.data();
+      const { playlistID, currentSongIndex, timeStarted } = roomInfo.data();
+
+      const currentTime = new Date().getTime();
+      const timeStartedMillis = parseFloat(`${timeStarted.seconds}.${timeStarted.nanoseconds}`);
+      const currentPosition = (currentTime / 1000) - timeStartedMillis;
+
+
       const { accessToken } = this.props;
       const { data: playlistData } = await axios({
         url: `https://api.spotify.com/v1/playlists/${playlistID}`,
@@ -208,14 +211,6 @@ class RoomCard extends Component {
             <Text style={styles.song}>{this.state.songName}</Text>
             <Text style={styles.artists}>{this.state.artist}</Text>
           </View>
-          <ProgressBar
-            startColor="#fff"
-            endColor="#fff"
-            progress={this.state.progress}
-            duration={1500}
-            width={this.state.deviceWidth * 0.6}
-            height={5}
-          />
           <View style={styles.locationOuterContainer}>
             <Text style={styles.locationTown}>
               {this.state.address}
