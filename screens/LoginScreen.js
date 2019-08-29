@@ -18,9 +18,6 @@ const { width: screenWidth } = Dimensions.get('window');
 const logo1Width = 0.9 * screenWidth;
 const logo1Height = 0.1779 * logo1Width;
 
-const logo2Width = 0.9 * screenWidth;
-const logo2Height = logo2Width * 0.0618;
-
 const spotifyWidth = 0.6 * screenWidth;
 const spotifyHeight = 0.3001 * spotifyWidth;
 
@@ -152,10 +149,6 @@ class LoginScreen extends PureComponent {
           <Image
             source={require('../assets/logo1.png')}
             style={[{ width: logo1Width, height: logo1Height }, styles.image]}
-          />
-          <Image
-            source={require('../assets/logo2.png')}
-            style={[{ width: logo2Width, height: logo2Height }, styles.image]}
           />
         </View>
         <View style={styles.spotifyContainer}>

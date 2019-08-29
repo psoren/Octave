@@ -50,8 +50,10 @@ class RoomSearchResult extends Component {
       Alert.alert(`Do you want to leave the room ${newRoom} and join the room ${this.props.roomName}?`, '',
         [{
           text: 'OK',
-          onPress: () => this.props.joinRoom(this.props.navigation,
-            this.props.id),
+          onPress: async () => {
+            await this.props.leaveRoom(null, this.props.currentRoom.id, true);
+            this.props.joinRoom(this.props.navigation, this.props.id);
+          },
         }, { text: 'Cancel' }]);
     } else {
       this.props.joinRoom(this.props.navigation, this.props.id);

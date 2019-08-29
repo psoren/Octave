@@ -10,7 +10,7 @@ import {
 
 export const updateRoom = data => ({ type: UPDATE_ROOM, payload: data });
 
-export const leaveRoom = (navigation, roomID) => async (dispatch) => {
+export const leaveRoom = (navigation, roomID, joiningNewRoom) => async (dispatch) => {
   // 1. Leave the room in firebase
   const db = firebase.firestore();
   const roomRef = db.collection('rooms').doc(roomID);
@@ -85,7 +85,11 @@ export const leaveRoom = (navigation, roomID) => async (dispatch) => {
   await dispatch({ type: LEAVE_ROOM });
 
   // 4. Navigate to the home screen
-  await navigation.navigate('Home');
+  if (joiningNewRoom) {
+    await navigation.navigate('NowPlaying');
+  } else {
+    await navigation.navigate('Home');
+  }
 };
 
 export const joinRoom = (navigation, roomID) => async (dispatch) => {

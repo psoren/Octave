@@ -43,7 +43,6 @@ class HomeScreen extends Component {
 
   componentDidMount = async () => {
     setupRealtimeDatabase();
-
     const {
       id, display_name, email, images
     } = await Spotify.getMe();
@@ -68,7 +67,6 @@ class HomeScreen extends Component {
       },
       (error) => {
         this.props.setLocation(false);
-        this.getAlphabeticalRooms();
         console.log(error);
         // Alert.alert(`Location Error: ${error.code}`, error.message);
         Alert.alert(`Please enable location permissions in 
@@ -80,6 +78,14 @@ class HomeScreen extends Component {
     this.setState({ deviceWidth, deviceHeight });
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (prevProps.userInfo.id !== '' && this.props.userInfo.id === '') {
+      console.log('logged out');
+    } else if (prevProps.userInfo.id === '' && this.props.userInfo.id !== '') {
+      console.log('logged in');
+    }
+  }
+
   componentWillUnmount = () => clearInterval(this.tokenRefreshInterval);
 
 
@@ -87,22 +93,6 @@ class HomeScreen extends Component {
     currentRoomIndex: Math.round((
       e.nativeEvent.contentOffset.x) / deviceWidth)
   });
-
-  getAlphabeticalRooms = async () => {
-    const db = firebase.firestore();
-    db.collection('rooms')
-      .orderBy('name').limit(10)
-      .onSnapshot((querySnapshot) => {
-        const newRooms = [];
-        querySnapshot.forEach((room) => {
-          newRooms.push({
-            id: room.id,
-            creatorID: room.data().creator.id
-          });
-        });
-        this.setState({ rooms: newRooms, loading: false });
-      });
-  }
 
   getLocalRooms = async () => {
     // Get user's location
@@ -114,15 +104,24 @@ class HomeScreen extends Component {
     let radius = 1;
     const field = 'position';
     const rooms = geo.collection('rooms');
-    let query = rooms.within(center, radius, field);
+    let query;
+    try {
+      query = rooms.within(center, radius, field);
+    } catch (err) {
+      console.log(`3e432${err}`);
+    }
     let localRooms = await geofirex.get(query);
-
+    console.log(localRooms);
     // try again with 100 KM
     while (localRooms.length < 10 && radius < 30000) {
       radius *= 10;
-      query = rooms.within(center, radius, field);
-      // eslint-disable-next-line no-await-in-loop
-      localRooms = await geofirex.get(query);
+      try {
+        query = rooms.within(center, radius, field);
+        // eslint-disable-next-line no-await-in-loop
+        localRooms = await geofirex.get(query);
+      } catch (err) {
+        console.log(`fd;lkjl: ${err}`);
+      }
     }
     this.setState({ rooms: localRooms });
 
@@ -132,18 +131,23 @@ class HomeScreen extends Component {
     // Subscribe to the realtime stream at that radius
     this.setState({ loading: false });
 
-    const localRoomsRef = geo.collection('rooms', ref => ref.limit(NUM_HOME_SCREEN_ROOMS));
-    query = localRoomsRef.within(center, radius, field);
-    query.subscribe((data) => {
-      const newRooms = [];
-      data.forEach((room) => {
-        newRooms.push({
-          id: room.id,
-          creatorID: room.creator.id
+    try {
+      const localRoomsRef = geo.collection('rooms', ref => ref.limit(NUM_HOME_SCREEN_ROOMS));
+      query = localRoomsRef.within(center, radius, field);
+
+      query.subscribe((data) => {
+        const newRooms = [];
+        data.forEach((room) => {
+          newRooms.push({
+            id: room.id,
+            creatorID: room.creator.id
+          });
         });
+        this.setState({ rooms: newRooms, loading: false });
       });
-      this.setState({ rooms: newRooms, loading: false });
-    });
+    } catch (err) {
+      console.log(`asdf: ${err}`);
+    }
   }
 
   render() {

@@ -107,7 +107,7 @@ class NowPlayingScreen extends Component {
     this.unsubscribe();
     clearInterval(this.updateProgressInterval);
     Spotify.removeListener('trackChange', this.updateCurrentSongIndex);
-    this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id);
+    this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id, false);
   }
 
   // Given a playlist id and a currentSongIndex, return the song info

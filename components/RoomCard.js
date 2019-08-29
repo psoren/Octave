@@ -52,7 +52,7 @@ class RoomCard extends Component {
         this.setState({ numSongs, numListeners: listeners.length + 1 });
         await Spotify.playURI(`spotify:playlist:${playlistID}`, currentSongIndex, currentPosition);
       } catch (err) {
-        console.log(err);
+        console.error(`RoomCard: ${err}`);
       }
     }
     this.setupRoom();
@@ -169,8 +169,10 @@ class RoomCard extends Component {
       Alert.alert(`Do you want to leave the room ${newRoom} and join the room ${this.state.name}?`, '',
         [{
           text: 'OK',
-          onPress: () => this.props.joinRoom(this.props.navigation,
-            this.state.id),
+          onPress: async () => {
+            await this.props.leaveRoom(this.props.navigation, this.props.currentRoom.id, true);
+            this.props.joinRoom(this.props.navigation, this.state.id);
+          },
           style: 'cancel'
         },
         { text: 'Cancel' }
@@ -327,8 +329,11 @@ const styles = {
   }
 };
 
-const mapStateToProps = ({ currentRoom, deviceInfo, auth, }) => ({
+const mapStateToProps = ({
+  currentRoom, deviceInfo, userInfo, auth
+}) => ({
   accessToken: auth.accessToken,
+  userInfo,
   currentRoom,
   location: deviceInfo.location
 });

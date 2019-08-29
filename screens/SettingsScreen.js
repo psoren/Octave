@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {
   Text, View, Alert, Image
 } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import Spotify from 'rn-spotify-sdk';
 import { connect } from 'react-redux';
 import firebase from 'firebase';
@@ -80,13 +80,6 @@ class SettingsScreen extends Component {
             style={styles.image}
           />
         </View>
-        <Button
-          containerStyle={styles.logoutContainerButton}
-          buttonStyle={styles.logoutButton}
-          titleStyle={{ fontWeight: 'bold', fontSize: 24 }}
-          title="LOG OUT"
-          onPress={this.logout}
-        />
         <View style={styles.nowPlaying}>
           {NowPlaying}
         </View>
