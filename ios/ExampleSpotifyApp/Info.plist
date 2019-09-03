@@ -37,8 +37,6 @@
 			</dict>
 		</dict>
 	</dict>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>To view rooms around you</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>To view rooms around you</string>
 	<key>UIAppFonts</key>

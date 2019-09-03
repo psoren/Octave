@@ -78,16 +78,7 @@ class HomeScreen extends Component {
     this.setState({ deviceWidth, deviceHeight });
   }
 
-  componentDidUpdate = (prevProps) => {
-    if (prevProps.userInfo.id !== '' && this.props.userInfo.id === '') {
-      console.log('logged out');
-    } else if (prevProps.userInfo.id === '' && this.props.userInfo.id !== '') {
-      console.log('logged in');
-    }
-  }
-
   componentWillUnmount = () => clearInterval(this.tokenRefreshInterval);
-
 
   handleScroll = e => this.setState({
     currentRoomIndex: Math.round((
