@@ -25,7 +25,8 @@ class CurrentListenersModal extends Component {
             <Listener
               key={this.props.creator.id}
               images={this.props.creator.images}
-              name={this.props.creator.name}
+              name={(this.props.creator && this.props.creator.name)
+                ? this.props.creator.name.split(' ')[0] : ''}
             />
             <ScrollView>
               <Text style={styles.title}>Current Listeners</Text>
@@ -37,7 +38,7 @@ class CurrentListenersModal extends Component {
                         <Listener
                           key={listener.id}
                           images={listener.images}
-                          name={listener.name}
+                          name={(listener && listener.name) ? listener.name.split(' ')[0] : ''}
                         />
                       ))}
                     </View>
@@ -45,7 +46,7 @@ class CurrentListenersModal extends Component {
                   : (
                     <View style={styles.listenersContainer}>
                       <Text style={styles.noListeners}>
-                      Invite people to your room!
+                        Invite people to your room!
                       </Text>
                     </View>
                   )
